@@ -48,7 +48,7 @@ async function validateUserRegistration(req,res,next) {
     next()
 }  
     
-route.route('/user/:id')
+route.route('/users/:id')
       .get(validateMongoObjectId,async(req,res)=>{ // get single user by _id
         const userId = req.params.id
         const user = await userModel.findById(userId)
@@ -79,11 +79,12 @@ function validateMongoObjectId(req,res,next) {
 
        
   // challenge  get user by Id
-    route.get('/users/:id',validateMongoObjectId, async(req,res)=>{ 
-      console.log("start the user"+req.params.id)
-      const userId =req.params.id
+    route.get('/user/:id',validateMongoObjectId, async(req,res)=>{ 
+      console.log("start the user"+  req.params.id)
+      const userId = req.params.id
       const user = await userModel.findById(userId)
       if(!user) return res.json({error:"cant find the user"}).status(404)
+        console.log(user)
       res.status(200).json(user)
     })
           

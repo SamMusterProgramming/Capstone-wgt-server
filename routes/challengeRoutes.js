@@ -107,7 +107,7 @@ route.post('/upload/:id',validateMongoObjectId,upload.single('video'),async(req,
     res.json(challenge)
 })
 
-route.get('/challenges/:id',async(req,res)=> {
+route.get('/:id',async(req,res)=> {
     const origin_id = req.params.id;
     const challenges = await challengeModel.find({origin_id:origin_id})
     const ch = await challengeModel.find({
@@ -117,13 +117,15 @@ route.get('/challenges/:id',async(req,res)=> {
 })
    
 // find any other challenges that don't include the user
-route.get('/topchallenges/:id',validateMongoObjectId,async(req,res)=> {
+route.get('/top/:id',validateMongoObjectId,async(req,res)=> {
     const idToExclude = req.params.id;
     console.log(idToExclude)
     const challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
     res.json(challenges).status(200)  
 })  
     
+
+
 /// likes **********************************
 route.route('/challenge/like/' )
     .get(async(req,res)=>{  
@@ -157,7 +159,7 @@ route.route('/challenge/like/' )
         res.json({isLiked:like.like,like_count:likes}).status(200)    
     })   
          
-route.route('/challenge/load/like/' )
+route.route('/load/like/' )
     .get(async(req,res)=>{  
             const ids = req.query.ids.split(',');
             const query = {

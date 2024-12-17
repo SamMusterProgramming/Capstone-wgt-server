@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
      talent:{
       type:String,
       default:   "add your profession"
+     },followers: {
+      type:Number,
+      default: 0 ,
+      required:false  
      }
    },
     { timestamps: true , versionKey: false }
