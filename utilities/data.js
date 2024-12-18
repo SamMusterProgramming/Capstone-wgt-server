@@ -20,7 +20,8 @@ const users =[
             username: "samcoeur",
             city:"Charlotte",
             state: "North Carolina",
-            profession: "Driver"  
+            profession: "Driver" ,
+            
     },  
     {
          

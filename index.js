@@ -10,7 +10,7 @@ const challengeRoute = require('./routes/challengeRoutes.js')
 
 const urlencodedParser = bodyParser.urlencoded({ extended: false })
 const PORT = process.env.PORT || 8000
-const app = express()
+const app = express()   
 connectDB() 
 
 app.use(cors())

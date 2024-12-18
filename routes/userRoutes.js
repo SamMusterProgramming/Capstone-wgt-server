@@ -5,6 +5,7 @@ const session = require('express-session')
 const {ObjectId} = require('mongodb')
 const data = require('../utilities/data')
 const { v4: uuidv4 } = require('uuid');
+const followerModel = require('../models/followers')
 
 route = express.Router();
 
@@ -23,6 +24,12 @@ route.get('/seed',async(req,res)=>{
     const users = await userModel.find({}).limit(20)
     if(!users) return res.json({error:"users list is empty"})
     res.json(users).status(200) 
+})
+
+route.get('/followers/seed',async(req,res)=>{
+  followerModel.collection.drop() // delete the collection document
+  
+  res.json("done").status(200) 
 })
 
 route.route('/')
@@ -88,6 +95,55 @@ function validateMongoObjectId(req,res,next) {
       res.status(200).json(user)
     })
           
+    
+    
+
+  // add follower
+  route.post('/followers/add/:id',validateMongoObjectId,async(req,res)=>{
+    console.log(req.body)
+       if (req.params.id == req.body.follower_id) return res.json("can't follow your self")
+      const user_id = req.params.id
+      let follower = await followerModel.findOne(
+              {user_id:user_id}
+              )
+      // if(follower) follower = await new followerModel({user_id:user_id, user_email:req.body.user_email,followers_count:1}).save()
+      let findFollower = false; 
+      follower.followers.forEach(follower =>{
+        if(follower.follower_id === req.body.follower_id) findFollower = true ;
+      }) 
+
+      console.log(findFollower)
+      if(findFollower) 
+        {
+          follower.followers = follower.followers.filter(el => el.follower_id.toString() !== req.body.follower_id)
+          await follower.save()
+          return res.json({isFollowing:false}).status(200)
+        }
+      else {
+       const newFollower = {  
+            follower_id:req.body.follower_id,
+            follower_email: req.body.email
+       }
+       follower.followers.push(newFollower)  
+       await follower.save()
+       return res.json({isFollowing:true}).status(200)
+      }
+  })   
+
+
+// find follower
+route.post('/followers/:id',validateMongoObjectId,async(req,res)=>{
+    console.log(req.params.id)
+     if (req.params.id == req.body.follower_id) return res.json({noDisplay:true})
+    const user_id = req.params.id
+    let follower = await followerModel.findById(user_id)
+    if(!follower)  return res.json({noDisplay:true}) //follower = await new followerModel({user_id:user_id, user_email:req.body.user_email}).save()
+    const elementFollower = follower.followers.find(el => el.follower_id.toString() === req.body.follower_id);
+    console.log(elementFollower) 
+    if(elementFollower) return res.json({isFollowing:true})
+    return res.json({isFollowing:false})
+})
+
 
 
 
@@ -99,20 +155,14 @@ route.get('/login', isAuthenticated, async (req, res) => {
 })
     
 route.post('/login', async(req, res)=>{ 
-  console.log(req.body)
+  console.log(req.body)      
     if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin "}).status(404)
     const query = {email:req.body.email,password:req.body.password}
     const user = await userModel.findOne(query)
     if(!user) return res.json({error:"user not found "}).status(404)
+    const findFollower = await followerModel.findOne({user_id:user._id})  
+    if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
     return res.status(200).json(user)
-    // req.session.regenerate(function (err) {
-    //     if (err) return res.send('errrooorr')
-    //     req.session.user = user  
-    //     req.session.save(function (err) {
-    //        if (err) return res.send('errrooorr')
-    //        res.status(200).json(user)
-    //   })
-    // })
 })
 
 //log out a user and reset session to null
