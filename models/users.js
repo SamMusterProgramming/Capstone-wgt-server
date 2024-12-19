@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
     { timestamps: true , versionKey: false }
  )
 
-userSchema.index({email:1});
+// userSchema.index({email:1});
 userSchema.index({username:1});
 userSchema.index({email:1,password:1});
 

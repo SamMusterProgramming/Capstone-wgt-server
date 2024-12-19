@@ -212,47 +212,7 @@ route.route('/load/like/' )
         }   
 
     })   
-        
- // add comment to post from user X  , paramas refer to user the owner of the post
- //req.body will contain the user who comments source_id and a content of the comment
-route.patch('/comments/add/:id',async(req,res)=>{
-    const query = { user_id:Number(req.params.id) ,post_id:Number(req.query.post_id)}
-    if(!req.body.source_id || !req.body.content) 
-        return res.status(404).json({error:"Invalid request , make sure you send source_id and content"})
-    const comment = req.body; //must have source id (the user who commented with comment content)
-    const post = await postModel.findOne({user_id:req.params.id,id:req.query.post_id})
-    if (!post) return res.status(404).send('Post not found');
-    const newComment = await commentModel.findOneAndUpdate(
-        query,  
-        {
-            $push: { content : comment }
-         },
-         { new:true } 
-        )   
-    post.comments.push(comment) 
-    await post.save();
-    res.json(post).status(201) 
-})   
-
-// get all comments of a post 
-route.get('/comments/all/:id',validateMongoObjectId,async(req,res)=> {
-   const _id = req.params.id ; 
-   const post = await postModel.findById(_id)
-   if (!post) return res.status(404).send('Post not found');
-   res.json(post.comments) 
-})
-//delete all comments of post
-route.delete('/comments/delete/:id',validateMongoObjectId,async(req,res)=> {
-    const _id = req.params.id ; 
-    const post = await postModel.findByIdAndUpdate(
-        _id,
-        { $set: { comments: [] } },
-      { new: true }
-        )
-    if (!post) return res.status(404).send('Post not found');
-    res.json(post) 
- })
-
+     
 
 // middleware to validate mongo objectId _id
 function validateMongoObjectId(req,res,next) {

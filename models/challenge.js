@@ -30,9 +30,9 @@ const challengeSchema = new mongoose.Schema({
 },
  { timestamps: true, versionKey: false }
  )
-// challengeSchema.index({origine_id:1});
-// challengeSchema.index({user_id:1,id:1});
+challengeSchema.index({origine_id:1});
+challengeSchema.index({user_id:1,id:1});
 
 let challengeModel = mongoose.model("challenges",challengeSchema);
 
-module.exports = challengeModel ;
+module.exports = challengeModel ;    
