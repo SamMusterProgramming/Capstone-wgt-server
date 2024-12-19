@@ -33,7 +33,6 @@ route.get('/challenges/seed',async(req,res)=>{
 
 // create new challenge
 route.post('/upload',upload.single('video'),async(req,res)=>{
-    console.log('I am here')
     if(!req.file){
         return res.status(400).send('no file to upload')
     }
@@ -70,18 +69,12 @@ route.post('/upload',upload.single('video'),async(req,res)=>{
 })
 
 route.post('/upload/:id',validateMongoObjectId,upload.single('video'),async(req,res)=>{
-    console.log('challeging a challenger')
     if(!req.file){
         return res.status(400).send('no file to upload')
     }
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
     const participant = {
-        // origin_id:req.body.origin_id,
-        // video_url:"/static/videos/" + req.file.originalname,
-        // desc: req.body.description,
-        // category : "eating context",
-        // like_count:0,
              _id: newObjectId,
              user_id:req.body.user_id ,
              video_url:"/static/videos/" + req.file.originalname,
@@ -121,7 +114,6 @@ route.get('/:id',async(req,res)=> {
 // find any other challenges that don't include the user
 route.get('/top/:id',validateMongoObjectId,async(req,res)=> {
     const idToExclude = req.params.id;
-    console.log(idToExclude)
     const challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
     res.json(challenges).status(200)  
 })  
@@ -137,7 +129,6 @@ route.route('/challenge/like/' )
             post_id:ids[1],
             challenge_id :ids[2]
         }
-        console.log(query) 
 
         let like = await likeModel.findOneAndUpdate(
            { user_id:query.user_id,post_id:query.post_id},
@@ -156,7 +147,6 @@ route.route('/challenge/like/' )
             if(like.like !== 0)  likes = likes - 1  
         } 
         challenge.participants[elementIndex] ={...challenge.participants[elementIndex],likes:likes};
-        console.log(challenge.participants[elementIndex].likes)
         await challenge.save()
         res.json({isLiked:like.like,like_count:likes}).status(200)    
     })   
@@ -169,7 +159,6 @@ route.route('/load/like/' )
                 post_id:ids[1],
             }
             const challenge_id = ids[2]
-            console.log(query)
             let like = await likeModel.findOne(
                 query
             )
@@ -223,97 +212,7 @@ route.route('/load/like/' )
         }   
 
     })   
-         
-
-
-
-
-
-
-
-route.route('/')
-    .get(async(req,res)=> { // get all posts for all Posts
-        const posts = await postModel.find({}).limit(20)
-        if(!posts) return res.json({error:"posts list is empty"})
-        res.json(posts).status(200)
-    })
-    .post(validatePostData,async(req,res)=>{ 
-        const comment =  new commentModel(// for each post , I create a welcome message from the admin 
-               {
-                user_id:req.body.user_id,
-                post_id:req.body.id, 
-                content:[{source_id:0,comment:"I am your Admin, Welcome"}] 
-              })
-        await comment.save()
-        const post = req.body
-        post["comments"] = [comment.content[0]] // i created and initialised template comment for the new post
-        const newPost = new postModel(post)
-        if(! newPost) return res.json({error:"can't create the Post"})
-        await newPost.save() 
-        res.json(newPost)  
-    })
-async function validatePostData(req,res,next) {
-    if(!req.body.id || !req.body.user_id)
-       return res.status(404).json({error:"invalid data"}) // we don't want to save post without required fields id and user_id
-    const post = await postModel.findOne({id:req.body.id})
-       if(post) return res.status(404).json({error:"ID exist or invalid"}) // id is unique for each post
-
-    next()
-}  
-
-
-
-
-
-
-//access and manages all posts of user X , user_id as a params
-
-route.route('/user/:id')
-     .get(async(req,res)=>{
-       const query = {user_id:req.params.id};
-       const posts = await postModel.find(query)
-       if(posts.length == 0) return res.json({error:"user does't have posts yet"}).status(404)
-       res.json(posts).status(200)
-     })
-     .delete(async(req,res)=>{
-        const query = {user_id:req.params.id};
-        const posts = await postModel.deleteMany(query,{ new: true } )
-        if(posts.length == 0 ) return res.json({error:"user does't have posts yet"}).status(404)
-        res.json(posts).status(200)
-      })
-     
-
-// get , delete and update a user post by user_id as paramas and post id as a query
-
-route.route('/user/post/:id')
-     .get(async(req,res)=>{
-        const query = {user_id:req.params.id,id:req.query.id}
-        const post = await postModel.findOne(query)
-        if(!post) return res.json({error:"can't find the post"}).status(404) 
-        res.status(200).json(post)
-     })
-     .delete(async(req,res)=>{
-        const query = {user_id:req.params.id,id:req.query.id}
-        const post = await postModel.deleteOne(
-            query,
-            { new: true } 
-            )
-        if(!post) return res.json({error:"can't find the post"}).status(404) 
-        res.status(200).json(post)
-     })
-     .patch(async(req,res)=>{
-        if(req.body.id || req.body.user_id) return res.json({error:"can't modify Ids, forbidden"}).status(404)
-        const query = {user_id:req.params.id,id:req.query.id}
-        const post = await postModel.updateOne(
-            query,
-            req.body,
-            { new: true } 
-            )
-        if(!post) return res.json({error:"can't find the post"}).status(404) 
-        res.status(200).json(post)
-     })
-
-
+        
  // add comment to post from user X  , paramas refer to user the owner of the post
  //req.body will contain the user who comments source_id and a content of the comment
 route.patch('/comments/add/:id',async(req,res)=>{

@@ -80,7 +80,6 @@ function validateMongoObjectId(req,res,next) {
        
   // challenge  get user by Id
     route.get('/user/:id',validateMongoObjectId, async(req,res)=>{ 
-      console.log("start the user"+  req.params.id)
       const userId = req.params.id
       const user = await userModel.findById(userId)
       if(!user) return res.json({error:"cant find the user"}).status(404)
@@ -93,7 +92,6 @@ function validateMongoObjectId(req,res,next) {
 
   // add follower
   route.post('/followers/add/:id',validateMongoObjectId,async(req,res)=>{
-    console.log(req.body)
        if (req.params.id == req.body.follower_id) return res.json("can't follow your self")
       const user_id = req.params.id
       let follower = await followerModel.findOne(
@@ -132,7 +130,6 @@ route.post('/followers/:id',validateMongoObjectId,async(req,res)=>{
     let follower = await followerModel.findById(user_id)
     if(!follower)  return res.json({noDisplay:true}) //follower = await new followerModel({user_id:user_id, user_email:req.body.user_email}).save()
     const elementFollower = follower.followers.find(el => el.follower_id.toString() === req.body.follower_id);
-    console.log(elementFollower) 
     if(elementFollower) return res.json({isFollowing:true})
     return res.json({isFollowing:false})
 })
@@ -147,8 +144,7 @@ route.get('/login', isAuthenticated, async (req, res) => {
     res.status(200).json(req.session.user)
 })
     
-route.post('/login', async(req, res)=>{ 
-  console.log(req.body)      
+route.post('/login', async(req, res)=>{      
     if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin "}).status(404)
     const query = {email:req.body.email,password:req.body.password}
     const user = await userModel.findOne(query)
