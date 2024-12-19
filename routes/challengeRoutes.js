@@ -6,6 +6,7 @@ const data = require('../utilities/data.js')
 const upload = require('../multer.js')
 const likeModel = require ('../models/likes.js')
 const mongoose = require('mongoose')
+const followerModel = require('../models/followers.js')
 
 route = express.Router();
 
@@ -13,6 +14,7 @@ route = express.Router();
 route.get('/like/seed',async(req,res)=>{
     challengeModel.collection.drop() 
     likeModel.collection.drop() 
+    followerModel.collection.drop() 
     res.json('azul')
 })      
 

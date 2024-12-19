@@ -8,12 +8,6 @@ const followerModel = require('../models/followers')
 
 route = express.Router();
 
-route.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true   
-})) 
- 
 // seeds the database with prototype data
 route.get('/seed',async(req,res)=>{
     userModel.collection.drop() // delete the collection document
