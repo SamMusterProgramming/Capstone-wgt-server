@@ -1,6 +1,5 @@
 const express = require('express')
 const userModel = require('../models/users')
-const postModel = require('../models/posts')
 const session = require('express-session')
 const {ObjectId} = require('mongodb')
 const data = require('../utilities/data')

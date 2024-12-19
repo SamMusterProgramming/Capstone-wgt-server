@@ -1,7 +1,6 @@
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
-const session = require('express-session');
 const connectDB = require('./db.js')
 require('dotenv').config()
 const userModel = require('./models/users.js')
