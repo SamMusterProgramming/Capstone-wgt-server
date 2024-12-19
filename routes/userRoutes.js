@@ -3,7 +3,6 @@ const userModel = require('../models/users')
 const session = require('express-session')
 const {ObjectId} = require('mongodb')
 const data = require('../utilities/data')
-const { v4: uuidv4 } = require('uuid');
 const followerModel = require('../models/followers')
 
 route = express.Router();
