@@ -81,10 +81,14 @@ route.post('/uploads',async(req,res)=>{
         desc: req.body.description,
         category : "eating context",
         like_count:0,    
-        
+        type:req.body.type,
+        category:req.body.category,
+        privacy:req.body.privacy,
+        audience:req.body.audience,
+        challengers:req.body.challengers,
         participants:[{
              _id: newObjectId,
-             user_id:req.body.origin_id ,
+             user_id:req.body.origin_id,
              video_url:req.body.video_url,
              likes:0,
              votes:0,
@@ -167,7 +171,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
             user_id:req.body.user_id,
             like:false,
             vote:false
-    })
+    })  
     await like.save()
     res.json(challenge)
 })

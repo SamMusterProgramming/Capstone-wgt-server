@@ -4,7 +4,8 @@ const session = require('express-session')
 const {ObjectId} = require('mongodb')
 const data = require('../utilities/data')
 const followerModel = require('../models/followers')
-
+const jwt = require('jsonwebtoken')
+require('dotenv').config()
 route = express.Router();
 
 // seeds the database with prototype data
@@ -20,9 +21,10 @@ route.get('/seed',async(req,res)=>{
 
 route.get('/followers/seed',async(req,res)=>{
   followerModel.collection.drop() // delete the collection document
-  
   res.json("done").status(200) 
 })
+
+
 
 route.route('/')
    .get(async(req,res)=>{ // get all users
@@ -150,6 +152,7 @@ route.post('/login', async(req, res)=>{
     if(!user) return res.json({error:"user not found "}).status(404)
     const findFollower = await followerModel.findOne({user_id:user._id})  
     if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
+    const accessToekn = jwt.sign(user.email , process.env.ACCESS_TOKEN_SECRET)  
     return res.status(200).json(user)
 })
 

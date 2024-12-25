@@ -23,9 +23,24 @@ const challengeSchema = new mongoose.Schema({
         required:false,
         default: "add description"
     },
+    type:{
+        type:String
+    },
     category:{
        type:String
     },  
+    privacy:{
+       type:String
+    },
+    audience:{
+        type:String,
+        default:"everyone"
+    },
+    challengers:{
+        type:String,
+        default: "everyone"
+    }
+    ,
      comments: [] // to store comment of a user in an array of object for the challenge 
 },
  { timestamps: true, versionKey: false }
