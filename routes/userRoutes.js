@@ -152,7 +152,7 @@ route.post('/login', async(req, res)=>{
     if(!user) return res.json({error:"user not found "}).status(404)
     const findFollower = await followerModel.findOne({user_id:user._id})  
     if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
-    const accessToekn = jwt.sign(user.email , process.env.ACCESS_TOKEN_SECRET)  
+    // const accessToekn = jwt.sign(user.email , process.env.ACCESS_TOKEN_SECRET)  
     return res.status(200).json(user)
 })
 
