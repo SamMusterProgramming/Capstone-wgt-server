@@ -7,6 +7,7 @@ const upload = require('../multer.js')
 const likeModel = require ('../models/likes.js')
 const mongoose = require('mongoose')
 const followerModel = require('../models/followers.js')
+const { findByIdAndUpdate } = require('../models/users.js')
 
 route = express.Router();
 
@@ -272,10 +273,8 @@ route.route('/load/like/' )
             let participants = challenge.participants.filter(participant => participant._id != query.post_id)
             let exist = null
             for (const participant of participants) {
-                console.log(participant)
-            exist = await likeModel.findOne({user_id:query.user_id,post_id:participant._id})
-            console.log(exist)
-            if (exist) if(exist.vote) break;
+              exist = await likeModel.findOne({user_id:query.user_id,post_id:participant._id})
+              if (exist) if(exist.vote) break;
           }
         if(exist) if(exist.vote) return res.json({isVoted:false,vote_count:votes})
         challenge.participants[elementIndex] ={...challenge.participants[elementIndex],votes:votes+1};
@@ -288,11 +287,36 @@ route.route('/load/like/' )
     })   
      
 
+    route.get('/find/:id',validateMongoObjectId, async(req,res)=>{
+        console.log(req.params.id)
+     const challenge_id = req.params.id;
+     const challenge = await challengeModel.findById(challenge_id)
+     console.log(challenge)
+     res.json(challenge).status(200)
+    })
+
+
+    route.patch('/quit/:id', validateMongoObjectId, async(req,res)=> {
+        const challenge_id = req.params.id;
+        const userId = req.body.user_id ; 
+        let challenge = await challengeModel.findById(
+             challenge_id 
+            )
+        if (challenge.participants.length == 1 ) {
+           await challengeModel.findByIdAndDelete(challenge_id)      
+           return res.json("deleted").status(200)
+        }
+            
+        challenge.participants = challenge.participants.filter(participant => participant.user_id !== userId)
+        await challenge.save()
+        res.json(challenge).status(200)
+    })        
+
 // middleware to validate mongo objectId _id
 function validateMongoObjectId(req,res,next) {
     if (!ObjectId.isValid(req.params.id)) return res.status(404).json({Error:"error in request ID"});
-    next()
+    next()   
 }    
-
+   
 
 module.exports = route; 
