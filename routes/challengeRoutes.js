@@ -177,19 +177,33 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     res.json(challenge)
 })
 
-route.get('/:id',async(req,res)=> {
+route.get('/original/:id',async(req,res)=> {
     const origin_id = req.params.id;
-    const challenges = await challengeModel.find({origin_id:origin_id})
-    const ch = await challengeModel.find({
-        participants:{$elemMatch: {user_id:req.params.id }}
+    let challenges = await challengeModel.find({origin_id:origin_id})
+    challenges = challenges.filter(challenge => 
+       challenge.participants.find(participant => participant.user_id == challenge.origin_id)
+    )
+    res.json(challenges)   
+})
+     
+
+route.get('/participate/:id',async(req,res)=> {
+    const origin_id = req.params.id;   
+    // const challenges = await challengeModel.find({origin_id:origin_id})
+    let challenges = await challengeModel.find({
+        participants:{$elemMatch: {user_id:origin_id }}
     })
-    res.json(ch)   
+    challenges = challenges.filter(challenge => challenge.origin_id != origin_id)
+    res.json(challenges)   
 })
    
 // find any other challenges that don't include the user
 route.get('/top/:id',validateMongoObjectId,async(req,res)=> {
     const idToExclude = req.params.id;
-    const challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
+    let challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
+    challenges = challenges.filter(challenge => 
+        !challenge.participants.find(participant => participant.user_id === idToExclude)
+     )
     res.json(challenges).status(200)  
 })  
     
