@@ -8,6 +8,7 @@ const followerSchema = new mongoose.Schema({
         required:true
      },
      followers:[],
+     followings:[],
      user_email:{
         type:String,
         default:"no email"
