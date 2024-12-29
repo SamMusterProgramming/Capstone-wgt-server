@@ -95,7 +95,6 @@ function validateMongoObjectId(req,res,next) {
   route.post('/followings/add/:id',validateMongoObjectId,async(req,res)=>{
       //  if (req.params.id == req.body.following_id) return res.json("can't follow your self")
       const user_id = req.params.id;
-      console.log(user_id)
       const following = {
         following_id:req.body.following_id,
         following_email :req.body.following_email
@@ -103,7 +102,8 @@ function validateMongoObjectId(req,res,next) {
       const follow= await followerModel.findOneAndUpdate(
               {user_id:user_id},
               {
-                  $push: { followings : following }
+                  $push: { followings : following },
+                  $inc: { followings_count: 1 }
                },
                { new:true } 
               )
@@ -111,7 +111,41 @@ function validateMongoObjectId(req,res,next) {
       const follower = await followerModel.findOneAndUpdate(
                 {user_id:req.body.following_id},
                 {
-                    $push: { followers : {follower_id:user_id,follower_email:follow.user_email}}
+                    $push: { followers : {follower_id:user_id,follower_email:follow.user_email}},
+                    $inc: { followers_count: 1 }
+                 },
+               { new:true } 
+        )
+  
+      res.json(follow.followings).status(200)
+
+  })   
+
+    // unfollow
+    route.patch('/unfollowing/:id',validateMongoObjectId,async(req,res)=>{
+      //  if (req.params.id == req.body.following_id) return res.json("can't follow your self")
+      const user_id = req.params.id;
+      console.log(user_id)
+
+      const following = {
+        following_id:req.body.following_id,
+        following_email :req.body.following_email
+      }
+      const follow= await followerModel.findOneAndUpdate(
+              {user_id:user_id},
+              {
+                  $pull: { followings : following },
+                  $inc: { followings_count: -1 }
+               },
+               { new:true } 
+              )
+
+      const follower = await followerModel.findOneAndUpdate(
+                {user_id:req.body.following_id},
+                {
+                    $pull: { followers : {follower_id:user_id,follower_email:follow.user_email}},
+                    $inc: { followers_count: -1 }
+
                  },
                  { new:true } 
         )
@@ -120,17 +154,12 @@ function validateMongoObjectId(req,res,next) {
 
   })   
 
-
-// find follower
-route.post('/followers/:id',validateMongoObjectId,async(req,res)=>{
+// get follow Data
+route.get('/follow/data/:id',validateMongoObjectId,async(req,res)=>{
     console.log(req.params.id)
-     if (req.params.id == req.body.follower_id) return res.json({noDisplay:true})
     const user_id = req.params.id
-    let follower = await followerModel.findById(user_id)
-    if(!follower)  return res.json({noDisplay:true}) //follower = await new followerModel({user_id:user_id, user_email:req.body.user_email}).save()
-    const elementFollower = follower.followers.find(el => el.follower_id.toString() === req.body.follower_id);
-    if(elementFollower) return res.json({isFollowing:true})
-    return res.json({isFollowing:false})
+    let follow = await followerModel.findOne({user_id:user_id})
+    return res.json(follow).status(200)
 })
 
 // followings
@@ -144,10 +173,6 @@ route.get('/followings/:id',validateMongoObjectId,async(req,res)=>{
   return res.json(followings)
 })
 
-
-
-
-    
 //I use this route to log in a user with session if successfully Authenticated 
 route.get('/login', isAuthenticated, async (req, res) => {
     if(!req.session.user) res.status(400).json("not looged in n")

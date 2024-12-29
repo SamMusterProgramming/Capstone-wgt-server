@@ -16,6 +16,10 @@ const followerSchema = new mongoose.Schema({
      followers_count:{
         type:Number,
         default:0
+     },
+     followings_count:{
+        type:Number,
+        default:0
      }
    },
     { timestamps: true , versionKey: false }

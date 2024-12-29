@@ -111,39 +111,40 @@ route.post('/uploads',async(req,res)=>{
     res.json( newChallenge)
 })
 
-route.post('/upload/:id',validateMongoObjectId,upload.single('video'),async(req,res)=>{
-    if(!req.file){
-        return res.status(400).send('no file to upload')
-    }
-    const newObjectId = new mongoose.Types.ObjectId();
-    const _id = req.params.id
-    const participant = {
-             _id: newObjectId,
-             user_id:req.body.user_id ,
-             video_url:"/static/videos/" + req.file.originalname,
-             likes:0,
-             votes:0,
-             profile_img:req.body.profile_img,
-             name:req.body.name
-            }  
+// route.post('/upload/:id',validateMongoObjectId,upload.single('video'),async(req,res)=>{
+//     if(!req.file){
+//         return res.status(400).send('no file to upload')
+//     }
+//     const newObjectId = new mongoose.Types.ObjectId();
+//     const _id = req.params.id
+//     const participant = {
+//              _id: newObjectId,
+//              user_id:req.body.user_id ,
+//              video_url:"/static/videos/" + req.file.originalname,
+//              likes:0,
+//              votes:0,
+//              profile_img:req.body.profile_img,
+//              name:req.body.name,
+//              email:req.body.email
+//             }  
     
-    const challenge = await challengeModel.findByIdAndUpdate(
-        _id,
-        {
-            $push: { participants : participant }
-         },
-         { new:true } 
-    )
-    if(!challenge) return res.json({error:"can't save the video"})
-    const like =  new likeModel({
-            post_id: newObjectId,
-            user_id:req.body.user_id,
-            like:false,
-            vote:false
-    })
-    await like.save()
-    res.json(challenge)
-})
+//     const challenge = await challengeModel.findByIdAndUpdate(
+//         _id,
+//         {
+//             $push: { participants : participant }
+//          },
+//          { new:true } 
+//     )
+//     if(!challenge) return res.json({error:"can't save the video"})
+//     const like =  new likeModel({
+//             post_id: newObjectId,
+//             user_id:req.body.user_id,
+//             like:false,
+//             vote:false
+//     })
+//     await like.save()
+//     res.json(challenge)
+// })
 
 route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     
@@ -156,7 +157,8 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
              likes:0,
              votes:0,
              profile_img:req.body.profile_img,
-             name:req.body.name
+             name:req.body.name,
+             email:req.body.email
             }  
     
     const challenge = await challengeModel.findByIdAndUpdate(
