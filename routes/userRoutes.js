@@ -84,7 +84,6 @@ function validateMongoObjectId(req,res,next) {
       const userId = req.params.id
       const user = await userModel.findById(userId)
       if(!user) return res.json({error:"cant find the user"}).status(404)
-        console.log(user)
       res.status(200).json(user)
     })
           

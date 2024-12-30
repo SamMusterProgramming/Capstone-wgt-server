@@ -33,42 +33,42 @@ route.get('/challenges/seed',async(req,res)=>{
 
 
 // create new challenge
-route.post('/upload',upload.single('video'),async(req,res)=>{
-    if(!req.file){
-        return res.status(400).send('no file to upload')
-    }
-    const newObjectId = new mongoose.Types.ObjectId();
-    const timeLapse = Date.now();
-    const challenge = {
-        origin_id:req.body.origin_id,
-        video_url:"/static/videos/" + req.file.originalname,
-        desc: req.body.description,
-        category : "eating context",
-        like_count:0,    
+// route.post('/upload',upload.single('video'),async(req,res)=>{
+//     if(!req.file){
+//         return res.status(400).send('no file to upload')
+//     }
+//     const newObjectId = new mongoose.Types.ObjectId();
+//     const timeLapse = Date.now();
+//     const challenge = {
+//         origin_id:req.body.origin_id,
+//         video_url:"/static/videos/" + req.file.originalname,
+//         desc: req.body.description,
+//         category : "eating context",
+//         like_count:0,    
         
-        participants:[{
-             _id: newObjectId,
-             user_id:req.body.origin_id ,
-             video_url:"/static/videos/" + req.file.originalname,
-             likes:0,
-             votes:0,
-             profile_img:req.body.profile_img,
-             name:req.body.name,
-             createdAt:timeLapse
-            }]    
-    }
+//         participants:[{
+//              _id: newObjectId,
+//              user_id:req.body.origin_id ,
+//              video_url:"/static/videos/" + req.file.originalname,
+//              likes:0,
+//              votes:0,
+//              profile_img:req.body.profile_img,
+//              name:req.body.name,
+//              createdAt:timeLapse
+//             }]    
+//     }
 
-    const newChallenge = await challengeModel(challenge)
-    await newChallenge.save()
-    const like =  new likeModel({
-        post_id:newObjectId,
-        user_id:req.body.origin_id,
-        like:false,
-        vote:false
-    })
-    await like.save()
-    res.json( newChallenge)
-})
+//     const newChallenge = await challengeModel(challenge)
+//     await newChallenge.save()
+//     const like =  new likeModel({
+//         post_id:newObjectId,
+//         user_id:req.body.origin_id,
+//         like:false,
+//         vote:false
+//     })
+//     await like.save()
+//     res.json( newChallenge)
+// })
 
 
 // firebase used here
@@ -111,41 +111,6 @@ route.post('/uploads',async(req,res)=>{
     res.json( newChallenge)
 })
 
-// route.post('/upload/:id',validateMongoObjectId,upload.single('video'),async(req,res)=>{
-//     if(!req.file){
-//         return res.status(400).send('no file to upload')
-//     }
-//     const newObjectId = new mongoose.Types.ObjectId();
-//     const _id = req.params.id
-//     const participant = {
-//              _id: newObjectId,
-//              user_id:req.body.user_id ,
-//              video_url:"/static/videos/" + req.file.originalname,
-//              likes:0,
-//              votes:0,
-//              profile_img:req.body.profile_img,
-//              name:req.body.name,
-//              email:req.body.email
-//             }  
-    
-//     const challenge = await challengeModel.findByIdAndUpdate(
-//         _id,
-//         {
-//             $push: { participants : participant }
-//          },
-//          { new:true } 
-//     )
-//     if(!challenge) return res.json({error:"can't save the video"})
-//     const like =  new likeModel({
-//             post_id: newObjectId,
-//             user_id:req.body.user_id,
-//             like:false,
-//             vote:false
-//     })
-//     await like.save()
-//     res.json(challenge)
-// })
-
 route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     
     const newObjectId = new mongoose.Types.ObjectId();
@@ -179,6 +144,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     res.json(challenge)
 })
 
+// get user created by user 
 route.get('/original/:id',async(req,res)=> {
     const origin_id = req.params.id;
     let challenges = await challengeModel.find({origin_id:origin_id})
