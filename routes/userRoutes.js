@@ -41,11 +41,11 @@ route.route('/')
    })   
 
 async function validateUserRegistration(req,res,next) {
-    if(!req.body.email || !req.body.password || !req.body.username )
-       return res.status(404).json({error:"invalid entry"}) //redirect('/registration')
+    if(!req.body.email || !req.body.password )
+       return res.status(404).json({error:"invalid entry"})
     const query = {email:req.body.email}
     const user = await userModel.findOne(query)
-    if(user) return res.status(400).json({error:"email exisit already"})
+    if(user) return res.status(400).json({error:"email exist already"})
     next()
 }  
     
@@ -86,7 +86,19 @@ function validateMongoObjectId(req,res,next) {
       if(!user) return res.json({error:"cant find the user"}).status(404)
       res.status(200).json(user)
     })
-          
+    route.patch('/user/:id',validateMongoObjectId, async(req,res)=>{ 
+     
+      const userId = req.params.id
+      const user = await userModel.findByIdAndUpdate(
+               userId,
+              req.body,
+              { new: true }
+            )
+            console.log(user)
+      if(!user) return res.json({error:"cant find the user"}).status(404)
+      res.status(200).json(user)
+    })
+               
     
     
 
@@ -179,16 +191,18 @@ route.get('/login', isAuthenticated, async (req, res) => {
 })
     
 route.post('/login', async(req, res)=>{      
-    if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin "}).status(404)
+    if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin"}).status(404)
     const query = {email:req.body.email,password:req.body.password}
+    const userEmail = await userModel.findOne({username:req.body.email})
+    if(!userEmail) return res.json({error:"user not found"}).status(404)
     const user = await userModel.findOne(query)
-    if(!user) return res.json({error:"user not found "}).status(404)
+    if(!user) return res.json({error:"invalid password"}).status(404)
     const findFollower = await followerModel.findOne({user_id:user._id})  
     if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
     // const accessToekn = jwt.sign(user.email , process.env.ACCESS_TOKEN_SECRET)  
     return res.status(200).json(user)
 })
-
+   
 //log out a user and reset session to null
 route.get('/logout',async(req,res)=>{
     req.session.user = null

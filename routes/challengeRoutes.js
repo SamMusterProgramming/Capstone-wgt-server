@@ -87,6 +87,7 @@ route.post('/uploads',async(req,res)=>{
         privacy:req.body.privacy,
         audience:req.body.audience,
         challengers:req.body.challengers,
+        name:req.body.name,
         participants:[{
              _id: newObjectId,
              user_id:req.body.origin_id,
@@ -171,8 +172,12 @@ route.get('/top/:id',validateMongoObjectId,async(req,res)=> {
     let challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
     challenges = challenges.filter(challenge => 
         !challenge.participants.find(participant => participant.user_id === idToExclude)
-     )
-    res.json(challenges).status(200)  
+    )
+    let challenge1 = await challengeModel.find({ origin_id: idToExclude })
+    challenge1 = challenge1.filter(challenge => 
+        !challenge.participants.find(participant => participant.user_id === idToExclude)
+    )
+    res.json(challenges.concat(challenge1)).status(200)  
 })  
     
 

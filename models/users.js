@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
         required:false,
         default:"/static/images/avatar.avif"
      },
+     cover_img:{
+      type:String,
+      required:false,
+      default:"/static/images/avatar.avif"
+     },
      email:{
         type:String,
         required:true,
@@ -49,7 +54,7 @@ const userSchema = new mongoose.Schema({
  )
 
 // userSchema.index({email:1});
-userSchema.index({username:1});
+userSchema.index({username:1});   
 userSchema.index({email:1,password:1});
 
 let userModel = mongoose.model("users",userSchema);

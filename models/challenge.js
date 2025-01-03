@@ -7,6 +7,10 @@ const challengeSchema = new mongoose.Schema({
        type:String,
        required : true ,
     },
+    name:{
+        type:String,
+        default:"unkown"
+    },
     participants:[]
     ,
     like_count:{
