@@ -204,13 +204,17 @@ route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
           )
   const notification = new notificationModel({
      receiver_id:receiver_id,
-     message: "you got new friend request",
-     type:"friend_request",
+     content: {
+      sender_id:req.body._id,
+      name:req.body.name,
+      profile_img:req.body.profile_img
+     },
+     message:"sent you a friend request",
+     type:"friend request",
      isRead:false,
   })
   await notification.save();
   res.json(friend).status(200)
-
 })   
 
 route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
@@ -227,8 +231,7 @@ route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
 
 route.get('/notifications/:id',validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
-  console.log(receiver_id)
-  const notifications = await notificationModel.find({receiver_id:receiver_id})
+  const notifications = await notificationModel.find({receiver_id:receiver_id}).sort({ date: -1 });
   console.log(notifications)
   res.json(notifications).status(200)
 
