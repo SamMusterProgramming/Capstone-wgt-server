@@ -32,45 +32,6 @@ route.get('/challenges/seed',async(req,res)=>{
 })
 
 
-// create new challenge
-// route.post('/upload',upload.single('video'),async(req,res)=>{
-//     if(!req.file){
-//         return res.status(400).send('no file to upload')
-//     }
-//     const newObjectId = new mongoose.Types.ObjectId();
-//     const timeLapse = Date.now();
-//     const challenge = {
-//         origin_id:req.body.origin_id,
-//         video_url:"/static/videos/" + req.file.originalname,
-//         desc: req.body.description,
-//         category : "eating context",
-//         like_count:0,    
-        
-//         participants:[{
-//              _id: newObjectId,
-//              user_id:req.body.origin_id ,
-//              video_url:"/static/videos/" + req.file.originalname,
-//              likes:0,
-//              votes:0,
-//              profile_img:req.body.profile_img,
-//              name:req.body.name,
-//              createdAt:timeLapse
-//             }]    
-//     }
-
-//     const newChallenge = await challengeModel(challenge)
-//     await newChallenge.save()
-//     const like =  new likeModel({
-//         post_id:newObjectId,
-//         user_id:req.body.origin_id,
-//         like:false,
-//         vote:false
-//     })
-//     await like.save()
-//     res.json( newChallenge)
-// })
-
-
 // firebase used here
 route.post('/uploads',async(req,res)=>{
    
@@ -83,9 +44,7 @@ route.post('/uploads',async(req,res)=>{
         category : "eating context",
         like_count:0,    
         type:req.body.type,
-        category:req.body.category,
         privacy:req.body.privacy,
-        audience:req.body.audience,
         challengers:req.body.challengers,
         name:req.body.name,
         participants:[{
@@ -236,7 +195,6 @@ route.route('/load/like/' )
     // challenge vote 
     route.route('/challenge/vote/' )
     .get(async(req,res)=>{  
-        console.log("i am here")
         const ids = req.query.ids.split(',');
         const query = {
             user_id:ids[0],
@@ -275,10 +233,8 @@ route.route('/load/like/' )
      
 
     route.get('/find/:id',validateMongoObjectId, async(req,res)=>{
-        console.log(req.params.id)
      const challenge_id = req.params.id;
      const challenge = await challengeModel.findById(challenge_id)
-     console.log(challenge)
      res.json(challenge).status(200)
     })
 

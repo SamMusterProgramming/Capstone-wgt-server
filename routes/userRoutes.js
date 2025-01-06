@@ -4,9 +4,13 @@ const session = require('express-session')
 const {ObjectId} = require('mongodb')
 const data = require('../utilities/data')
 const followerModel = require('../models/followers')
+const friendModel = require('../models/friends')
+const notificationModel = require('../models/notifications')
 const jwt = require('jsonwebtoken')
+// const friendModel = require('../models/friends')
 require('dotenv').config()
 route = express.Router();
+
 
 // seeds the database with prototype data
 route.get('/seed',async(req,res)=>{
@@ -94,7 +98,6 @@ function validateMongoObjectId(req,res,next) {
               req.body,
               { new: true }
             )
-            console.log(user)
       if(!user) return res.json({error:"cant find the user"}).status(404)
       res.status(200).json(user)
     })
@@ -104,7 +107,6 @@ function validateMongoObjectId(req,res,next) {
 
   // add following
   route.post('/followings/add/:id',validateMongoObjectId,async(req,res)=>{
-      //  if (req.params.id == req.body.following_id) return res.json("can't follow your self")
       const user_id = req.params.id;
       const following = {
         following_id:req.body.following_id,
@@ -136,7 +138,6 @@ function validateMongoObjectId(req,res,next) {
     route.patch('/unfollowing/:id',validateMongoObjectId,async(req,res)=>{
       //  if (req.params.id == req.body.following_id) return res.json("can't follow your self")
       const user_id = req.params.id;
-      console.log(user_id)
 
       const following = {
         following_id:req.body.following_id,
@@ -175,14 +176,65 @@ route.get('/follow/data/:id',validateMongoObjectId,async(req,res)=>{
 
 // followings
 route.get('/followings/:id',validateMongoObjectId,async(req,res)=>{
-  console.log(req.params.id)
   const user_id = req.params.id
   const followinglist = await followerModel.findOne({user_id:user_id})
   if(!followinglist) return res.json([])
   const followings = followinglist.followings;
-  console.log(followings)
   return res.json(followings)
 })
+
+
+
+//*********************** Friends request , adding */
+
+route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
+  const receiver_id = req.params.id;
+  const friend_request = {
+    sender_id:req.body._id,
+    name:req.body.name,
+    email:req.body.email,
+    profile_img:req.body.profile_img
+  }
+  const friend = await friendModel.findOneAndUpdate(
+          {receiver_id:receiver_id},
+          {
+              $push: { friend_request_received :friend_request },
+           },
+           { new:true } 
+          )
+  const notification = new notificationModel({
+     receiver_id:receiver_id,
+     message: "you got new friend request",
+     type:"friend_request",
+     isRead:false,
+  })
+  await notification.save();
+  res.json(friend).status(200)
+
+})   
+
+route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
+  const receiver_id = req.params.id;
+  console.log(receiver_id)
+  const friendlist = await friendModel.findOne({receiver_id:receiver_id})
+  
+  res.json(friendlist).status(200)
+
+})   
+
+
+//*********************** notifications */
+
+route.get('/notifications/:id',validateMongoObjectId,async(req,res)=>{
+  const receiver_id = req.params.id;
+  console.log(receiver_id)
+  const notifications = await notificationModel.find({receiver_id:receiver_id})
+  console.log(notifications)
+  res.json(notifications).status(200)
+
+})   
+
+
 
 //I use this route to log in a user with session if successfully Authenticated 
 route.get('/login', isAuthenticated, async (req, res) => {
@@ -199,14 +251,22 @@ route.post('/login', async(req, res)=>{
     if(!user) return res.json({error:"invalid password"}).status(404)
     const findFollower = await followerModel.findOne({user_id:user._id})  
     if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
-    // const accessToekn = jwt.sign(user.email , process.env.ACCESS_TOKEN_SECRET)  
-    return res.status(200).json(user)
+    const findFriend = await friendModel.findOne({receiver_id:user._id})  
+    if(!findFriend)  await  new friendModel(
+      {
+        receiver_id:user._id,
+        user_email:user.email,
+        user_name:user.name,
+        profile_img:user.profile_img
+    }).save()   
+    
+      return res.status(200).json(user)
 })
    
 //log out a user and reset session to null
 route.get('/logout',async(req,res)=>{
     req.session.user = null
-    req.session.save(function (err) {
+    req.session.save(function (err) {  
       if (err) return err
       req.session.regenerate(function (err) {
         if (err) return err

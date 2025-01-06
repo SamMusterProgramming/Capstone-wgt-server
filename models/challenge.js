@@ -30,16 +30,13 @@ const challengeSchema = new mongoose.Schema({
     type:{
         type:String
     },
-    category:{
-       type:String
-    },  
     privacy:{
        type:String
     },
-    audience:{
-        type:String,
-        default:"everyone"
-    },
+    // audience:{
+    //     type:String,
+    //     default:"everyone"
+    // },
     challengers:{
         type:String,
         default: "everyone"
