@@ -207,7 +207,8 @@ route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
      content: {
       sender_id:req.body._id,
       name:req.body.name,
-      profile_img:req.body.profile_img
+      profile_img:req.body.profile_img,
+      email:req.body.email
      },
      message:"sent you a friend request",
      type:"friend request",
@@ -216,6 +217,34 @@ route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
   await notification.save();
   res.json(friend).status(200)
 })   
+
+
+route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
+  const receiver_id = req.params.id;
+  console.log("i am here" + req.body)
+  const friend_request = {
+    sender_id:req.body._id,
+    name:req.body.name,
+    email:req.body.email,
+    profile_img:req.body.profile_img
+  }
+  const friend = await friendModel.findOneAndUpdate(
+          {receiver_id:receiver_id},
+          {
+              $pull: { friend_request_received :friend_request },
+           },
+           { new:true }   
+          )
+  let notifications = await notificationModel.findOneAndDelete({
+       receiver_id:receiver_id,
+       type:"friend request",
+      'content.sender_id': req.body._id} ,
+      { new:true }   
+    )
+  
+  console.log(notifications)
+  res.json(friend).status(200)
+})  
 
 route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
