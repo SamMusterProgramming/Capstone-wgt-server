@@ -41,6 +41,14 @@ route.route('/')
       const newUser = new userModel(user)
       if(! newUser) return res.json({error:"can't save user"})
       await newUser.save() 
+      const findFriend = await friendModel.findOne({receiver_id:user._id})  
+      if(!findFriend)  await  new friendModel(
+        {
+          receiver_id:user._id,
+          user_email:user.email,
+          user_name:user.name,
+          profile_img:user.profile_img
+      }).save()   
       res.json(newUser).status(200)      
    })   
 
