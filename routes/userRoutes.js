@@ -48,7 +48,10 @@ route.route('/')
           user_email:user.email,
           user_name:user.name,
           profile_img:user.profile_img
-      }).save()   
+      }).save() 
+      const findFollower = await followerModel.findOne({user_id:user._id})  
+      if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
+      
       res.json(newUser).status(200)      
    })   
 
@@ -238,7 +241,8 @@ route.post('/friends/unfriend/:id',validateMongoObjectId,async(req,res)=>{
   const friend1 = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
-              $pull: { friends :friend_1 },
+              $pull: { friends :{sender_id:req.body._id} },
+              $inc: { friends_count: -1 }
            },
            { new:true } 
           )
@@ -251,7 +255,8 @@ route.post('/friends/unfriend/:id',validateMongoObjectId,async(req,res)=>{
   const friend2 = await friendModel.findOneAndUpdate(
     {receiver_id:req.body._id},
     {
-        $pull: { friends :friend_2 },
+        $pull: { friends :{sender_id:friend1.receiver_id} },
+        $inc: { friends_count:-1 }
      },
      { new:true } 
     )
@@ -270,7 +275,7 @@ route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
-              $pull: { friend_request_received :friend_request },
+              $pull: { friend_request_received :{sender_id:req.body._id} },
            },
            { new:true }   
           )
@@ -297,8 +302,9 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
-              $pull: { friend_request_received :friend_request },
-              $push: {friends : friend_request}
+              $pull: { friend_request_received :{sender_id:req.body._id}},
+              $push: {friends : friend_request},
+              $inc: { friends_count: 1 }
            },
            { new:true }   
           )
@@ -311,7 +317,8 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
   const friend_sender = await friendModel.findOneAndUpdate(
             {receiver_id:req.body._id},
             {
-                $push: {friends : sender}
+                $push: {friends : sender},
+                $inc: { friends_count: 1 }
              },
              { new:true }   
             )
@@ -325,8 +332,8 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
   notification.isRead = true
   await notification.save()
   const newNotification = new notificationModel({
-    receiver_id:req.body._id,
-    content: {
+     receiver_id:req.body._id,
+     content: {
      sender_id:receiver_id,
      name:friend.user_name,
      email:friend.user_email,
