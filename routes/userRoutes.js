@@ -206,6 +206,10 @@ route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
     email:req.body.email,
     profile_img:req.body.profile_img
   }
+  const find_request= await friendModel.findOne({
+    receiver_id:req.body._id,
+  'friend_request_received.sender_id':receiver_id})
+  if(find_request) return  res.json("request exists")
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
