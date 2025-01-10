@@ -238,6 +238,12 @@ route.post('/friends/unfriend/:id',validateMongoObjectId,async(req,res)=>{
     email:req.body.email,
     profile_img:req.body.profile_img
   }
+
+  const find_friend = await friendModel.findOne({
+    receiver_id:receiver_id,
+  'friends.sender_id': req.body._id})
+  if(!find_friend) return  res.json("request expired")
+
   const friend1 = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
@@ -252,6 +258,10 @@ route.post('/friends/unfriend/:id',validateMongoObjectId,async(req,res)=>{
       email:friend1.user_email,
       profile_img:friend1.profile_img
   }
+  const find_friendx = await friendModel.findOne({
+    receiver_id:req.body._id,
+  'friends.sender_id': receiver_id})
+  if(!find_friendx) return  res.json("request expired")
   const friend2 = await friendModel.findOneAndUpdate(
     {receiver_id:req.body._id},
     {
@@ -272,6 +282,10 @@ route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
     email:req.body.email,
     profile_img:req.body.profile_img
   }
+  const find_request = await friendModel.findOne({
+    receiver_id:receiver_id,
+  'friend_request_received.sender_id': req.body._id})
+  if(!find_request) return res.json("couldn't find request expired")
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
@@ -286,7 +300,6 @@ route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
       { new:true }   
     )
   
-  console.log(notifications)
   res.json(friend).status(200)
 })  
 
@@ -299,6 +312,10 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
     email:req.body.email,
     profile_img:req.body.profile_img
   }
+  const find_request = await friendModel.findOne({
+    receiver_id:receiver_id,
+  'friend_request_received.sender_id': req.body._id})
+  if(!find_request) return  res.json("couldn't find request expired")
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
@@ -320,7 +337,7 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
                 $push: {friends : sender},
                 $inc: { friends_count: 1 }
              },
-             { new:true }   
+             { new:true }     
             )
   let notification = await notificationModel.findOne({
        receiver_id:receiver_id,
