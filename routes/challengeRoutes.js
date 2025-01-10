@@ -8,6 +8,7 @@ const likeModel = require ('../models/likes.js')
 const mongoose = require('mongoose')
 const followerModel = require('../models/followers.js')
 const { findByIdAndUpdate } = require('../models/users.js')
+const notificationModel = require('../models/notifications.js')
 
 route = express.Router();
 
@@ -68,6 +69,24 @@ route.post('/uploads',async(req,res)=>{
         vote:false
     })    
     await like.save()
+    
+    const follower = await followerModel.findOne({user_id:req.body.origin_id})
+    if(follower)
+      follower.followers.forEach(async(follower) =>{
+        const notification = {
+            receiver_id:follower.follower_id,
+            type:"follower",
+            isRead:false,
+            message: "has create new Challenge",
+            content: {
+                challenger_id:req.body.origin_id,
+                challenge_id:newChallenge._id,
+                name:req.body.name
+            }
+            
+        }
+        const newNotification = await notificationModel(notification).save()
+    })
     res.json( newChallenge)
 })
 
@@ -76,7 +95,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
     const participant = {
-             _id: newObjectId,
+             _id: newObjectId,    
              user_id:req.body.user_id ,
              video_url:req.body.video_url,
              likes:0,
