@@ -9,6 +9,7 @@ const mongoose = require('mongoose')
 const followerModel = require('../models/followers.js')
 const { findByIdAndUpdate } = require('../models/users.js')
 const notificationModel = require('../models/notifications.js')
+const friendModel = require('../models/friends.js')
 
 route = express.Router();
 
@@ -75,7 +76,24 @@ route.post('/uploads',async(req,res)=>{
       follower.followers.forEach(async(follower) =>{
         const notification = {
             receiver_id:follower.follower_id,
-            type:"follower",
+            type:"followers",
+            isRead:false,
+            message: "has create new Challenge",
+            content: {
+                challenger_id:req.body.origin_id,
+                challenge_id:newChallenge._id,
+                name:req.body.name
+            }
+            
+        }
+        const newNotification = await notificationModel(notification).save()
+    })
+    const friend = await friendModel.findOne({user_id:req.body.origin_id})
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+        const notification = {
+            receiver_id:friend.sender_id,
+            type:"followers",
             isRead:false,
             message: "has create new Challenge",
             content: {

@@ -210,6 +210,7 @@ route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
     receiver_id:req.body._id,
   'friend_request_received.sender_id':receiver_id})
   if(find_request) return  res.json("request exists")
+
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
@@ -349,7 +350,7 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
       'content.sender_id': req.body._id}
     )
   notification.type = "friends"    
-  notification.message = "has accepted your request"
+  notification.message = "is now a friend, start sharing"
   notification.isRead = true
   await notification.save()
   const newNotification = new notificationModel({
@@ -360,9 +361,9 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
      email:friend.user_email,
      profile_img:friend.profile_img
     },
-    message:"accepted request ",
+    message:"is now a friend, start sharing",
     type:"friends",
-    isRead:false,
+    isRead:true,
   })
   await newNotification.save()
   res.json(friend_sender).status(200)
@@ -383,11 +384,18 @@ route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
 
 route.get('/notifications/:id',validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
-  const notifications = await notificationModel.find({receiver_id:receiver_id}).sort({ date: -1 });
+  const notifications = await notificationModel.find({receiver_id:receiver_id}).sort({ createdAt: -1 });
   console.log(notifications)
   res.json(notifications).status(200)
+})  
 
-})   
+route.patch('/notifications/:id',validateMongoObjectId,async(req,res)=>{
+  const _id = req.params.id;
+  const notification = await notificationModel.findById(_id)
+  notification.isRead = true;
+  res.json(notification).status(200)
+})  
+
 route.delete('/notifications/:id',validateMongoObjectId,async(req,res)=>{
   const _id = req.params.id;
   const notifications = await notificationModel.findByIdAndDelete(_id)
