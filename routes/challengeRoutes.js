@@ -82,7 +82,8 @@ route.post('/uploads',async(req,res)=>{
             content: {
                 challenger_id:req.body.origin_id,
                 challenge_id:newChallenge._id,
-                name:req.body.name
+                name:req.body.name,
+                profile_img:req.body.profile_img,
             }
             
         }
