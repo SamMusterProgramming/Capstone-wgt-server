@@ -71,25 +71,25 @@ route.post('/uploads',async(req,res)=>{
     })    
     await like.save()
     
-    // const follower = await followerModel.findOne({user_id:req.body.origin_id})
-    // if(follower)
-    //   follower.followers.forEach(async(follower) =>{
-    //     const notification = {
-    //         receiver_id:follower.follower_id,
-    //         type:"followers",
-    //         isRead:false,
-    //         message: "has create new Challenge",
-    //         content: {
-    //             sender_id:req.body.origin_id,
-    //             challenge_id:newChallenge._id,
-    //             name:req.body.name,
-    //             profile_img:req.body.profile_img,
-    //         }
+    const follower = await followerModel.findOne({user_id:req.body.origin_id})
+    if(follower)
+      follower.followers.forEach(async(follower) =>{
+        const notification = {
+            receiver_id:follower.follower_id,
+            type:"followers",
+            isRead:false,
+            message: "has create new Challenge",
+            content: {
+                sender_id:req.body.origin_id,
+                challenge_id:newChallenge._id,
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
             
-    //     }
-    //     const newNotification = await notificationModel(notification).save()
-    // })
-    const friend = await friendModel.findOne({user_id:req.body.origin_id})
+        }
+        const newNotification = await notificationModel(notification).save()
+    })
+    const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
     if(friend)
       friend.friends.forEach(async(friend) =>{
         const notification = {
@@ -103,9 +103,10 @@ route.post('/uploads',async(req,res)=>{
                 name:req.body.name,
                 profile_img:req.body.profile_img,
             }
-            
+          
         }
-        const newNotification = await notificationModel(notification).save()
+        console.log(notification)
+        await notificationModel(notification).save()
     })
     res.json( newChallenge)
 })
