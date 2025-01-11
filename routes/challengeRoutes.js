@@ -71,24 +71,24 @@ route.post('/uploads',async(req,res)=>{
     })    
     await like.save()
     
-    const follower = await followerModel.findOne({user_id:req.body.origin_id})
-    if(follower)
-      follower.followers.forEach(async(follower) =>{
-        const notification = {
-            receiver_id:follower.follower_id,
-            type:"followers",
-            isRead:false,
-            message: "has create new Challenge",
-            content: {
-                challenger_id:req.body.origin_id,
-                challenge_id:newChallenge._id,
-                name:req.body.name,
-                profile_img:req.body.profile_img,
-            }
+    // const follower = await followerModel.findOne({user_id:req.body.origin_id})
+    // if(follower)
+    //   follower.followers.forEach(async(follower) =>{
+    //     const notification = {
+    //         receiver_id:follower.follower_id,
+    //         type:"followers",
+    //         isRead:false,
+    //         message: "has create new Challenge",
+    //         content: {
+    //             sender_id:req.body.origin_id,
+    //             challenge_id:newChallenge._id,
+    //             name:req.body.name,
+    //             profile_img:req.body.profile_img,
+    //         }
             
-        }
-        const newNotification = await notificationModel(notification).save()
-    })
+    //     }
+    //     const newNotification = await notificationModel(notification).save()
+    // })
     const friend = await friendModel.findOne({user_id:req.body.origin_id})
     if(friend)
       friend.friends.forEach(async(friend) =>{
@@ -98,9 +98,10 @@ route.post('/uploads',async(req,res)=>{
             isRead:false,
             message: "has create new Challenge",
             content: {
-                challenger_id:req.body.origin_id,
+                sender_id:req.body.origin_id,
                 challenge_id:newChallenge._id,
-                name:req.body.name
+                name:req.body.name,
+                profile_img:req.body.profile_img,
             }
             
         }
@@ -141,7 +142,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     await like.save()
     res.json(challenge)
 })
-
+   
 // get user created by user 
 route.get('/original/:id',async(req,res)=> {
     const origin_id = req.params.id;
