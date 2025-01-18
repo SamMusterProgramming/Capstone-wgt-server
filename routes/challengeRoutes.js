@@ -133,7 +133,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
          },
          { new:true } 
     )
-    if(!challenge) return res.json({error:"can't save the video"})
+    if(!challenge) return res.json({error:"challenge no longer exists"}).status(404)
     const like =  new likeModel({
             post_id: newObjectId,
             user_id:req.body.user_id,
@@ -141,6 +141,47 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
             vote:false
     })  
     await like.save()
+    const follower = await followerModel.findOne({user_id:req.body.origin_id})
+    if(follower)
+      follower.followers.forEach(async(follower) =>{
+        const notification = {
+            receiver_id:follower.follower_id,
+            type:"followers",
+            isRead:false,
+            message: "has participated in a Challenge",
+            content: {
+                sender_id:req.body.origin_id,
+                challenge_id:_id,
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
+            
+        }
+        const newNotification = await notificationModel(notification).save()
+    })
+    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+        if(!follower.followers.find(follower => follower.follower_id === friend.sender_id))
+        {
+        const notification = {
+            receiver_id:friend.sender_id,
+            type:"followers",
+            isRead:false,
+            message: "has participated in a Challenge",
+            content: {
+                sender_id:req.body.origin_id,
+                challenge_id:_id,
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
+          
+        }
+        console.log(notification)
+        await notificationModel(notification).save()
+    }
+    })
+
     res.json(challenge)
 })
    
@@ -153,7 +194,7 @@ route.get('/original/:id',async(req,res)=> {
     )
     res.json(challenges)   
 })
-     
+         
 
 route.get('/participate/:id',async(req,res)=> {
     const origin_id = req.params.id;   
@@ -277,7 +318,7 @@ route.route('/load/like/' )
      const challenge = await challengeModel.findById(challenge_id)
      res.json(challenge).status(200)
     })
-
+    
 
     route.patch('/quit/:id', validateMongoObjectId, async(req,res)=> {
         const challenge_id = req.params.id;
@@ -285,21 +326,27 @@ route.route('/load/like/' )
         let challenge = await challengeModel.findById(
              challenge_id 
             )
+        if(!challenge) res.json("challenge expired")
+        const deleteNotifications = await notificationModel.deleteMany({
+                "content.challenge_id":challenge_id,
+                "content.sender_id":userId
+               },{new:true})  
+        console.log(deleteNotifications)
         if (challenge.participants.length == 1 ) {
-           await challengeModel.findByIdAndDelete(challenge_id)      
+           await challengeModel.findByIdAndDelete(challenge_id) 
            return res.json("deleted").status(200)
-        }
-            
+        }        
+                                   
         challenge.participants = challenge.participants.filter(participant => participant.user_id !== userId)
         await challenge.save()
         res.json(challenge).status(200)
-    })        
-
+    })                
+                              
 // middleware to validate mongo objectId _id
 function validateMongoObjectId(req,res,next) {
     if (!ObjectId.isValid(req.params.id)) return res.status(404).json({Error:"error in request ID"});
     next()   
-}    
-   
-
+}            
+          
+            
 module.exports = route; 

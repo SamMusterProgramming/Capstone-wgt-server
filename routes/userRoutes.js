@@ -44,13 +44,13 @@ route.route('/')
       const findFriend = await friendModel.findOne({receiver_id:user._id})  
       if(!findFriend)  await  new friendModel(
         {
-          receiver_id:user._id,
+          receiver_id:newUser._id,
           user_email:user.email,
           user_name:user.name,
           profile_img:user.profile_img
       }).save() 
-      const findFollower = await followerModel.findOne({user_id:user._id})  
-      if(!findFollower)  await  new followerModel({user_id:user._id,user_email:user.email}).save()   
+      const findFollower = await followerModel.findOne({user_id:newUser._id})  
+      if(!findFollower)  await  new followerModel({user_id:newUser._id,user_email:user.email}).save()   
       
       res.json(newUser).status(200)      
    })   
@@ -362,7 +362,7 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
      profile_img:friend.profile_img
     },
     message:"is now a friend, start sharing",
-    type:"friends",
+    type:"friends",   
     isRead:true,
   })
   await newNotification.save()
