@@ -92,6 +92,8 @@ route.post('/uploads',async(req,res)=>{
     const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
     if(friend)
       friend.friends.forEach(async(friend) =>{
+        if(!follower.followers.find(follower => follower.follower_id == friend.sender_id))
+        {
         const notification = {
             receiver_id:friend.sender_id,
             type:"followers",
@@ -107,6 +109,7 @@ route.post('/uploads',async(req,res)=>{
         }
         console.log(notification)
         await notificationModel(notification).save()
+    }           
     })
     res.json( newChallenge)
 })
@@ -266,6 +269,7 @@ route.route('/load/like/' )
             )
             if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
             const challenge = await challengeModel.findById(challenge_id)
+            if(!challenge) return res.json("can't find the challenge")
             const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
             const likes = challenge.participants[elementIndex].likes 
             const votes = challenge.participants[elementIndex].votes 
