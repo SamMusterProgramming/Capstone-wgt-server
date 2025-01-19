@@ -101,7 +101,7 @@ route.post('/uploads',async(req,res)=>{
             message: "has create new Challenge",
             content: {
                 sender_id:req.body.origin_id,
-                challenge_id:newChallenge._id,
+                challenge_id:newChallenge._id.toString(),
                 name:req.body.name,
                 profile_img:req.body.profile_img,
             }
@@ -149,7 +149,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
       follower.followers.forEach(async(follower) =>{
         const notification = {
             receiver_id:follower.follower_id,
-            type:"followers",
+            type:"followers",    
             isRead:false,
             message: "has participated in a Challenge",
             content: {

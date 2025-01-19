@@ -392,7 +392,9 @@ route.get('/notifications/:id',validateMongoObjectId,async(req,res)=>{
 route.patch('/notifications/:id',validateMongoObjectId,async(req,res)=>{
   const _id = req.params.id;
   const notification = await notificationModel.findById(_id)
+  console.log(notification)
   notification.isRead = true;
+  await notification.save();
   res.json(notification).status(200)
 })  
 
