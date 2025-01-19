@@ -81,7 +81,7 @@ route.post('/uploads',async(req,res)=>{
             message: "has create new Challenge",
             content: {
                 sender_id:req.body.origin_id,
-                challenge_id:newChallenge._id,
+                challenge_id:newChallenge._id.toString(),
                 name:req.body.name,
                 profile_img:req.body.profile_img,
             }
@@ -339,8 +339,7 @@ route.route('/load/like/' )
         if (challenge.participants.length == 1 ) {
            await challengeModel.findByIdAndDelete(challenge_id) 
            return res.json("deleted").status(200)
-        }        
-                                   
+        }                                  
         challenge.participants = challenge.participants.filter(participant => participant.user_id !== userId)
         await challenge.save()
         res.json(challenge).status(200)
