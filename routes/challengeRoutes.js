@@ -244,6 +244,8 @@ route.route('/challenge/like/' )
         if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
         const challenge = await challengeModel.findById(query.challenge_id)
         if(!challenge) return res.json("no challenge").status(404)
+        if(!challenge.participants.find(el => el._id.toString() === query.post_id))
+                return res.json("post expired")
         const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
 
         let likes = challenge.participants[elementIndex].likes 
@@ -265,7 +267,7 @@ route.route('/load/like/' )
             }
             const challenge_id = ids[2]
             let like = await likeModel.findOne(
-                query         
+                query             
             )  
             const challenge = await challengeModel.findById(challenge_id) 
             if(!challenge) return res.json("no challenge").status(404)
@@ -287,14 +289,16 @@ route.route('/load/like/' )
             user_id:ids[0],
             post_id:ids[1],
             challenge_id :ids[2]
-        }
+        }      
         let  find = await likeModel.findOne({user_id:query.user_id,post_id:query.post_id})
+        // if(!find) return res.json("post expired").status(404) 
         let challenge = await challengeModel.findById(query.challenge_id)
         if(!challenge) return res.json("no challenge").status(404)
-        const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
+        if(!challenge.participants.find(el => el._id.toString() === query.post_id))
+            return res.json("post expired")
+        const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);             
         let votes = challenge.participants[elementIndex].votes 
-
-        if (find.vote) {
+        if (find.vote) {      
            find.vote = false
            challenge.participants[elementIndex] ={...challenge.participants[elementIndex],votes:votes-1};
            await find.save()
