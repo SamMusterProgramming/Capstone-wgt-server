@@ -243,7 +243,7 @@ route.route('/challenge/like/' )
    
         if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
         const challenge = await challengeModel.findById(query.challenge_id)
-        if(!challenge) return res.json("no challenge").status(404)
+        if(!challenge) return res.json("post expired").status(404)
         if(!challenge.participants.find(el => el._id.toString() === query.post_id))
                 return res.json("post expired")
         const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
@@ -263,14 +263,14 @@ route.route('/load/like/' )
             const ids = req.query.ids.split(',');
             const query = {
                 user_id:ids[0],
-                post_id:ids[1],
+                post_id:ids[1],   
             }
             const challenge_id = ids[2]
             let like = await likeModel.findOne(
                 query             
             )  
             const challenge = await challengeModel.findById(challenge_id) 
-            if(!challenge) return res.json("no challenge").status(404)
+            if(!challenge) return res.json("post expired").status(404)
             if(!challenge.participants.find(el => el._id.toString() === query.post_id))
                 return res.json("post expired")
             if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
@@ -293,7 +293,7 @@ route.route('/load/like/' )
         let  find = await likeModel.findOne({user_id:query.user_id,post_id:query.post_id})
         // if(!find) return res.json("post expired").status(404) 
         let challenge = await challengeModel.findById(query.challenge_id)
-        if(!challenge) return res.json("no challenge").status(404)
+        if(!challenge) return res.json("post expired").status(404)
         if(!challenge.participants.find(el => el._id.toString() === query.post_id))
             return res.json("post expired")
         const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);             
