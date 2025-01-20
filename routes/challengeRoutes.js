@@ -150,7 +150,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
         const notification = {
             receiver_id:follower.follower_id,
             type:"followers",    
-            isRead:false,
+            isRead:false,   
             message: "has participated in a Challenge",
             content: {
                 sender_id:req.body.origin_id,
@@ -240,10 +240,11 @@ route.route('/challenge/like/' )
            [ { "$set": { "like": { "$eq": [false, "$like"] } } } ] , 
            { new: true } 
         )   
-
+   
         if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
         
         const challenge = await challengeModel.findById(query.challenge_id)
+        if(!challenge) return res.json("can't find the challenge").status(404)
         const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
 
         let likes = challenge.participants[elementIndex].likes 
@@ -265,18 +266,18 @@ route.route('/load/like/' )
             }
             const challenge_id = ids[2]
             let like = await likeModel.findOne(
-                query
-            )
+                query         
+            )   
             if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
             const challenge = await challengeModel.findById(challenge_id)
-            if(!challenge) return res.json("can't find the challenge")
+            if(!challenge) return res.json("can't find the challenge").status(404)
             const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
             const likes = challenge.participants[elementIndex].likes 
             const votes = challenge.participants[elementIndex].votes 
             const likeData = {isLiked:like.like,like_count:likes,isVoted:like.vote,vote_count:votes}
             res.json(likeData).status(200)      
     })   
-
+            
     // challenge vote 
     route.route('/challenge/vote/' )
     .get(async(req,res)=>{  
@@ -286,7 +287,6 @@ route.route('/load/like/' )
             post_id:ids[1],
             challenge_id :ids[2]
         }
-         
         let  find = await likeModel.findOne({user_id:query.user_id,post_id:query.post_id})
         let challenge = await challengeModel.findById(query.challenge_id)
         const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
