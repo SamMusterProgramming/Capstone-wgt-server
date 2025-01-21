@@ -137,6 +137,22 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
          { new:true } 
     )
     if(!challenge) return res.json({error:"challenge no longer exists"}).status(404)
+    
+    const notification = {
+            receiver_id:challenge.origin_id,
+            type:"followers",    
+            isRead:false,   
+            message: "has Replied to your Challenge",
+            content: {
+                sender_id:req.body.origin_id,
+                challenge_id:_id,
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
+            
+    }
+    await notificationModel(notification).save()
+
     const like =  new likeModel({
             post_id: newObjectId,
             user_id:req.body.user_id,
@@ -147,6 +163,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     const follower = await followerModel.findOne({user_id:req.body.origin_id})
     if(follower)
       follower.followers.forEach(async(follower) =>{
+      if(challenge.origin_id !== follower.follower_id ){
         const notification = {
             receiver_id:follower.follower_id,
             type:"followers",    
@@ -161,10 +178,12 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
             
         }
         const newNotification = await notificationModel(notification).save()
+      }
     })
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
     if(friend)
       friend.friends.forEach(async(friend) =>{
+        if(challenge.origin_id !== friend.sender_id ){
         if(!follower.followers.find(follower => follower.follower_id === friend.sender_id))
         {
         const notification = {
@@ -182,7 +201,8 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
         }
         console.log(notification)
         await notificationModel(notification).save()
-    }
+      }
+    } 
     })
 
     res.json(challenge)
@@ -326,7 +346,7 @@ route.route('/load/like/' )
     route.get('/find/:id',validateMongoObjectId, async(req,res)=>{
      const challenge_id = req.params.id;
      const challenge = await challengeModel.findById(challenge_id)
-     if(!challenge) return res.json("no challenge")
+     if(!challenge) return res.json("post expired")
      res.json(challenge).status(200)
     })
     
