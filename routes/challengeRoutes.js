@@ -281,7 +281,7 @@ route.route('/load/like/' )
             res.json(likeData).status(200)      
     })   
             
-    // challenge vote 
+    // challenge vote    
     route.route('/challenge/vote/' )
     .get(async(req,res)=>{  
         const ids = req.query.ids.split(',');
@@ -326,7 +326,7 @@ route.route('/load/like/' )
     route.get('/find/:id',validateMongoObjectId, async(req,res)=>{
      const challenge_id = req.params.id;
      const challenge = await challengeModel.findById(challenge_id)
-     if(!challenge) return res,json("no challenge")
+     if(!challenge) return res.json("no challenge")
      res.json(challenge).status(200)
     })
     
