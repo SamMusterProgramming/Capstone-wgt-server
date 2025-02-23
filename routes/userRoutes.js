@@ -448,9 +448,11 @@ route.get('/logout',async(req,res)=>{
 })
 
 // middleware to test if authenticated
-route.get ('/isAuthenticated',verifyJwt ,(req, res) =>{
-    const userId = req.id
-    const user = userModel.findById(userId)
+route.get('/isAuthenticated',verifyJwt ,async(req, res) =>{
+  console.log(req.user.id)
+    const userId = req.user.id.toString()
+    const user =await  userModel.findById(userId)
+    console.log(user)
     res.json(user)
 }
 )
@@ -462,10 +464,12 @@ function validatePost(req,res,next) {
   }  
     
 function verifyJwt  (req,res,next){
+  console.log("hello from jwt")
   const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
   if (!token) return res.status(401).send({ message: 'No token provided' });
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
+    console.log(decoded)
     req.user = decoded; // Store decoded user information in the request object
     next();
 });
