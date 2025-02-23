@@ -10,6 +10,7 @@ const followerModel = require('../models/followers.js')
 const { findByIdAndUpdate } = require('../models/users.js')
 const notificationModel = require('../models/notifications.js')
 const friendModel = require('../models/friends.js')
+const jwt = require('jsonwebtoken')
 
 route = express.Router();
 
@@ -47,7 +48,7 @@ route.post('/uploads',async(req,res)=>{
         like_count:0,    
         type:req.body.type,
         privacy:req.body.privacy,
-        challengers:req.body.challengers,
+        // challengers:req.body.challengers,
         name:req.body.name,
         participants:[{
              _id: newObjectId,
@@ -107,7 +108,7 @@ route.post('/uploads',async(req,res)=>{
             }
           
         }
-        console.log(notification)
+
         await notificationModel(notification).save()
     }           
     })
@@ -118,6 +119,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
     
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
+    console.log(req.body)
     const participant = {
              _id: newObjectId,    
              user_id:req.body.user_id ,
@@ -199,7 +201,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
             }
           
         }
-        console.log(notification)
+
         await notificationModel(notification).save()
       }
     } 
@@ -209,7 +211,7 @@ route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
 })
    
 // get user created by user 
-route.get('/original/:id',async(req,res)=> {
+route.get('/original/:id',verifyJwt, async(req,res)=> {
     const origin_id = req.params.id;
     let challenges = await challengeModel.find({origin_id:origin_id})
     challenges = challenges.filter(challenge => 
@@ -219,7 +221,7 @@ route.get('/original/:id',async(req,res)=> {
 })
          
 
-route.get('/participate/:id',async(req,res)=> {
+route.get('/participate/:id',verifyJwt,async(req,res)=> {
     const origin_id = req.params.id;   
     // const challenges = await challengeModel.find({origin_id:origin_id})
     let challenges = await challengeModel.find({
@@ -230,7 +232,7 @@ route.get('/participate/:id',async(req,res)=> {
 })
    
 // find any other challenges that don't include the user
-route.get('/top/:id',validateMongoObjectId,async(req,res)=> {
+route.get('/top/:id',validateMongoObjectId,verifyJwt,async(req,res)=> {
     const idToExclude = req.params.id;
     let challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
     challenges = challenges.filter(challenge => 
@@ -280,6 +282,7 @@ route.route('/challenge/like/' )
          
 route.route('/load/like/' )
     .get(async(req,res)=>{  
+        console.log("i am here")
             const ids = req.query.ids.split(',');
             const query = {
                 user_id:ids[0],
@@ -306,7 +309,7 @@ route.route('/load/like/' )
     .get(async(req,res)=>{  
         const ids = req.query.ids.split(',');
         const query = {
-            user_id:ids[0],
+            user_id:ids[0],   
             post_id:ids[1],
             challenge_id :ids[2]
         }      
@@ -354,6 +357,7 @@ route.route('/load/like/' )
     route.patch('/quit/:id', validateMongoObjectId, async(req,res)=> {
         const challenge_id = req.params.id;
         const userId = req.body.user_id ; 
+        console.log(userId)
         let challenge = await challengeModel.findById(
              challenge_id 
             )
@@ -378,6 +382,17 @@ function validateMongoObjectId(req,res,next) {
     if (!ObjectId.isValid(req.params.id)) return res.status(404).json({Error:"error in request ID"});
     next()   
 }            
-          
+ 
+function  verifyJwt(req,res,next){
+    console.log("you are authticated")
+    const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
+    if (!token) return res.status(401).send({ message: 'No token provided' });
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
+      req.user = decoded; // Store decoded user information in the request object
+      next();
+  });
+  
+}
             
 module.exports = route; 

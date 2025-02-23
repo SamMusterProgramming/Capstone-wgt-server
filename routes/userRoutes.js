@@ -310,7 +310,6 @@ route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
 
 route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
-  console.log("i am here" + req.body)
   const friend_request = {
     sender_id:req.body._id,
     name:req.body.name,
@@ -373,7 +372,6 @@ route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
 
 route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
-  console.log(receiver_id)
   const friendlist = await friendModel.findOne({receiver_id:receiver_id})
   res.json(friendlist).status(200)
 
@@ -385,7 +383,6 @@ route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
 route.get('/notifications/:id',validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
   const notifications = await notificationModel.find({receiver_id:receiver_id}).sort({ createdAt: -1 });
-  console.log(notifications)
   res.json(notifications).status(200)
 })  
 
@@ -407,15 +404,16 @@ route.delete('/notifications/:id',validateMongoObjectId,async(req,res)=>{
 
 
 //I use this route to log in a user with session if successfully Authenticated 
-route.get('/login', isAuthenticated, async (req, res) => {
-    if(!req.session.user) res.status(400).json("not looged in n")
-    res.status(200).json(req.session.user)
-})
+// route.get('/login', isAuthenticated, async (req, res) => {
+//     if(!req.session.user) res.status(400).json("not looged in n")
+//     res.status(200).json(req.session.user)
+// })
     
-route.post('/login', async(req, res)=>{      
+route.post('/login', async(req, res)=>{     
+     
     if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin"}).status(404)
-    const query = {email:req.body.email,password:req.body.password}
-    const userEmail = await userModel.findOne({username:req.body.email})
+    const query = {email:req.body.email.toLowerCase(),password:req.body.password}
+    const userEmail = await userModel.findOne({username:req.body.email.toLowerCase()})
     if(!userEmail) return res.json({error:"user not found"}).status(404)
     const user = await userModel.findOne(query)
     if(!user) return res.json({error:"invalid password"}).status(404)
@@ -429,33 +427,49 @@ route.post('/login', async(req, res)=>{
         user_name:user.name,
         profile_img:user.profile_img
     }).save()   
+    const id = user._id  
+    const  token = jwt.sign(
+      {id}, process.env.ACCESS_TOKEN_SECRET
+   );
     
-      return res.status(200).json(user)
+   res.status(200).json( {auth:true ,token:token , user:user})
 })
    
 //log out a user and reset session to null
 route.get('/logout',async(req,res)=>{
-    req.session.user = null
+    req.session.user = null  
     req.session.save(function (err) {  
       if (err) return err
       req.session.regenerate(function (err) {
         if (err) return err
         return res.redirect('/')  
       })
-    })
+    })   
 })
 
 // middleware to test if authenticated
-function isAuthenticated (req, res, next) {
-    if (req.session.user) next()
-    else res.redirect('/')
+route.get ('/isAuthenticated',verifyJwt ,(req, res) =>{
+    const userId = req.id
+    const user = userModel.findById(userId)
+    res.json(user)
 }
-
+)
      
 function validatePost(req,res,next) {
       if(!req.body.id || !req.body.user_id || !req.body.image_url)
          return res.status(404).json({error:"invalid entry"}) 
       next()
   }  
+    
+function verifyJwt  (req,res,next){
+  const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
+  if (!token) return res.status(401).send({ message: 'No token provided' });
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
+    req.user = decoded; // Store decoded user information in the request object
+    next();
+});
+}
+
 
 module.exports = route; 
