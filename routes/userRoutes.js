@@ -95,13 +95,13 @@ function validateMongoObjectId(req,res,next) {
 
        
   // challenge  get user by Id
-    route.get('/user/:id',validateMongoObjectId, async(req,res)=>{ 
+    route.get('/user/:id',verifyJwt,validateMongoObjectId, async(req,res)=>{ 
       const userId = req.params.id
       const user = await userModel.findById(userId)
       if(!user) return res.json({error:"cant find the user"}).status(404)
       res.status(200).json(user)
     })
-    route.patch('/user/:id',validateMongoObjectId, async(req,res)=>{ 
+    route.patch('/user/:id',verifyJwt,validateMongoObjectId, async(req,res)=>{ 
      
       const userId = req.params.id
       const user = await userModel.findByIdAndUpdate(
@@ -117,7 +117,7 @@ function validateMongoObjectId(req,res,next) {
     
 
   // add following
-  route.post('/followings/add/:id',validateMongoObjectId,async(req,res)=>{
+  route.post('/followings/add/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
       const user_id = req.params.id;
       const following = {
         following_id:req.body.following_id,
@@ -146,7 +146,7 @@ function validateMongoObjectId(req,res,next) {
   })   
 
     // unfollow
-    route.patch('/unfollowing/:id',validateMongoObjectId,async(req,res)=>{
+    route.patch('/unfollowing/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
       //  if (req.params.id == req.body.following_id) return res.json("can't follow your self")
       const user_id = req.params.id;
 
@@ -178,7 +178,7 @@ function validateMongoObjectId(req,res,next) {
   })   
 
 // get follow Data
-route.get('/follow/data/:id',validateMongoObjectId,async(req,res)=>{
+route.get('/follow/data/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
     console.log(req.params.id)
     const user_id = req.params.id
     let follow = await followerModel.findOne({user_id:user_id})
@@ -186,7 +186,7 @@ route.get('/follow/data/:id',validateMongoObjectId,async(req,res)=>{
 })
 
 // followings
-route.get('/followings/:id',validateMongoObjectId,async(req,res)=>{
+route.get('/followings/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
   const user_id = req.params.id
   const followinglist = await followerModel.findOne({user_id:user_id})
   if(!followinglist) return res.json([])
@@ -198,7 +198,7 @@ route.get('/followings/:id',validateMongoObjectId,async(req,res)=>{
 
 //*********************** Friends request , adding */
 
-route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
+route.post('/friends/request/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
   const friend_request = {
     sender_id:req.body._id,
@@ -235,7 +235,7 @@ route.post('/friends/request/:id',validateMongoObjectId,async(req,res)=>{
 })   
 
 
-route.post('/friends/unfriend/:id',validateMongoObjectId,async(req,res)=>{
+route.post('/friends/unfriend/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
   const friend_1 = {
     sender_id:req.body._id,
@@ -279,7 +279,7 @@ route.post('/friends/unfriend/:id',validateMongoObjectId,async(req,res)=>{
 })   
 
 
-route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
+route.post('/friends/cancel/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
   const friend_request = {
     sender_id:req.body._id,
@@ -308,7 +308,7 @@ route.post('/friends/cancel/:id',validateMongoObjectId,async(req,res)=>{
   res.json(friend).status(200)
 })  
 
-route.post('/friends/accept/:id',validateMongoObjectId,async(req,res)=>{
+route.post('/friends/accept/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
   const receiver_id = req.params.id;
   const friend_request = {
     sender_id:req.body._id,
@@ -395,7 +395,7 @@ route.patch('/notifications/:id',validateMongoObjectId,async(req,res)=>{
   res.json(notification).status(200)
 })  
 
-route.delete('/notifications/:id',validateMongoObjectId,async(req,res)=>{
+route.delete('/notifications/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
   const _id = req.params.id;
   const notifications = await notificationModel.findByIdAndDelete(_id)
   res.json("deleted").status(200)
@@ -452,7 +452,6 @@ route.get('/isAuthenticated',verifyJwt ,async(req, res) =>{
   console.log(req.user.id)
     const userId = req.user.id.toString()
     const user =await  userModel.findById(userId)
-    console.log(user)
     res.json(user)
 }
 )

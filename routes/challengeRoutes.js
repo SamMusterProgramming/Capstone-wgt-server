@@ -36,7 +36,7 @@ route.get('/challenges/seed',async(req,res)=>{
 
 
 // firebase used here
-route.post('/uploads',async(req,res)=>{
+route.post('/uploads',verifyJwt,async(req,res)=>{
    
     const newObjectId = new mongoose.Types.ObjectId();
     const timeLapse = Date.now();
@@ -115,7 +115,7 @@ route.post('/uploads',async(req,res)=>{
     res.json( newChallenge)
 })
 
-route.post('/uploads/:id',validateMongoObjectId,async(req,res)=>{
+route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
     
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
@@ -232,7 +232,7 @@ route.get('/participate/:id',verifyJwt,async(req,res)=> {
 })
    
 // find any other challenges that don't include the user
-route.get('/top/:id',validateMongoObjectId,verifyJwt,async(req,res)=> {
+route.get('/top/:id',verifyJwt,validateMongoObjectId,verifyJwt,async(req,res)=> {
     const idToExclude = req.params.id;
     let challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
     challenges = challenges.filter(challenge => 
@@ -248,8 +248,8 @@ route.get('/top/:id',validateMongoObjectId,verifyJwt,async(req,res)=> {
 
 
 /// likes **********************************
-route.route('/challenge/like/' )
-    .get(async(req,res)=>{  
+route.route('/challenge/like/')
+    .get(verifyJwt,async(req,res)=>{  
         const ids = req.query.ids.split(',');
         const query = {
             user_id:ids[0],
@@ -281,7 +281,7 @@ route.route('/challenge/like/' )
     })   
          
 route.route('/load/like/' )
-    .get(async(req,res)=>{  
+    .get(verifyJwt,async(req,res)=>{  
         console.log("i am here")
             const ids = req.query.ids.split(',');
             const query = {
@@ -306,7 +306,7 @@ route.route('/load/like/' )
             
     // challenge vote    
     route.route('/challenge/vote/' )
-    .get(async(req,res)=>{  
+    .get(verifyJwt,async(req,res)=>{  
         const ids = req.query.ids.split(',');
         const query = {
             user_id:ids[0],   
@@ -346,7 +346,7 @@ route.route('/load/like/' )
     })   
      
 
-    route.get('/find/:id',validateMongoObjectId, async(req,res)=>{
+    route.get('/find/:id',verifyJwt,validateMongoObjectId, async(req,res)=>{
      const challenge_id = req.params.id;
      const challenge = await challengeModel.findById(challenge_id)
      if(!challenge) return res.json("post expired")
@@ -354,7 +354,7 @@ route.route('/load/like/' )
     })
     
 
-    route.patch('/quit/:id', validateMongoObjectId, async(req,res)=> {
+    route.patch('/quit/:id',verifyJwt,validateMongoObjectId, async(req,res)=> {
         const challenge_id = req.params.id;
         const userId = req.body.user_id ; 
         console.log(userId)
