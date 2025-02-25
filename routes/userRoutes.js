@@ -429,7 +429,7 @@ route.post('/login', async(req, res)=>{
     }).save()   
     const id = user._id  
     const  token = jwt.sign(
-      {id}, process.env.ACCESS_TOKEN_SECRET
+      {id}, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '1d' }
    );
     
    res.status(200).json( {auth:true ,token:token , user:user})
@@ -465,7 +465,7 @@ function validatePost(req,res,next) {
 function verifyJwt  (req,res,next){
   console.log("hello from jwt")
   const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
-  if (!token) return res.status(401).send({ message: 'No token provided' });
+  if (!token) return res.status(401).json({ message: 'No token provided' });
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
     console.log(decoded)
