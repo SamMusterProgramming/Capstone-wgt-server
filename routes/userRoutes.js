@@ -121,7 +121,9 @@ function validateMongoObjectId(req,res,next) {
       const user_id = req.params.id;
       const following = {
         following_id:req.body.following_id,
-        following_email :req.body.following_email
+        following_email :req.body.following_email,
+        following_profileimg : req.body.following_profileimg,
+        following_name : req.body.following_name
       }
       const follow= await followerModel.findOneAndUpdate(
               {user_id:user_id},
@@ -135,7 +137,12 @@ function validateMongoObjectId(req,res,next) {
       const follower = await followerModel.findOneAndUpdate(
                 {user_id:req.body.following_id},
                 {
-                    $push: { followers : {follower_id:user_id,follower_email:follow.user_email}},
+                    $push: { followers : {
+                      follower_id:user_id,
+                      follower_email:follow.user_email,
+                      follower_profileimg:req.body.follower_profileimg,
+                      follower_name : req.body.follower_name
+                    }},
                     $inc: { followers_count: 1 }
                  },
                { new:true } 
@@ -152,7 +159,9 @@ function validateMongoObjectId(req,res,next) {
 
       const following = {
         following_id:req.body.following_id,
-        following_email :req.body.following_email
+        following_email :req.body.following_email,
+        following_profileimg:req.body.following_profileimg,
+        following_name :req.body.following_name
       }
       const follow= await followerModel.findOneAndUpdate(
               {user_id:user_id},
@@ -166,7 +175,12 @@ function validateMongoObjectId(req,res,next) {
       const follower = await followerModel.findOneAndUpdate(
                 {user_id:req.body.following_id},
                 {
-                    $pull: { followers : {follower_id:user_id,follower_email:follow.user_email}},
+                    $pull: { followers : {
+                      follower_id:user_id,
+                      follower_email:follow.user_email,
+                      follower_profileimg:req.body.follower_profileimg,
+                      follower_name:req.body.follower_name
+                    }},
                     $inc: { followers_count: -1 }
 
                  },
