@@ -332,7 +332,7 @@ route.post('/friends/accept/:id',verifyJwt,validateMongoObjectId,async(req,res)=
   }
   const find_request = await friendModel.findOne({
     receiver_id:receiver_id,
-  'friend_request_received.sender_id': req.body._id})
+  'friend_request_received.sender_id':req.body._id})
   if(!find_request) return  res.json("couldn't find request expired")
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
