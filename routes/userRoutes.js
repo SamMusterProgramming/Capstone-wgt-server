@@ -193,7 +193,6 @@ function validateMongoObjectId(req,res,next) {
 
 // get follow Data
 route.get('/follow/data/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
-    console.log(req.params.id)
     const user_id = req.params.id
     let follow = await followerModel.findOne({user_id:user_id})
     return res.json(follow).status(200)
@@ -304,7 +303,15 @@ route.post('/friends/cancel/:id',verifyJwt,validateMongoObjectId,async(req,res)=
   const find_request = await friendModel.findOne({
     receiver_id:receiver_id,
   'friend_request_received.sender_id': req.body._id})
-  if(!find_request) return res.json("couldn't find request expired")
+  if(!find_request){ 
+    await notificationModel.findOneAndDelete({
+      receiver_id:receiver_id,
+      type:"friend request",
+     'content.sender_id': req.body._id} ,
+     { new:true }   
+   )
+    return res.json("couldn't find request expired")
+  }
   const friend = await friendModel.findOneAndUpdate(
           {receiver_id:receiver_id},
           {
@@ -413,16 +420,14 @@ route.delete('/notifications/:id',verifyJwt,validateMongoObjectId,async(req,res)
   const _id = req.params.id;
   const notifications = await notificationModel.findByIdAndDelete(_id)
   res.json("deleted").status(200)
-})   
-
-
+})  
 
 //I use this route to log in a user with session if successfully Authenticated 
 // route.get('/login', isAuthenticated, async (req, res) => {
 //     if(!req.session.user) res.status(400).json("not looged in n")
 //     res.status(200).json(req.session.user)
 // })
-    
+   
 route.post('/login', async(req, res)=>{     
      
     if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin"}).status(404)
@@ -463,7 +468,6 @@ route.get('/logout',async(req,res)=>{
 
 // middleware to test if authenticated
 route.get('/isAuthenticated',verifyJwt ,async(req, res) =>{
-  console.log(req.user.id)
     const userId = req.user.id.toString()
     const user =await  userModel.findById(userId)
     res.json(user)
@@ -477,12 +481,10 @@ function validatePost(req,res,next) {
   }  
     
 function verifyJwt  (req,res,next){
-  console.log("hello from jwt")
   const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
   if (!token) return res.status(401).json({ message: 'No token provided' });
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
-    console.log(decoded)
     req.user = decoded; // Store decoded user information in the request object
     next();
 });

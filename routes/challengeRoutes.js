@@ -282,7 +282,6 @@ route.route('/challenge/like/')
          
 route.route('/load/like/' )
     .get(verifyJwt,async(req,res)=>{  
-        console.log("i am here")
             const ids = req.query.ids.split(',');
             const query = {
                 user_id:ids[0],
@@ -357,7 +356,6 @@ route.route('/load/like/' )
     route.patch('/quit/:id',verifyJwt,validateMongoObjectId, async(req,res)=> {
         const challenge_id = req.params.id;
         const userId = req.body.user_id ; 
-        console.log(userId)
         let challenge = await challengeModel.findById(
              challenge_id 
             )
@@ -384,7 +382,6 @@ function validateMongoObjectId(req,res,next) {
 }            
  
 function  verifyJwt(req,res,next){
-    console.log("you are authticated")
     const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
     if (!token) return res.status(401).send({ message: 'No token provided' });
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
