@@ -42,7 +42,7 @@ const challengeSchema = new mongoose.Schema({
         default: "everyone"
     }
     ,
-     comments: [] // to store comment of a user in an array of object for the challenge 
+    comments: [] // to store comment of a user in an array of object for the challenge 
 },
  { timestamps: true, versionKey: false }
  )

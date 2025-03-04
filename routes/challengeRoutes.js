@@ -373,7 +373,43 @@ route.route('/load/like/' )
         challenge.participants = challenge.participants.filter(participant => participant.user_id !== userId)
         await challenge.save()
         res.json(challenge).status(200)
-    })                
+    })           
+  // ****************************Comments ***************************
+
+   route.get('/posts/:id',verifyJwt,async(req,res)=> {
+      const post_id = req.params.id
+      let postComment = await commentModel.findOne({post_id:post_id})
+      return res.json(postComment).status(200)
+   })
+
+   route.post('/posts/:id',verifyJwt,async(req,res)=> {
+    console.log(req.params.id)
+      const post_id = req.params.id
+      const commentData={
+            _id :new mongoose.Types.ObjectId(),
+            commenter_id : req.body.commenter_id,
+            profile_img:req.body.profile_img,
+            name:req.body.name,
+            comment:req.body.comment
+          }
+      let postComment = await commentModel.findOne({post_id:post_id})
+      if(!postComment) {
+           const data = {
+             post_id : req.body.post_id,
+             user_id : req.body.user_id,
+             content:[commentData]
+           }   
+           let newCommentData = new commentModel(data)
+           await newCommentData.save()
+           return res.json(newCommentData)   
+         }
+
+      postComment.content.push(commentData)
+      await postComment.save()
+      }     
+   )
+  
+
                               
 // middleware to validate mongo objectId _id
 function validateMongoObjectId(req,res,next) {

@@ -2,17 +2,15 @@ const mongoose = require('mongoose')
 
 
 const commentSchema = new mongoose.Schema({
-     user_id :{
-        type:Number,
-        min: 0,
-        require:true,
-    },
     post_id :{
-        type:Number,
-        min: 0,
+        type:String,
         require:true,
     },
-     content:[]
+    user_id :{
+        type:String,
+        require:true,
+    },
+    content:[]
 },
  { versionKey: false }
  )
