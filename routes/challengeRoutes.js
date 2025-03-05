@@ -384,7 +384,7 @@ route.route('/load/like/' )
 
    route.post('/posts/:id',verifyJwt,async(req,res)=> {
     console.log(req.params.id)
-      const post_id = req.params.id
+      const post_id = req.params.id.toString()
       const commentData={
             _id :new mongoose.Types.ObjectId(),
             commenter_id : req.body.commenter_id,
@@ -410,7 +410,29 @@ route.route('/load/like/' )
    )
   
 
-                              
+  route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
+    console.log(req.body.comment_id)
+    const post_id = req.params.id;
+    const comment_id = req.body.comment_id
+    let postComment = await commentModel.findOne(
+        {post_id:post_id 
+        //     ,
+        //  "content._id":comment_id
+        }
+        // ,
+        // {
+        //   $pull: { content : {_id:comment_id} } 
+        // }
+        // ,{new:true}
+    )
+    
+    postComment.content = postComment.content.filter(el => el._id.toString() !== comment_id.toString())
+    console.log(postComment)
+    await postComment.save()
+    return res.json(postComment).status(200)
+ })
+ 
+ 
 // middleware to validate mongo objectId _id
 function validateMongoObjectId(req,res,next) {
     if (!ObjectId.isValid(req.params.id)) return res.status(404).json({Error:"error in request ID"});
