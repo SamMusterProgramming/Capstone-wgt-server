@@ -37,6 +37,7 @@ const challengeSchema = new mongoose.Schema({
     //     type:String,
     //     default:"everyone"
     // },
+    invited_friends:[],
     challengers:{
         type:String,
         default: "everyone"

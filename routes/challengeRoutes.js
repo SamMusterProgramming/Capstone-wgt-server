@@ -48,6 +48,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         like_count:0,    
         type:req.body.type,
         privacy:req.body.privacy,
+        invited_friends:req.body.friendList,
         // challengers:req.body.challengers,
         name:req.body.name,
         participants:[{

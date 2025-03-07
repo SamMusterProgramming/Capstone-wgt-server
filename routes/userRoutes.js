@@ -448,7 +448,7 @@ route.post('/login', async(req, res)=>{
     }).save()   
     const id = user._id  
     const  token = jwt.sign(
-      {id}, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '1d' }
+      {id}, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '23h' }
    );
     
    res.status(200).json( {auth:true ,token:token , user:user})
