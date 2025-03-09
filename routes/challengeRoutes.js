@@ -39,7 +39,7 @@ route.get('/challenges/seed',async(req,res)=>{
 route.post('/uploads',verifyJwt,async(req,res)=>{
    
     const newObjectId = new mongoose.Types.ObjectId();
-    const timeLapse = Date.now();
+    const timeLapse =new Date();
     const challenge = {
         origin_id:req.body.origin_id,
         video_url:req.body.video_url,
@@ -129,7 +129,8 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
              votes:0,
              profile_img:req.body.profile_img,
              name:req.body.name,
-             email:req.body.email
+             email:req.body.email,
+             createdAt: new Date()
             }  
     
     const challenge = await challengeModel.findByIdAndUpdate(
@@ -416,6 +417,10 @@ route.route('/load/like/' )
    route.get('/posts/:id',verifyJwt,async(req,res)=> {
       const post_id = req.params.id
       let postComment = await commentModel.findOne({post_id:post_id})
+    //   if(!postComment) 
+    //     {
+    //     return res.json("empty")
+    //     }
       return res.json(postComment).status(200)
    })
 
@@ -443,6 +448,7 @@ route.route('/load/like/' )
 
       postComment.content.push(commentData)
       await postComment.save()
+      res.json(postComment).status(200)
       }     
    )
   
