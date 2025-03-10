@@ -472,7 +472,10 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
  
  route.post('/favourite/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
-    console.log(req.body)
+    const challenge = await challengeModel.findById(
+        req.body._id 
+       )
+    if(!challenge) return res.json("challenge expired").status(404)   
     let favourite = await favouriteModel.findOne(
         {user_id:user_id  } 
     )
@@ -510,6 +513,10 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
 
  route.patch('/favourite/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
+    const challenge = await challengeModel.findById(
+        req.body._id 
+       )
+    if(!challenge) return res.json("challenge expired").status(404)   
     let favourite = await favouriteModel.findOneAndUpdate(
         {user_id:user_id} ,
        { $pull: {favourites : {_id:req.body._id} } },
