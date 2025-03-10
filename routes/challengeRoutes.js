@@ -141,7 +141,7 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
          },
          { new:true } 
     )
-    if(!challenge) return res.json({error:"challenge no longer exists"}).status(404)
+    if(!challenge) return res.json({error:"challenge expired"}).status(404)
     
     const notification = {
             receiver_id:challenge.origin_id,
@@ -512,7 +512,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
     let favourite = await favouriteModel.findOneAndUpdate(
         {user_id:user_id} ,
-       { $pull: {favourites : req.body } },
+       { $pull: {favourites : {_id:req.body._id} } },
        { new:true } 
     )
     // if(!favourite)  {
