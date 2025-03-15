@@ -50,7 +50,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         type:req.body.type,
         privacy:req.body.privacy,
         invited_friends:req.body.friendList,
-        // challengers:req.body.challengers,
+        audience:req.body.audience,
         name:req.body.name,
         participants:[{
              _id: newObjectId,

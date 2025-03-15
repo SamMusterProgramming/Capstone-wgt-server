@@ -33,16 +33,15 @@ const challengeSchema = new mongoose.Schema({
     privacy:{
        type:String
     },
-    // audience:{
-    //     type:String,
-    //     default:"everyone"
-    // },
-    invited_friends:[],
-    challengers:{
+    mode:{
         type:String,
-        default: "everyone"
-    }
-    ,
+        default:"open"
+    },
+    invited_friends:[],
+    audience:{
+       type:String,
+       default: "open"
+    },
     comments: [] // to store comment of a user in an array of object for the challenge 
 },
  { timestamps: true, versionKey: false }
