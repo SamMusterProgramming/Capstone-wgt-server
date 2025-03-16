@@ -412,7 +412,22 @@ route.route('/load/like/' )
         challenge.participants = challenge.participants.filter(participant => participant.user_id !== userId)
         await challenge.save()
         res.json(challenge).status(200)
-    })           
+    })          
+    
+    
+    route.patch('/mode/:id',verifyJwt,validateMongoObjectId, async(req,res)=> {
+
+        const challenge_id = req.params.id;
+        const newMode = req.body.mode; 
+        console.log(newMode)
+        let challenge = await challengeModel.findByIdAndUpdate(
+             challenge_id ,
+             { $set: { audience: newMode } },
+             { new: true }
+            )
+        
+        res.json(challenge).status(200)
+    }) 
   // ****************************Comments ***************************
 
    route.get('/posts/:id',verifyJwt,async(req,res)=> {
