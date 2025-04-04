@@ -52,6 +52,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         invited_friends:req.body.friendList,
         audience:req.body.audience,
         name:req.body.name,
+        thumbNail_URL: req.body.thumbNail,
         participants:[{
              _id: newObjectId,
              user_id:req.body.origin_id,
@@ -61,6 +62,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
              profile_img:req.body.profile_img,
              name:req.body.name,
              email:req.body.email,
+             thumbNail_URL: req.body.thumbNail,
              createdAt:timeLapse
             }]    
     }
@@ -131,6 +133,7 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
              profile_img:req.body.profile_img,
              name:req.body.name,
              email:req.body.email,
+             thumbNail_URL: req.body.thumbNail,
              createdAt: new Date()
             }  
     

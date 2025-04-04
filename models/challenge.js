@@ -42,6 +42,9 @@ const challengeSchema = new mongoose.Schema({
        type:String,
        default: "open"
     },
+    thumbNail_URL : {
+        type:String
+    },
     comments: [] // to store comment of a user in an array of object for the challenge 
 },
  { timestamps: true, versionKey: false }
