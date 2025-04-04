@@ -227,7 +227,6 @@ route.patch('/update/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
         { $set: { 'participants.$.thumbNail_URL': thumbNail_URL } },
         { new:true } 
      )
-     challenge["thumbNail_URL"] = thumbNail_URL
      res.json(challenge)
 })
    
