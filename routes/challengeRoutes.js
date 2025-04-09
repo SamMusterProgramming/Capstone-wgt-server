@@ -218,15 +218,16 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
 
 
 route.patch('/update/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
-    console.log("here thumbnail")
+    console.log(req.body.thumbNail_URL)
      const challenge_id = req.params.id
      const user_id = req.body.user_id
      const thumbNail_URL = req.body.thumbNail_URL
-     let challenge = await challengeModel.findByIdAndUpdate(
-        { _id:challenge_id, 'participants.user_id': user_id },
-        { $set: { 'participants.$.thumbNail_URL': thumbNail_URL } },
-        { new:true } 
+     let challenge = await challengeModel.findById(
+        challenge_id 
      )
+     const index = challenge.participants.findIndex(participant => participant.user_id === user_id)
+     challenge.participants[index]["thumbNail_URL"] = thumbNail_URL 
+     await challenge.save()
      res.json(challenge)
 })
    

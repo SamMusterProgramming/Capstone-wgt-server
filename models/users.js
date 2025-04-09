@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
     
      name:{
         type:String,
+        default:"Unknown Some"
      },
      profile_img:{
         type:String,

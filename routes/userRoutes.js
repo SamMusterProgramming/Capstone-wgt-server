@@ -36,10 +36,12 @@ route.route('/')
      if(!users) return res.json({error:"users list is empty"})
      res.json(users).status(200)   
    })   
+
    .post(validateUserRegistration,async(req,res)=> {  // add or register user
       const user = req.body
       const newUser = new userModel(user)
       if(! newUser) return res.json({error:"can't save user"})
+        console.log(newUser)
       await newUser.save() 
       const findFriend = await friendModel.findOne({receiver_id:user._id})  
       if(!findFriend)  await  new friendModel(
@@ -51,19 +53,25 @@ route.route('/')
       }).save() 
       const findFollower = await followerModel.findOne({user_id:newUser._id})  
       if(!findFollower)  await  new followerModel({user_id:newUser._id,user_email:user.email}).save()   
-      
-      res.json(newUser).status(200)      
+       const id = newUser._id  
+       const  token = jwt.sign(
+          {id}, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '23h' }
+       );
+        
+       res.status(200).json( {auth:true ,token:token , user:newUser})
+      // res.json(newUser).status(200)        
    })   
 
 async function validateUserRegistration(req,res,next) {
+
     if(!req.body.email || !req.body.password )
        return res.status(404).json({error:"invalid entry"})
     const query = {email:req.body.email}
     const user = await userModel.findOne(query)
-    if(user) return res.status(400).json({error:"email exist already"})
+    if(user) return res.json({error:"email exist already"}).status(400)
     next()
 }  
-    
+
 route.route('/users/:id')
       .get(validateMongoObjectId,async(req,res)=>{ // get single user by _id
         const userId = req.params.id
@@ -487,7 +495,7 @@ function verifyJwt  (req,res,next){
     if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
     req.user = decoded; // Store decoded user information in the request object
     next();
-});
+});   
 }
 
 
