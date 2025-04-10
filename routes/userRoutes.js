@@ -38,7 +38,7 @@ route.route('/')
    })   
 
    .post(validateUserRegistration,async(req,res)=> {  // add or register user
-      const user = req.body
+      const user = {...req.body,name:req.body.firstname+" "+req.body.lastname}
       const newUser = new userModel(user)
       if(! newUser) return res.json({error:"can't save user"})
         console.log(newUser)
@@ -110,7 +110,7 @@ function validateMongoObjectId(req,res,next) {
       res.status(200).json(user)
     })
     route.patch('/user/:id',verifyJwt,validateMongoObjectId, async(req,res)=>{ 
-     
+      console.log(req.body)
       const userId = req.params.id
       const user = await userModel.findByIdAndUpdate(
                userId,
