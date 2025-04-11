@@ -42,10 +42,19 @@ const userSchema = new mongoose.Schema({
       type:String,
       default:"North Carolina"
      },
+     country:{
+      type:String,
+      default:"US"
+     },
      talent:{
       type:String,
       default:   "add your profession"
-     },followers: {
+     },
+     tellus:{
+      type:String,
+      default: ""
+     },
+     followers: {
       type:Number,
       default: 0 ,
       required:false  

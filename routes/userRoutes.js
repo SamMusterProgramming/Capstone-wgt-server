@@ -109,6 +109,7 @@ function validateMongoObjectId(req,res,next) {
       if(!user) return res.json({error:"cant find the user"}).status(404)
       res.status(200).json(user)
     })
+    // update user 
     route.patch('/user/:id',verifyJwt,validateMongoObjectId, async(req,res)=>{ 
       console.log(req.body)
       const userId = req.params.id
