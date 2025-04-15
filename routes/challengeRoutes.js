@@ -451,10 +451,10 @@ route.route('/load/like/' )
    route.get('/posts/:id',verifyJwt,async(req,res)=> {
       const post_id = req.params.id
       let postComment = await commentModel.findOne({post_id:post_id})
-    //   if(!postComment) 
-    //     {
-    //     return res.json("empty")
-    //     }
+      if(!postComment) 
+        {
+          return res.json("empty")   
+        }
       return res.json(postComment).status(200)
    })
 
