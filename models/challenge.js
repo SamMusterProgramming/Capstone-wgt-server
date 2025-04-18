@@ -17,7 +17,10 @@ const challengeSchema = new mongoose.Schema({
         type:Number,
         min:[0]
     },
-   
+    profile_img:{
+        type:String,
+        default:"/static/materials/avatar.avif"
+    },
     video_url:{
         type:String,
         default:"/static/materials/avatar.avif"

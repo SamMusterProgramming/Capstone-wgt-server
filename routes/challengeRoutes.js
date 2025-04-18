@@ -53,6 +53,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         audience:req.body.audience,
         name:req.body.name,
         thumbNail_URL: req.body.thumbNail,
+        profile_img:req.body.profile_img,
         participants:[{
              _id: newObjectId,
              user_id:req.body.origin_id,
