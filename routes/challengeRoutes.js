@@ -38,14 +38,12 @@ route.get('/challenges/seed',async(req,res)=>{
 
 // firebase used here
 route.post('/uploads',verifyJwt,async(req,res)=>{
-   
     const newObjectId = new mongoose.Types.ObjectId();
     const timeLapse =new Date();
     const challenge = {
         origin_id:req.body.origin_id,
         video_url:req.body.video_url,
         desc: req.body.description,
-        category : "eating context",
         like_count:0,    
         type:req.body.type,
         privacy:req.body.privacy,
@@ -117,7 +115,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         await notificationModel(notification).save()
     }           
     })
-    res.json( newChallenge)
+    res.json(newChallenge)
 })
 
 route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{

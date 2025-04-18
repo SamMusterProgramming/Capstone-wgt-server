@@ -438,7 +438,7 @@ route.delete('/notifications/:id',verifyJwt,validateMongoObjectId,async(req,res)
 // })
    
 route.post('/login', async(req, res)=>{     
-     
+ 
     if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin"}).status(404)
     const query = {email:req.body.email.toLowerCase(),password:req.body.password}
     const userEmail = await userModel.findOne({username:req.body.email.toLowerCase()})
