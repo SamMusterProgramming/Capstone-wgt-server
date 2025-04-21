@@ -38,6 +38,7 @@ route.get('/challenges/seed',async(req,res)=>{
 
 // firebase used here
 route.post('/uploads',verifyJwt,async(req,res)=>{
+
     const newObjectId = new mongoose.Types.ObjectId();
     const timeLapse =new Date();
     const challenge = {
@@ -246,17 +247,17 @@ route.get('/all/:id',verifyJwt, async(req,res)=> {
 
 route.get('/original/public/:id',verifyJwt, async(req,res)=> {
     const origin_id = req.params.id;
-    let challenges = await challengeModel.find({origin_id:origin_id})
+    let challenges = await challengeModel.find({origin_id:origin_id}).sort({ createdAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.privacy == "Public")
     challenges = challenges.filter(challenge => 
        challenge.participants.find(participant => participant.user_id == challenge.origin_id)
     )
     res.json(challenges)   
 })
- 
+
 route.get('/original/private/:id',verifyJwt, async(req,res)=> {
     const origin_id = req.params.id;
-    let challenges = await challengeModel.find({origin_id:origin_id})
+    let challenges = await challengeModel.find({origin_id:origin_id}).sort({ createdAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.privacy == "Private")
     challenges = challenges.filter(challenge => 
        challenge.participants.find(participant => participant.user_id == challenge.origin_id)
@@ -270,7 +271,7 @@ route.get('/participate/public/:id',verifyJwt,async(req,res)=> {
     // const challenges = await challengeModel.find({origin_id:origin_id})
     let challenges = await challengeModel.find({
         participants:{$elemMatch: {user_id:origin_id }}
-    })
+    }).sort({ createdAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.origin_id != origin_id)
     challenges = challenges.filter(challenge =>challenge.privacy == "Public")
     res.json(challenges)   
@@ -280,7 +281,7 @@ route.get('/participate/private/:id',verifyJwt,async(req,res)=> {
     // const challenges = await challengeModel.find({origin_id:origin_id})
     let challenges = await challengeModel.find({
         participants:{$elemMatch: {user_id:origin_id }}
-    })
+    }).sort({ createdAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.origin_id != origin_id)
     challenges=challenges.filter(challenge =>challenge.privacy == "Private")
 
@@ -290,7 +291,7 @@ route.get('/participate/private/:id',verifyJwt,async(req,res)=> {
 // find any other challenges that don't include the user
 route.get('/top/:id',verifyJwt,validateMongoObjectId,verifyJwt,async(req,res)=> {
     const idToExclude = req.params.id;
-    let challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } })
+    let challenges = await challengeModel.find({ origin_id: { $ne: idToExclude } }).sort({ createdAt: 'desc' })
     challenges = challenges.filter(challenge => 
         !challenge.participants.find(participant => participant.user_id === idToExclude)
     )
