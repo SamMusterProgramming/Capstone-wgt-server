@@ -431,12 +431,17 @@ route.delete('/notifications/:id',verifyJwt,validateMongoObjectId,async(req,res)
   res.json("deleted").status(200)
 })  
 
-//I use this route to log in a user with session if successfully Authenticated 
-// route.get('/login', isAuthenticated, async (req, res) => {
-//     if(!req.session.user) res.status(400).json("not looged in n")
-//     res.status(200).json(req.session.user)
-// })
-   
+
+//********************************* search for users */
+
+route.get('/find/search',verifyJwt,async(req,res)=>{
+  console.log("i am here guery")
+  const { name } = req.query;
+  const users = await userModel.find({ name: { $regex: name, $options: 'i' } }); 
+  res.json({users})
+})   
+
+//****************************** login user here */
 route.post('/login', async(req, res)=>{     
  
     if(!req.body.email || !req.body.password) return res.json({error:"invalid loggin"}).status(404)
