@@ -435,10 +435,9 @@ route.delete('/notifications/:id',verifyJwt,validateMongoObjectId,async(req,res)
 //********************************* search for users */
 
 route.get('/find/search',verifyJwt,async(req,res)=>{
-  console.log("i am here guery")
   const { name } = req.query;
   const users = await userModel.find({ name: { $regex: name, $options: 'i' } }); 
-  res.json({users})
+  res.json({users:users})
 })   
 
 //****************************** login user here */
