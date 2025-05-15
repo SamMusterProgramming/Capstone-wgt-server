@@ -592,7 +592,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
         const newViewer = new viewerModel({
             post_id:post_id,
             user_id:req.body.user_id,
-            viewer:[{viewer_id:req.body.viewer_id}]
+            viewer:[]
         }
         )
         await newViewer.save()
