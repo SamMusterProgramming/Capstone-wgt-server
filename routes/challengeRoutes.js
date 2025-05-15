@@ -272,7 +272,7 @@ route.get('/original/public/:id',verifyJwt, async(req,res)=> {
 
 route.get('/original/private/:id',verifyJwt, async(req,res)=> {
     const origin_id = req.params.id;
-    let challenges = await challengeModel.find({origin_id:origin_id}).sort({ createdAt: 'desc' })
+    let challenges = await challengeModel.find({origin_id:origin_id}).sort({ updatedAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.privacy == "Private")
     challenges = challenges.filter(challenge => 
        challenge.participants.find(participant => participant.user_id == challenge.origin_id)
@@ -286,7 +286,7 @@ route.get('/participate/public/:id',verifyJwt,async(req,res)=> {
     // const challenges = await challengeModel.find({origin_id:origin_id})
     let challenges = await challengeModel.find({
         participants:{$elemMatch: {user_id:origin_id }}
-    }).sort({ createdAt: 'desc' })
+    }).sort({ updatedAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.origin_id != origin_id)
     challenges = challenges.filter(challenge =>challenge.privacy == "Public")
     res.json(challenges)   
