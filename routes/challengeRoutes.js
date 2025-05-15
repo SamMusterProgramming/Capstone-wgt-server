@@ -11,6 +11,7 @@ const followerModel = require('../models/followers.js')
 const { findByIdAndUpdate } = require('../models/users.js')
 const notificationModel = require('../models/notifications.js')
 const friendModel = require('../models/friends.js')
+const viewerModel = require('../models/postViewers')
 const jwt = require('jsonwebtoken')
 
 route = express.Router();
@@ -68,6 +69,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
     }
     const newChallenge = await challengeModel(challenge)
     await newChallenge.save()
+
     const like =  new likeModel({
         post_id:newObjectId,
         user_id:req.body.origin_id,
@@ -75,7 +77,13 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         vote:false
     })    
     await like.save()
-    
+
+    const viewerPost = new viewerModel({
+        post_id:newObjectId,
+        user_id:req.body.origin_id,
+    })
+    await viewerPost.save()
+
     const follower = await followerModel.findOne({user_id:req.body.origin_id})
     if(follower)
       follower.followers.forEach(async(follower) =>{
@@ -168,6 +176,13 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
             vote:false
     })  
     await like.save()
+
+    const viewerPost = new viewerModel({
+        post_id:newObjectId,
+        user_id:req.body.user_id,
+    })
+    await viewerPost.save()
+
     const follower = await followerModel.findOne({user_id:req.body.origin_id})
     if(follower)
       follower.followers.forEach(async(follower) =>{
@@ -502,7 +517,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
     await postComment.save()
     return res.json(postComment).status(200)
  })
- 
+ //***************************favourites */
  route.post('/favourite/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
     const challenge = await challengeModel.findById(
@@ -567,6 +582,49 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
     return res.json(favourite).status(200)
  })
 
+  //*************************** Viewers */
+  route.get('/viewer/:id',verifyJwt,async(req,res)=> {
+    const post_id = req.params.id;
+    const viewer = await viewerModel.findOne(
+        {post_id:post_id} 
+       )
+    // if(!viewer)  {
+    //     const newViewer = new viewerModel({
+    //         post_id:post_id,
+    //         user_id:req.body.user_id,
+    //         viewer:[{viewer_id:req.body.viewer_id}]
+    //     }
+    //     )
+    //     await newViewer.save()
+    //     return res.json(newViewer)
+    // }
+    // viewer.viewers.push({viewer_id:req.body.viewer_id})
+    // await viewer.save()
+    return res.json(viewer).status(200)
+ })
+
+  route.post('/viewer/:id',verifyJwt,async(req,res)=> {
+    const post_id = req.params.id;
+    const viewer = await viewerModel.findOne(
+        {post_id:post_id} 
+       )
+    // if(!viewer) return res.json("post expired").status(404)   
+    
+    if(!viewer)  {
+        const newViewer = new viewerModel({
+            post_id:post_id,
+            user_id:req.body.user_id,
+            viewers:[{viewer_id:req.body.viewer_id}]
+        }
+        )
+        await newViewer.save()
+        return res.json(newViewer)
+    }
+    viewer.viewers.push({viewer_id:req.body.viewer_id})
+    await viewer.save()
+    return res.json(viewer).status(200)
+ })
+ 
 
 // middleware to validate mongo objectId _id
 function validateMongoObjectId(req,res,next) {
