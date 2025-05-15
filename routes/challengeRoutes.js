@@ -588,16 +588,16 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
     const viewer = await viewerModel.findOne(
         {post_id:post_id} 
        )
-    // if(!viewer)  {
-    //     const newViewer = new viewerModel({
-    //         post_id:post_id,
-    //         user_id:req.body.user_id,
-    //         viewer:[{viewer_id:req.body.viewer_id}]
-    //     }
-    //     )
-    //     await newViewer.save()
-    //     return res.json(newViewer)
-    // }
+    if(!viewer)  {
+        const newViewer = new viewerModel({
+            post_id:post_id,
+            user_id:req.body.user_id,
+            viewer:[{viewer_id:req.body.viewer_id}]
+        }
+        )
+        await newViewer.save()
+        return res.json(newViewer)
+    }
     // viewer.viewers.push({viewer_id:req.body.viewer_id})
     // await viewer.save()
     return res.json(viewer).status(200)
