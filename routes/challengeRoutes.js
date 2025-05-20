@@ -224,6 +224,11 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
         if(challenge.participants.find(participant => participant.user_id == friend.sender_id)) {
              message = "has replied to the challenge you've participated in  "
         }else {
+            if(challenge.privacy == "Private") {
+                if(challenge.invited_friends.find(invite=>invite.sender_id == friend.sender_id))
+                     message = "has joined the challenge you are intvied to"
+                else message = "has participated in a Challenge"
+            }else
             message = "has participated in a Challenge"
         }
         const notification = {
