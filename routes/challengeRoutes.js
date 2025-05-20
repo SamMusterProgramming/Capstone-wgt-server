@@ -84,51 +84,51 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
     })
     await viewerPost.save()
 
-    const follower = await followerModel.findOne({user_id:req.body.origin_id})
-    if(follower)
-      follower.followers.forEach(async(follower) =>{
-        const notification = {
-            receiver_id:follower.follower_id,
-            type:"followers",
-            isRead:false,
-            message: "has create new Challenge",
-            content: {
-                sender_id:req.body.origin_id,
-                challenge_id:newChallenge._id.toString(),
-                name:req.body.name,
-                profile_img:req.body.profile_img,
-            }
-            
-        }
-        const newNotification = await notificationModel(notification).save()
-    })
-    const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
-
-    // if(friend)
-    //   friend.friends.forEach(async(friend) =>{
-    //     if(!follower.followers.find(follower => follower.follower_id == friend.sender_id))
-    //     {
+    // const follower = await followerModel.findOne({user_id:req.body.origin_id})
+    // if(follower)
+    //   follower.followers.forEach(async(follower) =>{
     //     const notification = {
-    //         receiver_id:friend.sender_id,
+    //         receiver_id:follower.follower_id,
     //         type:"followers",
     //         isRead:false,
-    //         message:
-    //         req.body.privacy == "Private"?
-    //          req.body.friendList.find(fr => fr.sender_id == friend.sender_id) 
-    //                    ? "Invited you to a participate in his challenge" :
-    //                    "has create new Challenge",
-    //         content: {  
+    //         message: "has create new Challenge",
+    //         content: {
     //             sender_id:req.body.origin_id,
     //             challenge_id:newChallenge._id.toString(),
     //             name:req.body.name,
     //             profile_img:req.body.profile_img,
     //         }
-          
+            
     //     }
-
     //     await notificationModel(notification).save()
-    // }           
     // })
+    const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
+
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+        if(!follower.followers.find(follower => follower.follower_id == friend.sender_id))
+        {
+        const notification = {
+            receiver_id:friend.sender_id,
+            type:"followers",
+            isRead:false,
+            message:
+            // req.body.privacy == "Private"?
+            //  req.body.friendList.find(fr => fr.sender_id == friend.sender_id) 
+            //            ? "Invited you to a participate in his challenge" :
+                       "has create new Challenge",
+            content: {  
+                sender_id:req.body.origin_id,
+                challenge_id:newChallenge._id.toString(),
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
+          
+        }
+
+        await notificationModel(notification).save()
+    }           
+    })
 
     res.json(newChallenge)
 })
