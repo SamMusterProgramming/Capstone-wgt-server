@@ -111,10 +111,12 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
             receiver_id:friend.sender_id,
             type:"followers",
             isRead:false,
-            message:req.body.privacy == "Private"?
-             req.body.friendList.find(fr => fr.sender_id == friend.sender_id) 
-                       ? "Invited you to a participate in his challenge" :"has create new Challenge",
-            content: {
+            message:
+            // req.body.privacy == "Private"?
+            //  req.body.friendList.find(fr => fr.sender_id == friend.sender_id) 
+                    //    ? "Invited you to a participate in his challenge" :
+                       "has create new Challenge",
+            content: {  
                 sender_id:req.body.origin_id,
                 challenge_id:newChallenge._id.toString(),
                 name:req.body.name,
