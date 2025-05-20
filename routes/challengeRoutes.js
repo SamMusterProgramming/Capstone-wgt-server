@@ -194,37 +194,43 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
     })
     await viewerPost.save()
 
-    const follower = await followerModel.findOne({user_id:req.body.origin_id})
-    if(follower)
-      follower.followers.forEach(async(follower) =>{
-      if(challenge.origin_id !== follower.follower_id ){
-        const notification = {
-            receiver_id:follower.follower_id,
-            type:"followers",    
-            isRead:false,   
-            message: "has participated in a Challenge",
-            content: {
-                sender_id:req.body.origin_id,
-                challenge_id:_id,
-                name:req.body.name,
-                profile_img:req.body.profile_img,
-            }
+    // const follower = await followerModel.findOne({user_id:req.body.origin_id})
+    // if(follower)
+    //   follower.followers.forEach(async(follower) =>{
+    //   if(challenge.origin_id !== follower.follower_id ){
+    //     const notification = {
+    //         receiver_id:follower.follower_id,
+    //         type:"followers",    
+    //         isRead:false,   
+    //         message: "has participated in a Challenge",
+    //         content: {
+    //             sender_id:req.body.origin_id,
+    //             challenge_id:_id,
+    //             name:req.body.name,
+    //             profile_img:req.body.profile_img,
+    //         }
             
-        }
-        const newNotification = await notificationModel(notification).save()
-      }
-    })
+    //     }
+    //     const newNotification = await notificationModel(notification).save()
+    //   }
+    // })
+
+
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
     if(friend)
       friend.friends.forEach(async(friend) =>{
         if(challenge.origin_id !== friend.sender_id ){
-        if(!follower.followers.find(follower => follower.follower_id === friend.sender_id))
-        {
+        let message =""
+        if(challenge.participants.find(participant => participant.user_id == friend.sender_id)) {
+             message = "has replied to the challenge you've participated in  "
+        }else {
+            message = "has participated in a Challenge"
+        }
         const notification = {
             receiver_id:friend.sender_id,
             type:"followers",
             isRead:false,
-            message: "has participated in a Challenge",
+            message: message,
             content: {
                 sender_id:req.body.origin_id,
                 challenge_id:_id,
@@ -235,7 +241,6 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
         }
 
         await notificationModel(notification).save()
-      }
     } 
     })
 
