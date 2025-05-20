@@ -109,7 +109,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
       friend.friends.forEach(async(friend) =>{
         // if(!follower.followers.find(follower => follower.follower_id == friend.sender_id))
         // {
-        const message = ""
+        let message = ""
         if (req.body.privacy == "Private") {
             if(req.body.friendList.find(fr => fr.sender_id == friend.sender_id))
              message = "Invited you to a participate in his challenge"
