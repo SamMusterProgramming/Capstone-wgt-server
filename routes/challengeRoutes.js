@@ -85,7 +85,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
     await viewerPost.save()
 
     const follower = await followerModel.findOne({user_id:req.body.origin_id})
-    if(follower)
+    if(follower) if(follower.followers.length > 0)
       follower.followers.forEach(async(follower) =>{
         const notification = {
             receiver_id:follower.follower_id,
@@ -101,7 +101,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
             
         }
         await notificationModel(notification).save()
-    })
+   }) 
 
     const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
 
