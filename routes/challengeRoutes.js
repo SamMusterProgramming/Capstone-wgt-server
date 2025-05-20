@@ -171,7 +171,7 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
             isRead:false,   
             message: "has Replied to your Challenge",
             content: {
-                sender_id:req.body.origin_id,
+                sender_id:req.body.user_id,
                 challenge_id:_id,
                 name:req.body.name,
                 profile_img:req.body.profile_img,
@@ -179,6 +179,27 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
             
     }
     await notificationModel(notification).save()
+
+    challenge.participants.forEach(async(participant) =>{
+        if(challenge.origin_id !== participant.user_id && participant.user_id !== req.body.user_id ){
+        let message = "has replied to the challenge you've participated in"
+        const notification = {
+            receiver_id:participant.user_id,
+            type:"followers",
+            isRead:false,
+            message: message,
+            content: {
+                sender_id:req.body.user_id,
+                challenge_id:_id,
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
+          
+        }
+
+        await notificationModel(notification).save()
+    } 
+    })
 
     const like =  new likeModel({
             post_id: newObjectId,
@@ -217,8 +238,12 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
 
 
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+    const filterFriends = friend.friends.filter(friend =>
+                    !challenge.participants.find(
+                     participant => participant.user_id == friend.sender_id
+                   ) )
     if(friend)
-      friend.friends.forEach(async(friend) =>{
+      filterFriends.forEach(async(friend) =>{
         if(challenge.origin_id !== friend.sender_id ){
         let message =""
         if(challenge.participants.find(participant => participant.user_id == friend.sender_id)) {
@@ -237,7 +262,7 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
             isRead:false,
             message: message,
             content: {
-                sender_id:req.body.origin_id,
+                sender_id:req.body.user_id,
                 challenge_id:_id,
                 name:req.body.name,
                 profile_img:req.body.profile_img,
