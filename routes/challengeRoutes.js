@@ -41,7 +41,7 @@ route.get('/challenges/seed',async(req,res)=>{
 route.post('/uploads',verifyJwt,async(req,res)=>{
 
     const newObjectId = new mongoose.Types.ObjectId();
-    const timeLapse =new Date();
+    const timeLapse = new Date();
     const challenge = {
         origin_id:req.body.origin_id,
         video_url:req.body.video_url,
@@ -102,33 +102,34 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
     //     }
     //     await notificationModel(notification).save()
     // })
-    // const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
 
-    // if(friend)
-    //   friend.friends.forEach(async(friend) =>{
-    //     if(!follower.followers.find(follower => follower.follower_id == friend.sender_id))
-    //     {
-    //     const notification = {
-    //         receiver_id:friend.sender_id,
-    //         type:"followers",
-    //         isRead:false,
-    //         message:
-    //         req.body.privacy == "Private"?
-    //          req.body.friendList.find(fr => fr.sender_id == friend.sender_id) 
-    //                    ? "Invited you to a participate in his challenge" :
-    //                    "has create new Challenge",
-    //         content: {  
-    //             sender_id:req.body.origin_id,
-    //             challenge_id:newChallenge._id.toString(),
-    //             name:req.body.name,
-    //             profile_img:req.body.profile_img,
-    //         }
+    const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
+
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+        // if(!follower.followers.find(follower => follower.follower_id == friend.sender_id))
+        // {
+        const notification = {
+            receiver_id:friend.sender_id,
+            type:"followers",
+            isRead:false,
+            message:
+            req.body.privacy == "Private"?
+             req.body.friendList.find(fr => fr.sender_id == friend.sender_id) 
+                       ? "Invited you to a participate in his challenge" :
+                       "has create new Challenge",
+            content: {  
+                sender_id:req.body.origin_id,
+                challenge_id:newChallenge._id.toString(),
+                name:req.body.name,
+                profile_img:req.body.profile_img,
+            }
           
-    //     }
+        }
 
-    //     await notificationModel(notification).save()
+        await notificationModel(notification).save()
     // }           
-    // })
+    })
 
     res.json(newChallenge)
 })
