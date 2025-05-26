@@ -592,7 +592,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
     let favourite = await favouriteModel.findOne(
         {user_id:user_id} 
-    )
+    ).sort({ createdAt: 'desc' })
     if(!favourite)  {
         const newFavourite = new favouriteModel({
             user_id:user_id,
@@ -602,15 +602,15 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
         await newFavourite.save()
         return res.json(newFavourite)
     }
-    let challenges =[]
-    favourite.favourites.forEach(async(challenge) => {
-         const chall = await challengeModel.findById(challenge._id)
-         if(chall) challenges.push(chall)
-    })
-    console.log(challenges.length)
-    favourite.favourites = favourite.favourites.filter(chall => challenges.find(c => c._id === chall._id) )
-    console.log(favourite.favourites.length)
-    await favourite.save()
+    // let challenges =[]
+    // favourite.favourites.forEach(async(challenge) => {
+    //      const chall = await challengeModel.findById(challenge._id)
+    //      if(chall) challenges.push(chall)
+    // })
+    // console.log(challenges.length)
+    // favourite.favourites = favourite.favourites.filter(chall => challenges.find(c => c._id === chall._id) )
+    // console.log(favourite.favourites.length)
+    // await favourite.save()
     return res.json(favourite).status(200)
  })
 
