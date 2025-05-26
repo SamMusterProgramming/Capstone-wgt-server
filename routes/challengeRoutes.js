@@ -603,11 +603,13 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
         return res.json(newFavourite)
     }
     let challenges =[]
-    favourite.favourites.forEach(challenge => {
-         const chall = challengeModel.findById(challenge._id)
+    favourite.favourites.forEach(async(challenge) => {
+         const chall = await challengeModel.findById(challenge._id)
          if(chall) challenges.push(chall)
     })
-    favourite.favourites = challenges;
+    console.log(challenges.length)
+    favourite.favourites = favourite.favourites.filter(chall => challenges.find(c => c._id === chall._id) )
+    console.log(favourite.favourites.length)
     await favourite.save()
     return res.json(favourite).status(200)
  })
