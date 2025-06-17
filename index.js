@@ -6,7 +6,7 @@ require('dotenv').config()
 const userModel = require('./models/users.js')
 const userRoute = require('./routes/userRoutes.js')
 const challengeRoute = require('./routes/challengeRoutes.js')
-
+const talentRoute = require('./routes/talentRoutes.js')
 const urlencodedParser = bodyParser.urlencoded({ extended: false })
 const PORT = process.env.PORT || 8000
 const app = express()   
@@ -18,6 +18,7 @@ app.use('/static', express.static('public'))
 app.use(express.json())
 app.use('/users',userRoute)
 app.use('/challenges',challengeRoute)
+app.use('/talents',talentRoute)
 app.use(validateRequestNetwork)
 
 
