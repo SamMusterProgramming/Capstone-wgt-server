@@ -13,6 +13,7 @@ const talentModel = require('../models/talent.js')
 // const friendModel = require('../models/friends.js')
 // const viewerModel = require('../models/postViewers')
 const jwt = require('jsonwebtoken')
+const { default: mongoose } = require('mongoose')
 
 
 route = express.Router();
@@ -32,6 +33,35 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        return res.json(tal)
      }
      return res.json(talent)
+})
+
+
+route.post('/uploads/:id',verifyJwt,async(req,res)=>{
+    
+    const newObjectId = new mongoose.Types.ObjectId();
+    const _id = req.params.id
+    const contestant = {
+             _id: newObjectId,    
+             user_id:req.body.user_id ,
+             video_url:req.body.video_url,
+             profile_img:req.body.profile_img,
+             name:req.body.name,
+             email:req.body.email,
+             thumbNail_URL: req.body.thumbNail,
+             createdAt: new Date()
+            }  
+    
+    const newTalent = await talentModel.findByIdAndUpdate(
+        _id,
+        {
+            $push: { contestants : contestant }
+         },
+         { new:true } 
+    )
+    if(!newTalent) return res.json({error:"challenge expired"}).status(404)
+    
+
+    res.json(newTalent)
 })
 
 route.get('/room/:id',verifyJwt, async(req,res)=>{
