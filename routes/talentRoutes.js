@@ -34,6 +34,13 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      return res.json(talent)
 })
 
+route.get('/room/:id',verifyJwt, async(req,res)=>{
+    const room_id = req.params.id;
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("post expired")
+    res.json(talentRoom).status(200)
+   })
+
 function  verifyJwt(req,res,next){
     const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
     if (!token) return res.status(401).send({ message: 'No token provided' });
