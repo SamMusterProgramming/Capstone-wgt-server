@@ -13,7 +13,7 @@ const talentModel = require('../models/talent.js')
 // const friendModel = require('../models/friends.js')
 // const viewerModel = require('../models/postViewers')
 const jwt = require('jsonwebtoken')
-const { default: mongoose } = require('mongoose')
+const mongoose = require('mongoose')
 
 
 route = express.Router();
