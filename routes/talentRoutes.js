@@ -59,8 +59,6 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
          { new:true } 
     )
     if(!newTalent) return res.json({error:"challenge expired"}).status(404)
-    
-
     res.json(newTalent)
 })
 
@@ -68,6 +66,17 @@ route.get('/room/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("post expired")
+    res.json(talentRoom).status(200)
+   })
+
+route.patch('/delete/:id',verifyJwt, async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    console.log(user_id)
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("post expired")
+    talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
+    await talentRoom.save()
     res.json(talentRoom).status(200)
    })
 
