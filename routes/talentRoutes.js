@@ -2,6 +2,7 @@ const express = require('express')
 const {ObjectId} = require('mongodb')
 const commentModel = require('../models/comments.js')
 const talentModel = require('../models/talent.js')
+const talentPostDataModel  = require('../models/talentPostData.js')
 // const favouriteModel = require('../models/favourites.js')
 // const data = require('../utilities/data.js')
 // const upload = require('../multer.js')
@@ -34,6 +35,95 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      }
      return res.json(talent)
 })
+//********************************post likes, votes, comments */
+
+route.get('/likes/:id',verifyJwt,async(req,res)=>{
+    const post_id =  req.params.id
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+    return res.json(talentPost)
+})
+
+route.post('/likes/:id',verifyJwt,async(req,res)=>{
+    
+    const post_id =  req.params.id
+    const owner_id = req.body.owner_id
+    const like = {
+       liker_id : req.body.liker_id
+    }
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+    if(! talentPost) {
+        const talP = new talentPostDataModel({
+           owner_id:owner_id,
+           post_id : post_id,
+           votes:[],
+           likes:[like],
+           comments:[]
+         })
+        await talP.save()
+        return res.json(talP)
+    }
+    
+    let updateQuery;
+
+    const userLiked = talentPost.likes.find(like => like.liker_id == req.body.liker_id);
+    if (userLiked) {
+        console.log("i amhere")
+        updateQuery = { $pull: { likes: like } };
+      } else {
+        updateQuery = { $addToSet: { likes: like } }; // $addToSet ensures unique entries
+      }
+    const updatedPost = await talentPostDataModel.findOneAndUpdate(
+        {post_id:post_id},
+         updateQuery,
+        { new: true } 
+      );
+    return res.json(updatedPost)
+})
+
+route.post('/votes/:id',verifyJwt,async(req,res)=>{
+    
+    const post_id =  req.params.id
+    const owner_id = req.body.owner_id
+    const vote = {
+       voter_id : req.body.voter_id
+    }
+
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+
+    if(! talentPost) {
+        const talP = new talentPostDataModel({
+           owner_id:owner_id,
+           post_id : post_id,
+           votes:[vote],
+           likes:[],
+           comments:[]
+         })
+        await talP.save()
+        return res.json(talP)
+    }
+    
+    let updateQuery;
+
+    const userLiked = talentPost.votes.find(vote => vote.voter_id == req.body.voter_id);
+    if (userLiked) {
+        updateQuery = { $pull: { votes: vote } };
+      } else {
+        updateQuery = { $addToSet: { votes: vote } }; // $addToSet ensures unique entries
+      }
+    const updatedPost = await talentPostDataModel.findOneAndUpdate(
+        {post_id:post_id},
+         updateQuery,
+        { new: true } 
+      );
+    return res.json(updatedPost)
+})
+
 
 
 route.post('/uploads/:id',verifyJwt,async(req,res)=>{
@@ -58,6 +148,15 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
          },
          { new:true } 
     )
+    const newPostData = new talentPostDataModel(
+         {
+          post_id : newObjectId,
+          owner_id : req.body.user_id,
+          likes:[],
+          votes:[],
+          comments:[]
+         })
+    await newPostData.save()
     if(!newTalent) return res.json({error:"challenge expired"}).status(404)
     res.json(newTalent)
 })
