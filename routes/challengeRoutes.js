@@ -557,9 +557,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
         }
        
     )
-    
     postComment.content = postComment.content.filter(el => el._id.toString() !== comment_id.toString())
-    console.log(postComment)
     await postComment.save()
     return res.json(postComment).status(200)
  })

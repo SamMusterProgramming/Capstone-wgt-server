@@ -124,7 +124,60 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     return res.json(updatedPost)
 })
 
+// **************************** Comments ***************************
 
+route.get('/post/comments/:id',verifyJwt,async(req,res)=> {
+    const post_id = req.params.id
+    let postData = await talentPostDataModel.findOne({post_id:post_id})
+    // if(!postData) 
+    //   {
+    //     return res.json("empty")   
+    //   }
+    return res.json(postData).status(200)
+ })
+
+ route.post('/posts/:id',verifyJwt,async(req,res)=> {
+  console.log(req.params.id)
+    const post_id = req.params.id.toString()
+    const commentData={
+          _id :new mongoose.Types.ObjectId(),
+          commenter_id : req.body.commenter_id,
+          profile_img:req.body.profile_img,
+          name:req.body.name,
+          comment:req.body.comment
+        }
+    let postData = await talentPostDataModel.findOne({post_id:post_id})
+    // if(!postComment) {
+    //      const data = {
+    //        post_id : req.body.post_id,
+    //        user_id : req.body.user_id,
+    //        content:[commentData]
+    //      }   
+    //      let newCommentData = new commentModel(data)
+    //      await newCommentData.save()
+    //      return res.json(newCommentData)   
+    //    }
+
+    postData.comments.push(commentData)
+    await postData.save()
+    res.json(postData).status(200)
+    }     
+ )
+
+
+route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
+  console.log(req.body.comment_id)
+  const post_id = req.params.id;
+  const comment_id = req.body.comment_id
+  let postComment = await commentModel.findOne(
+      {post_id:post_id 
+      }
+     
+  )
+  postComment.content = postComment.content.filter(el => el._id.toString() !== comment_id.toString())
+  await postComment.save()
+  return res.json(postComment).status(200)
+})
 
 route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     
