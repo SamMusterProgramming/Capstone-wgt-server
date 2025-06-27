@@ -43,12 +43,13 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      if(talent.contestants.length > 0){
         talent.contestants.map(async(contestant,index) => {
             const pData = await talentPostDataModel.findOne({post_id:contestant._id})
-            newT.contestants.push({...contestant,votes:pData.votes.length})
-            if(newT.contestants.length== talent.contestants.length){
+            if (pData) newT.contestants.push({...contestant,votes:pData.votes.length})
+            else newT.contestants.push({...contestant,votes:0 })
+            if(newT.contestants.length == talent.contestants.length){
                 console.log(newT)
                 newT.contestants.sort((a, b) => b.votes - a.votes)
                 return  res.json(newT)
-            }   
+            }     
               
         })
      }else  return res.json(talent)   
