@@ -3,16 +3,7 @@ const {ObjectId} = require('mongodb')
 const commentModel = require('../models/comments.js')
 const talentModel = require('../models/talent.js')
 const talentPostDataModel  = require('../models/talentPostData.js')
-// const favouriteModel = require('../models/favourites.js')
-// const data = require('../utilities/data.js')
-// const upload = require('../multer.js')
-// const likeModel = require ('../models/likes.js')
-// const mongoose = require('mongoose')
-// const followerModel = require('../models/followers.js')
-// const { findByIdAndUpdate } = require('../models/users.js')
-// const notificationModel = require('../models/notifications.js')
-// const friendModel = require('../models/friends.js')
-// const viewerModel = require('../models/postViewers')
+
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
 
@@ -239,6 +230,14 @@ route.get('/room/:id',verifyJwt, async(req,res)=>{
     if(!talentRoom) return res.json("post expired")
     res.json(talentRoom).status(200)
    })
+
+   route.get('/rooms',verifyJwt, async(req,res)=>{
+    const { name } = req.query;
+    const talentRooms = await talentModel.find({name:name})
+    if(!talentRooms) return res.json("post expired")
+    res.json(talentRooms).status(200)
+   })
+
 
 route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
