@@ -66,22 +66,21 @@ route.post('/likes/:id',verifyJwt,async(req,res)=>{
         {post_id:post_id}
         )
     if(! talentPost) {
-        const talP = new talentPostDataModel({
-           owner_id:owner_id,
-           post_id : post_id,
-           votes:[],
-           likes:[like],
-           comments:[]
-         })
-        await talP.save()
-        return res.json(talP)
+        // const talP = new talentPostDataModel({
+        //    owner_id:owner_id,
+        //    post_id : post_id,
+        //    votes:[],
+        //    likes:[like],
+        //    comments:[]
+        //  })
+        // await talP.save()
+        return res.json("expired")
     }
     
     let updateQuery;
 
     const userLiked = talentPost.likes.find(like => like.liker_id == req.body.liker_id);
     if (userLiked) {
-        console.log("i amhere")
         updateQuery = { $pull: { likes: like } };
       } else {
         updateQuery = { $addToSet: { likes: like } }; // $addToSet ensures unique entries
