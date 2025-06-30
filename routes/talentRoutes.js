@@ -245,7 +245,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const post_id = req.body.post_id;
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("post expired")
-    const deletedPost = await talentPostDataModel.findByIdAndDelete({post_id:post_id})
+    const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
     console.log(deletedPost)
     talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
     await talentRoom.save()
