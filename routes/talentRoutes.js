@@ -6,6 +6,8 @@ const talentPostDataModel  = require('../models/talentPostData.js')
 
 const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
+const friendModel = require('../models/friends.js')
+const notificationModel = require('../models/notifications.js')
 
 
 route = express.Router();
@@ -45,13 +47,17 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         })
      }else  return res.json(talent)   
 })
-//********************************post likes, votes, comments */
+//******************************** post likes, votes, comments */
 
-route.get('/likes/:id',verifyJwt,async(req,res)=>{
+route.get('/post/:id',verifyJwt,async(req,res)=>{
     const post_id =  req.params.id
     const talentPost = await talentPostDataModel.findOne(
         {post_id:post_id}
         )
+     if(!talentPost) 
+      {
+        return res.json("expired")   
+      }
     return res.json(talentPost)
 })
 
@@ -66,14 +72,7 @@ route.post('/likes/:id',verifyJwt,async(req,res)=>{
         {post_id:post_id}
         )
     if(! talentPost) {
-        // const talP = new talentPostDataModel({
-        //    owner_id:owner_id,
-        //    post_id : post_id,
-        //    votes:[],
-        //    likes:[like],
-        //    comments:[]
-        //  })
-        // await talP.save()
+      
         return res.json("expired")
     }
     
@@ -219,9 +218,35 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
           comments:[]
          })
     await newPostData.save()
-    if(!newTalent) return res.json({error:"challenge expired"}).status(404)
+
+    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+   
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+      
+        let   message = "has participated in a talent show"     
+        const notification = {
+            receiver_id:friend.sender_id,
+            type:"talent",
+            isRead:false,
+            message:message , 
+            content: {  
+                sender_id:req.body.user_id,
+                talentRoom_id:_id,
+                name:newTalent.name,
+                region:newTalent.region,   
+            }
+          
+        }
+
+        await notificationModel(notification).save()
+        
+    })
+
+    if(!newTalent) return res.json({error:"expired"}).status(404)
     res.json(newTalent)
 })
+
 
 route.get('/room/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;

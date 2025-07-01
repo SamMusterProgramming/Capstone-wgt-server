@@ -132,7 +132,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         }
 
         await notificationModel(notification).save()
-    // }           
+        
     })
 
     res.json(newChallenge)
