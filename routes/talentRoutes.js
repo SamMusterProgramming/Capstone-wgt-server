@@ -92,6 +92,36 @@ route.post('/likes/:id',verifyJwt,async(req,res)=>{
     return res.json(updatedPost)
 })
 
+route.post('/flags/:id',verifyJwt,async(req,res)=>{
+    const post_id =  req.params.id
+    const owner_id = req.body.owner_id
+    const flag = {
+       flagger_id : req.body.flagger_id
+    }
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+    if(! talentPost) { 
+        return res.json("expired")
+    }
+    
+    let updateQuery;
+
+    const userFlagged = talentPost.flags.find(flag => flag.flagger_id == req.body.flagger_id);
+    if (userFlagged) {
+        updateQuery = { $pull: { flags: flag } };
+      } else {
+        updateQuery = { $addToSet: { flags: flag } }; // $addToSet ensures unique entries
+      }
+    const updatedPost = await talentPostDataModel.findOneAndUpdate(
+        {post_id:post_id},
+         updateQuery,
+        { new: true } 
+      );
+    return res.json(updatedPost)
+})
+
+
 route.post('/votes/:id',verifyJwt,async(req,res)=>{
     
     const post_id =  req.params.id
@@ -104,16 +134,8 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
         {post_id:post_id}
         )
 
-    if(! talentPost) {
-        const talP = new talentPostDataModel({
-           owner_id:owner_id,
-           post_id : post_id,
-           votes:[vote],
-           likes:[],
-           comments:[]
-         })
-        await talP.save()
-        return res.json(talP)
+    if(! talentPost) { 
+        return res.json("expired")
     }
     
     let updateQuery;

@@ -13,6 +13,7 @@ const dataSchema = new mongoose.Schema({
     },
     likes:[],
     votes:[],
+    flags:[],
     comments: [] 
 },
  { timestamps: true, versionKey: false }
