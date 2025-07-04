@@ -120,7 +120,7 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
         { new: true } 
       );
     const talentRoom = await talentModel.findById(talentPost.room_id)
-    if(updatedPost.flags.length >= 5)  {
+    if(updatedPost.flags.length >= 7)  {
          if(updatedPost.likes.length < updatedPost.flags.length * 10 )
          {
             talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== owner_id)
