@@ -118,6 +118,12 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
          updateQuery,
         { new: true } 
       );
+    if(updatedPost.flags.length > 5)  {
+         if(updatedPost.likes.length < updatedPost.flags.length * 10 )
+         {
+
+         }
+    }
     return res.json(updatedPost)
 })
 
@@ -238,6 +244,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
          {
           post_id : newObjectId,
           owner_id : req.body.user_id,
+          room_id:req.body.room_id,
           likes:[],
           votes:[],
           comments:[]

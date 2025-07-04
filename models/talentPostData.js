@@ -11,6 +11,10 @@ const dataSchema = new mongoose.Schema({
        type:String,
        required:true,
     },
+    room_id:{ 
+        type:String,
+        required:true,
+     },
     likes:[],
     votes:[],
     flags:[],
