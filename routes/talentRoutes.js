@@ -220,6 +220,8 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              profile_img:req.body.profile_img,
              name:req.body.name,
              email:req.body.email,
+             country:req.body.country,
+             city:req.body.city,
              thumbNail_URL: req.body.thumbNail,
              createdAt: new Date()
             }  
