@@ -98,6 +98,7 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
     const flag = {
        flagger_id : req.body.flagger_id
     }
+
     const talentPost = await talentPostDataModel.findOne(
         {post_id:post_id}
         )
@@ -118,10 +119,13 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
          updateQuery,
         { new: true } 
       );
-    if(updatedPost.flags.length > 5)  {
+    const talentRoom = await talentModel.findById(talentPost.room_id)
+    if(updatedPost.flags.length >= 5)  {
          if(updatedPost.likes.length < updatedPost.flags.length * 10 )
          {
-
+            talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== owner_id)
+            await talentRoom.save()
+            await talentPostDataModel.findOneAndDelete({post_id:post_id})
          }
     }
     return res.json(updatedPost)
