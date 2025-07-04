@@ -223,7 +223,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              country:req.body.country,
              city:req.body.city,
              thumbNail_URL: req.body.thumbNail,
-             talentRoom_id: req.body.talentRoom_id,
+             talentRoom_id: req.body.room_id,
              createdAt: new Date()
             }  
     
