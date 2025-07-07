@@ -298,19 +298,31 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
     //          createdAt: new Date()
     //         }  
     
-    const newTalent = await talentModel.findById(
-        _id 
+    const newTalent = await talentModel.findByIdAndUpdate(
+        _id ,
+        {
+            $set: {
+              "contestants.$[item].name": req.body.name,
+              "contestants.$[item].profile_img": req.body.profile_img,
+              "contestants.$[item].thumbNail_URL": req.body.thumbNail,
+              "contestants.$[item].country":req.body.country,
+              "contestants.$[item].video_url":req.body.video_url,
+            }
+          },
+          {
+            arrayFilters: [{ "item.id": req.body.user_id }],
+            new: true 
+          }
     )
-    const contestantToUpdate = newTalent.contestants.find(item => item.user_id === req.body.user_id);
-    if (contestantToUpdate) {
-        contestantToUpdate.video_url=req.body.video_url;
-        contestantToUpdate.profile_img=req.body.profile_img;
-        contestantToUpdate.name=req.body.name;
-        contestantToUpdate.country=req.body.country;
-        contestantToUpdate.thumbNail_URL=req.body.thumbNail;
-    
-        await newTalent.save();
-      }
+    // const contestantToUpdate = newTalent.contestants.find(item => item.user_id === req.body.user_id);
+    // if (contestantToUpdate) {
+    //     contestantToUpdate.video_url = req.body.video_url;
+    //     contestantToUpdate.profile_img = req.body.profile_img;
+    //     contestantToUpdate.name = req.body.name;
+    //     contestantToUpdate.country = req.body.country;
+    //     contestantToUpdate.thumbNail_URL = req.body.thumbNail;
+    //     await newTalent.save();
+    //   }
 
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
     if(friend)
