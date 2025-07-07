@@ -353,7 +353,6 @@ route.patch('/queue/:id',verifyJwt,async(req,res)=>{
     )
     
     let updateQuery;
-
     const userQued = talentRoom.queue.find(user => user.user_id == req.body.user_id);
     if (userQued) {
         updateQuery = { $pull: { queue: user } };
