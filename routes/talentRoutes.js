@@ -286,34 +286,33 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
     
     const _id = req.params.id
-    const newStatus= {   
-             video_url:req.body.video_url,
-             profile_img:req.body.profile_img,
-             name:req.body.name,
-             email:req.body.email,
-             country:req.body.country,
-             city:req.body.city,
-             thumbNail_URL: req.body.thumbNail,
-             talentRoom_id: req.body.room_id,
-             createdAt: new Date()
-            }  
+    // const newStatus= {   
+    //          video_url:req.body.video_url,
+    //          profile_img:req.body.profile_img,
+    //          name:req.body.name,
+    //          email:req.body.email,
+    //          country:req.body.country,
+    //          city:req.body.city,
+    //          thumbNail_URL: req.body.thumbNail,
+    //          talentRoom_id: req.body.room_id,
+    //          createdAt: new Date()
+    //         }  
     
-    const newTalent = await talentModel.findOneAndUpdate(
-        {_id:_id ,"contestants.user_id":req.body.user_id},
-        {
-            $set: {
-                "contestants.$[elem].video_url":req.body.video_url,
-                "contestants.$[elem].profile_img":req.body.profile_img,
-                "contestants.$[elem].name": req.body.name,
-                "contestants.$[elem].country":req.body.country,
-                "contestants.$[elem]. thumbNail_URL":req.body.thumbNail,
-            }
-         },
-         { new:true } 
+    const newTalent = await talentModel.findById(
+        _id 
     )
+    const contestantToUpdate = newTalent.contestants.find(item => item.user_id === req.body.user_id);
+    if (contestantToUpdate) {
+        contestantToUpdate.video_url=req.body.video_url;
+        contestantToUpdate.profile_img=req.body.profile_img;
+        contestantToUpdate.name=req.body.name;
+        contestantToUpdate.country=req.body.country;
+        contestantToUpdate.thumbNail_URL=req.body.thumbNail;
+    
+        await newTalent.save();
+      }
 
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
-   
     if(friend)
       friend.friends.forEach(async(friend) =>{
       
