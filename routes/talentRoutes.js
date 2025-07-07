@@ -31,7 +31,8 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         name:talent.name,
         region : talent.region,
         desc : talent.desc,
-        contestants:[]
+        contestants:[],
+        queue : talent.queue,
      }
      if(talent.contestants.length > 0){
         talent.contestants.map(async(contestant,index) => {
@@ -44,8 +45,9 @@ route.post('/creates',verifyJwt,async(req,res)=>{
                 return  res.json(newT)
             }     
               
-        })
-     }else  return res.json(talent)   
+        })  
+     }     
+     else  return  res.json(talent)   
 })
 //******************************** post likes, votes, comments */
 
@@ -219,6 +221,8 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
   return res.json(postComment).status(200)
 })
 
+//*****************************upload contestants */
+
 route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     
     const newObjectId = new mongoose.Types.ObjectId();
@@ -286,18 +290,6 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
     
     const _id = req.params.id
-    // const newStatus= {   
-    //          video_url:req.body.video_url,
-    //          profile_img:req.body.profile_img,
-    //          name:req.body.name,
-    //          email:req.body.email,
-    //          country:req.body.country,
-    //          city:req.body.city,
-    //          thumbNail_URL: req.body.thumbNail,
-    //          talentRoom_id: req.body.room_id,
-    //          createdAt: new Date()
-    //         }  
-    
     const newTalent = await talentModel.findByIdAndUpdate(
         _id ,
         {
@@ -352,6 +344,30 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
 })
 
 
+route.patch('/queue/:id',verifyJwt,async(req,res)=>{
+    console.log(req.body)
+    const _id = req.params.id
+    const user = req.body
+    const talentRoom = await talentModel.findById(
+        _id 
+    )
+    
+    let updateQuery;
+
+    const userQued = talentRoom.queue.find(user => user.user_id == req.body.user_id);
+    if (userQued) {
+        updateQuery = { $pull: { queue: user } };
+      } else {
+        updateQuery = { $addToSet: { queue: user } }; // $addToSet ensures unique entries
+      }
+    const updatedRoom = await talentModel.findByIdAndUpdate(
+        _id,
+         updateQuery,
+        { new: true } 
+      );
+    return res.json(updatedRoom)
+})
+
 
 route.get('/room/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
@@ -360,7 +376,7 @@ route.get('/room/:id',verifyJwt, async(req,res)=>{
     res.json(talentRoom).status(200)
    })
 
-   route.get('/rooms',verifyJwt, async(req,res)=>{
+route.get('/rooms',verifyJwt, async(req,res)=>{
     const { name } = req.query;
     const talentRooms = await talentModel.find({name:name})
     if(!talentRooms) return res.json("post expired")

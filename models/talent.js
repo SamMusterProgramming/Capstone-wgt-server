@@ -9,6 +9,10 @@ const talentSchema = new mongoose.Schema({
     },
     contestants:[]
     ,
+    eliminations:[]
+    ,
+    queue:[]
+    ,
     like_count:{
         type:Number,
         min:[0]
