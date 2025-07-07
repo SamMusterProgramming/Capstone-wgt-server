@@ -283,6 +283,64 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     res.json(newTalent)
 })
 
+route.patch('/update/:id',verifyJwt,async(req,res)=>{
+    
+    const _id = req.params.id
+    const newStatus= {   
+             video_url:req.body.video_url,
+             profile_img:req.body.profile_img,
+             name:req.body.name,
+             email:req.body.email,
+             country:req.body.country,
+             city:req.body.city,
+             thumbNail_URL: req.body.thumbNail,
+             talentRoom_id: req.body.room_id,
+             createdAt: new Date()
+            }  
+    
+    const newTalent = await talentModel.findOneAndUpdate(
+        {_id:_id ,"contestants.user_id":req.body.user_id},
+        {
+            $set: {
+                "contestants.$[elem].video_url":req.body.video_url,
+                "contestants.$[elem].profile_img":req.body.profile_img,
+                "contestants.$[elem].name": req.body.name,
+                "contestants.$[elem].country":req.body.country,
+                "contestants.$[elem]. thumbNail_URL":req.body.thumbNail,
+            }
+         },
+         { new:true } 
+    )
+
+    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+   
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+      
+        let   message = "has updated his participation in a talent show"     
+        const notification = {
+            receiver_id:friend.sender_id,
+            type:"talent",
+            isRead:false,
+            message:message , 
+            content: {  
+                sender_id:req.body.user_id,
+                talentRoom_id:_id,
+                name:newTalent.name,
+                region:newTalent.region,   
+            }
+          
+        }
+
+        await notificationModel(notification).save()
+        
+    })
+
+    if(!newTalent) return res.json({error:"expired"}).status(404)
+    res.json(newTalent)
+})
+
+
 
 route.get('/room/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
