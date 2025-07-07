@@ -310,7 +310,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
             }
           },
           {
-            arrayFilters: [{ "item.id": req.body.user_id }],
+            arrayFilters: [{ "item.user_id": req.body.user_id }],
             new: true 
           }
     )
