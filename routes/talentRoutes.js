@@ -241,17 +241,13 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              talentRoom_id: req.body.room_id,
              createdAt: new Date()
             }  
-    
+    const query = req.body.type=="new" ? 
+    {$push: { contestants : contestant }}
+    : {$push: { queue : contestant }}
     const newTalent = await talentModel.findByIdAndUpdate(
         _id,
-        {
-            $push: { contestants : contestant },
-            $pull: { queue : {
-                 user_id:req.body.user_id,
-                 profile_img:req.body.profile_img,
-                 name:req.body.name,
-            } }
-         },
+         query
+         ,
          { new:true } 
     )
     const newPostData = new talentPostDataModel(
@@ -266,7 +262,8 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     await newPostData.save()
 
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
-   
+    
+    if(req,body.type == "new"){
     if(friend)
       friend.friends.forEach(async(friend) =>{
       
@@ -288,6 +285,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
         await notificationModel(notification).save()
         
     })
+   }
 
     if(!newTalent) return res.json({error:"expired"}).status(404)
     res.json(newTalent)
@@ -312,15 +310,6 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
             new: true 
           }
     )
-    // const contestantToUpdate = newTalent.contestants.find(item => item.user_id === req.body.user_id);
-    // if (contestantToUpdate) {
-    //     contestantToUpdate.video_url = req.body.video_url;
-    //     contestantToUpdate.profile_img = req.body.profile_img;
-    //     contestantToUpdate.name = req.body.name;
-    //     contestantToUpdate.country = req.body.country;
-    //     contestantToUpdate.thumbNail_URL = req.body.thumbNail;
-    //     await newTalent.save();
-    //   }
 
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
     if(friend)
