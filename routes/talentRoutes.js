@@ -244,7 +244,12 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     const newTalent = await talentModel.findByIdAndUpdate(
         _id,
         {
-            $push: { contestants : contestant }
+            $push: { contestants : contestant },
+            $pull: { queue : {
+                 user_id:req.body.user_id,
+                 profile_img:req.body.profile_img,
+                 name:req.body.name,
+            } }
          },
          { new:true } 
     )
