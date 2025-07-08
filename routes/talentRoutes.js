@@ -395,11 +395,19 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
+    const type = req.body.type
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("post expired")
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
-    talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
-    talentRoom.eliminations.push({user_id:user_id})
+    if(type=="resign"){
+        talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
+        talentRoom.eliminations.push({user_id:user_id})
+        
+    }
+    if(type=="queued"){
+        talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
+        // talentRoom.eliminations.push({user_id:user_id})
+    }
     await talentRoom.save()
     res.json(talentRoom).status(200)
    })
