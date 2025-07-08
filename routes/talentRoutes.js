@@ -241,7 +241,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              talentRoom_id: req.body.room_id,
              createdAt: new Date()
             }  
-    const query = req.body.type=="new" ? 
+    const query = req.body.type =="new" ? 
     {$push: { contestants : contestant }}
     : {$push: { queue : contestant }}
     const newTalent = await talentModel.findByIdAndUpdate(
@@ -294,23 +294,35 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
     
     const _id = req.params.id
+    const query = req.body.type =="update" ? 
+    {
+        $set: {
+          "contestants.$[item].name": req.body.name,
+          "contestants.$[item].profile_img": req.body.profile_img,
+          "contestants.$[item].thumbNail_URL": req.body.thumbNail,
+          "contestants.$[item].country":req.body.country,
+          "contestants.$[item].video_url":req.body.video_url,
+        }
+      }:
+      {
+        $set: {
+          "queue.$[item].name": req.body.name,
+          "queue.$[item].profile_img": req.body.profile_img,
+          "queue.$[item].thumbNail_URL": req.body.thumbNail,
+          "queue.$[item].country":req.body.country,
+          "queue.$[item].video_url":req.body.video_url,
+        }
+      }
     const newTalent = await talentModel.findByIdAndUpdate(
         _id ,
-        {
-            $set: {
-              "contestants.$[item].name": req.body.name,
-              "contestants.$[item].profile_img": req.body.profile_img,
-              "contestants.$[item].thumbNail_URL": req.body.thumbNail,
-              "contestants.$[item].country":req.body.country,
-              "contestants.$[item].video_url":req.body.video_url,
-            }
-          },
+        query,
           {
             arrayFilters: [{ "item.user_id": req.body.user_id }],
             new: true 
           }
     )
 
+   if(req.body.type =="update"){
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
     if(friend)
       friend.friends.forEach(async(friend) =>{
@@ -332,7 +344,8 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
 
         await notificationModel(notification).save()
         
-    })
+     })
+    }
 
     if(!newTalent) return res.json({error:"expired"}).status(404)
     res.json(newTalent)
