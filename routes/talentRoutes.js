@@ -33,6 +33,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         desc : talent.desc,
         contestants:[],
         queue : talent.queue,
+        eliminations : talent.eliminations
      }
      if(talent.contestants.length > 0){
         talent.contestants.map(async(contestant,index) => {
@@ -395,8 +396,8 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("post expired")
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
-    console.log(deletedPost)
     talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
+    talentRoom.eliminations.push({user_id:user_id})
     await talentRoom.save()
     res.json(talentRoom).status(200)
    })
