@@ -244,6 +244,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     const query = req.body.type =="new" ? 
     {$push: { contestants : contestant }}
     : {$push: { queue : contestant }}
+
     const newTalent = await talentModel.findByIdAndUpdate(
         _id,
          query
@@ -263,7 +264,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
     
-    if(req,body.type == "new"){
+    if(req.body.type == "new"){
     if(friend)
       friend.friends.forEach(async(friend) =>{
       
@@ -294,7 +295,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
     
     const _id = req.params.id
-    const query = req.body.type =="update" ? 
+    const query = req.body.type == "update" ? 
     {
         $set: {
           "contestants.$[item].name": req.body.name,
