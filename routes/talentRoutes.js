@@ -171,6 +171,21 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
          updateQuery,
         { new: true } 
       );
+
+    const talentRoom = await talentModel.findByIdAndUpdate(
+        req.body.room_id,
+        {
+            $set: {
+              "contestants.$[item].votes":updatedPost.votes.length,
+              "contestants.$[item].likes":updatedPost.likes.length,
+            }
+          },
+          {
+            arrayFilters: [{ "item.user_id": owner_id }],
+            new: true 
+          }
+    )
+    
     return res.json(updatedPost)
 })
 
@@ -244,6 +259,8 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              email:req.body.email,
              country:req.body.country,
              city:req.body.city,
+             votes:0,
+             likes:0,
              thumbNail_URL: req.body.thumbNail,
              talentRoom_id: req.body.room_id,
              createdAt: new Date()
