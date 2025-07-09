@@ -127,8 +127,13 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
          if(updatedPost.likes.length < updatedPost.flags.length * 10 )
          {
             talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== owner_id)
+            talentRoom.eliminations.push({user_id:owner_id})
+            let userQueue = null  ;
+            if(talentRoom.queue.length >0) 
+                userQueue = talentRoom.queue.shift()
+            userQueue && talentRoom.contestants.push(userQueue)
             await talentRoom.save()
-            await talentPostDataModel.findOneAndDelete({post_id:post_id})
+            // await talentPostDataModel.findOneAndDelete({post_id:post_id})
          }
     }
     return res.json(updatedPost)
@@ -400,18 +405,23 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("post expired")
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
-    if(type=="resign"){
+    if(type == "resign"){
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
         talentRoom.eliminations.push({user_id:user_id})
-        
+        let userQueue = null ; 
+        if(talentRoom.queue.length > 0)
+               userQueue = talentRoom.queue.shift()
+        userQueue && talentRoom.contestants.push(userQueue)
     }
-    if(type=="queued"){
+    if(type == "queued"){
         talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
         // talentRoom.eliminations.push({user_id:user_id})
     }
     await talentRoom.save()
     res.json(talentRoom).status(200)
    })
+
+
 
 function  verifyJwt(req,res,next){
     const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
