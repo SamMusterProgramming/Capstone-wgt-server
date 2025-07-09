@@ -452,10 +452,10 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
 
     if(talentRoom.contestants.length < 10) return res.json(talentRoom)
 
-    const eliminatedContestants = talentRoom.contestants.splice(talentRoom.contestants.length-6,talentRoom.contestants.length-1)
+    const eliminatedContestants = talentRoom.contestants.splice(-5)
     talentRoom.eliminations.push(...eliminatedContestants)
     
-    const queuedContestants = talentRoom.queue.splice(0,4)
+    const queuedContestants = talentRoom.queue.splice(0,5)
     talentRoom.contestants.push(...queuedContestants)
     await talentRoom.save()
 
