@@ -26,6 +26,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
+     
      let newT = {
         _id:talent._id,
         name:talent.name,
@@ -33,6 +34,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         desc : talent.desc,
         contestants:[],
         queue : talent.queue,
+        MAXCONTESTANTS: 22,
         eliminations : talent.eliminations
      }
      if(talent.contestants.length > 0){
@@ -41,7 +43,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             if (pData) newT.contestants.push({...contestant,votes:pData.votes.length})
             else newT.contestants.push({...contestant,votes:0 })
             if(newT.contestants.length == talent.contestants.length){
-                console.log(newT)
+                // console.log(newT)
                 newT.contestants.sort((a, b) => b.votes - a.votes)
                 return  res.json(newT)
             }     
@@ -407,7 +409,9 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
     if(type == "resign"){
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
-        talentRoom.eliminations.push({user_id:user_id})
+        talentRoom.eliminations.push({
+                 user_id:user_id
+                })
         let userQueue = null ; 
         if(talentRoom.queue.length > 0)
                userQueue = talentRoom.queue.shift()
@@ -421,6 +425,24 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     res.json(talentRoom).status(200)
    })
 
+   route.patch('/elimination/:id',verifyJwt, async(req,res)=>{
+    const room_id = req.params.id;
+    const talentRoom = await talentModel.findById(room_id)
+
+    if(talentRoom.contestants.length < 10) return res.json(talentRoom)
+
+    const eliminatedContestants = talentRoom.contestants.splice(talentRoom.contestants.length-6,talentRoom.contestants.length-1)
+    talentRoom.eliminations.push(...eliminatedContestants)
+    
+    const queuedContestants = talentRoom.queue.splice(0,4)
+    talentRoom.contestants.push(...queuedContestants)
+    await talentRoom.save()
+
+    eliminatedContestants.forEach(async(el)=> {
+          await talentPostDataModel.findByIdAndDelete(el._id)
+    } )
+    res.json(talentRoom).status(200)
+   })
 
 
 function  verifyJwt(req,res,next){

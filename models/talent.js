@@ -26,7 +26,13 @@ const talentSchema = new mongoose.Schema({
     region:{
         type:String
     },
-   
+    MAXCONTESTANTS: {
+        type: Number,
+        default: 22,
+        // set(value) {
+        //   return this.a; // Always return the existing value
+        // },  
+      },
     invited_friends:[],
     audience:{
        type:String,
