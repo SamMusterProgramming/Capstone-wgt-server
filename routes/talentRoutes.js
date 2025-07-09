@@ -26,31 +26,33 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-     
-     let newT = {
-        _id:talent._id,
-        name:talent.name,
-        region : talent.region,
-        desc : talent.desc,
-        contestants:[],
-        queue : talent.queue,
-        MAXCONTESTANTS: 22,
-        eliminations : talent.eliminations
-     }
-     if(talent.contestants.length > 0){
-        talent.contestants.map(async(contestant,index) => {
-            const pData = await talentPostDataModel.findOne({post_id:contestant._id})
-            if (pData) newT.contestants.push({...contestant,votes:pData.votes.length})
-            else newT.contestants.push({...contestant,votes:0 })
-            if(newT.contestants.length == talent.contestants.length){
-                // console.log(newT)
-                newT.contestants.sort((a, b) => b.votes - a.votes)
-                return  res.json(newT)
-            }     
+     talent.contestants.sort((a, b) => b.votes - a.votes)
+     await talent.save()
+    //  let newT = {
+    //     _id:talent._id,
+    //     name:talent.name,
+    //     region : talent.region,
+    //     desc : talent.desc,
+    //     contestants:[],
+    //     queue : talent.queue,
+    //     MAXCONTESTANTS: 22,
+    //     eliminations : talent.eliminations
+    //  }
+    //  if(talent.contestants.length > 0){
+    //     talent.contestants.map(async(contestant,index) => {
+    //         const pData = await talentPostDataModel.findOne({post_id:contestant._id})
+    //         if (pData) newT.contestants.push({...contestant,votes:pData.votes.length})
+    //         else newT.contestants.push({...contestant,votes:0 })
+    //         if(newT.contestants.length == talent.contestants.length){
+            
+    //             newT.contestants.sort((a, b) => b.votes - a.votes)
+    //             return  res.json(newT)
+    //         }     
               
-        })  
-     }     
-     else  return  res.json(talent)   
+    //     })  
+    //  }     
+    //  else  return 
+      res.json(talent)   
 })
 //******************************** post likes, votes, comments */
 
@@ -185,6 +187,8 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
             new: true 
           }
     )
+    talentRoom.contestants.sort((a, b) => b.votes - a.votes)
+    await talentRoom.save()
     
     return res.json(updatedPost)
 })
