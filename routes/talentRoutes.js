@@ -488,7 +488,26 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
 
     eliminatedContestants.forEach(async(el)=> {
           await talentPostDataModel.findByIdAndDelete(el._id)
+          let   message = "you have been eliminated from  talent show"     
+          const notification = {
+              receiver_id:el.user_id,
+              type:"talent",
+              isRead:false,
+              message:message , 
+              content: {  
+                  sender_id:el.user_id,
+                  talentRoom_id:room_id,
+                  name:el.name,
+                  profile_img:el.profile_img,
+                  region:talentRoom.region,   
+              }
+            
+          }
+          await notificationModel(notification).save()
     } )
+
+
+
     res.json(talentRoom).status(201)   
    })
 
