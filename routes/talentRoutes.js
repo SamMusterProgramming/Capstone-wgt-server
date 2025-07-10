@@ -489,7 +489,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     eliminatedContestants.forEach(async(el)=> {
           await talentPostDataModel.findByIdAndDelete(el._id)
     } )
-    res.json(talentRoom).status(200)   
+    res.json(talentRoom).status(201)   
    })
 
 
