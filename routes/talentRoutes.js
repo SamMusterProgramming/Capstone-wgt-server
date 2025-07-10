@@ -26,7 +26,14 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-     talent.contestants.sort((a, b) => b.votes - a.votes)
+     talent.contestants.sort((a, b) => {
+                        if(a.votes !== b.votes){
+                           return b.votes - a.votes
+                        }else {
+                           return b.likes - a.likes
+                        }
+                        
+                        })
      await talent.save()
     //  let newT = {
     //     _id:talent._id,
@@ -96,6 +103,19 @@ route.post('/likes/:id',verifyJwt,async(req,res)=>{
          updateQuery,
         { new: true } 
       );
+      const talentRoom = await talentModel.findByIdAndUpdate(
+        req.body.room_id,
+        {
+            $set: {
+              "contestants.$[item].votes":updatedPost.votes.length,
+              "contestants.$[item].likes":updatedPost.likes.length,
+            }
+          },
+          {
+            arrayFilters: [{ "item.user_id": owner_id }],
+            new: true 
+          }
+    )
     return res.json(updatedPost)
 })
 
@@ -187,7 +207,14 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
             new: true 
           }
     )
-    talentRoom.contestants.sort((a, b) => b.votes - a.votes)
+    talentRoom.contestants.sort((a, b) => {
+        if(a.votes !== b.votes){
+            b.votes - a.votes
+        }else {
+            b.likes - a.likes
+        }
+        
+        })
     await talentRoom.save()
     
     return res.json(updatedPost)
