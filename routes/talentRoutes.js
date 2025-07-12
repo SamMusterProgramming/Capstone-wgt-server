@@ -332,8 +332,11 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
             content: {  
                 sender_id:req.body.user_id,
                 talentRoom_id:_id,
-                name:newTalent.name,
-                region:newTalent.region,   
+                talentName:newTalent.name,
+                region:newTalent.region, 
+                profile_img:req.body.profile_img,
+                name:req.body.name,
+                email:req.body.email,  
             }
           
         }
