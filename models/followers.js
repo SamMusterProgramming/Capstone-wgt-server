@@ -9,18 +9,18 @@ const followerSchema = new mongoose.Schema({
      },
      followers:[],
      followings:[],
-     user_email:{
+     email:{
         type:String,
-        default:"no email"
+        default:"no name"
      },
-     followers_count:{
-        type:Number,
-        default:0
+     name:{
+      type:String,
+      default:"no name"
      },
-     followings_count:{
-        type:Number,
-        default:0
+     profile_img:{
+        type:String
      }
+    
    },
     { timestamps: true , versionKey: false }
  )

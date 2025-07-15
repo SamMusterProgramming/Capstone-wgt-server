@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 
 const friendSchema = new mongoose.Schema({
     
-     receiver_id:{
+     user_id:{
         type:String,
         required:true
      },
@@ -11,20 +11,15 @@ const friendSchema = new mongoose.Schema({
         type:String
      },
      friends:[],
-     user_email:{
+     email:{
         type:String,
         default:"no email"
      },
-     user_name:{
-        type:String,
-        default:"no name"
+     name:{
+      type:String,
+      default:"no email"
      },
-     friends_count:{
-        type:Number,
-        default:0
-     },
-     friend_request_send:[],
-     friend_request_received:[],
+     friend_request_sent:[],
      createdAt: {
         type: Date,   
         default: Date.now
