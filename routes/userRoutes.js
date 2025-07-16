@@ -227,12 +227,12 @@ route.post('/friends/request/:id',verifyJwt,validateMongoObjectId,async(req,res)
     email:req.body.email,
     profile_img:req.body.profile_img
   }
-  // const find_request= await friendModel.findOne
-  //  ({
-  //      user_id:req.body._id,
-  //     'friend_request_sent.user_id':user_id
-  //  })
-  // if(find_request) return  res.json("request exists")
+  const find_request= await friendModel.findOne
+   ({
+       user_id:req.body._id,
+      'friend_request_sent.user_id':user_id
+   })
+  if(find_request) return  res.json("exist")
 
   const friend = await friendModel.findOneAndUpdate(
           {user_id:user_id},
@@ -270,8 +270,7 @@ route.post('/friends/unfriend/:id',verifyJwt,validateMongoObjectId,async(req,res
   const find_friend = await friendModel.findOne({
     user_id:user_id,
     'friends.user_id': req.body._id})
-  if(!find_friend) return  res.json("request expired")
-
+  if(find_friend){
   const friend1 = await friendModel.findOneAndUpdate(
           {user_id:user_id},
           {
@@ -279,23 +278,26 @@ route.post('/friends/unfriend/:id',verifyJwt,validateMongoObjectId,async(req,res
            },
            { new:true } 
           )
-  const friend_2 = {
-      user_id:friend1.user_id,
-      name:friend1.name,
-      email:friend1.email,
-      profile_img:friend1.profile_img
-  }
-  const find_friendx = await friendModel.findOne({
-    user_id:req.body._id,
-   'friends.user_id': user_id})
-  if(!find_friendx) return  res.json("request expired")
+        }
+
+  // const friend_2 = {
+  //     user_id:friend1.user_id,
+  //     name:friend1.name,
+  //     email:friend1.email,
+  //     profile_img:friend1.profile_img
+  // }
+  // const find_friendx = await friendModel.findOne({
+  //   user_id:req.body._id,
+  //  'friends.user_id': user_id})
+  // if(!find_friendx){
   const friend2 = await friendModel.findOneAndUpdate(
     {user_id:req.body._id},
     {
-        $pull: { friends :{user_id:friend1.user_id} },
+        $pull: { friends :{user_id:user_id} },
      },
      { new:true } 
     )
+  // }
   res.json(friend2).status(200)
 })   
 
@@ -393,7 +395,7 @@ route.post('/friends/accept/:id',verifyJwt,validateMongoObjectId,async(req,res)=
     },
     message:"has accepted your friend request, start sharing",
     type:"friends",   
-    isRead:true,
+    isRead:false,
   })
   await newNotification.save()
   res.json(friend_sender).status(200)
