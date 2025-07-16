@@ -310,10 +310,10 @@ route.post('/friends/cancel/:id',verifyJwt,validateMongoObjectId,async(req,res)=
     email:req.body.email,
     profile_img:req.body.profile_img
   }
-  const find_request = await friendModel.findOne({
-            user_id:user_id,
-            'friend_request_sent.user_id': req.body._id
-          })
+  // const find_request = await friendModel.findOne({
+  //           user_id:req.body._id,
+  //           'friend_request_sent.user_id': user_id
+  //         })
   // if(!find_request){ 
   //   await notificationModel.findOneAndDelete({
   //     receiver_id:user_id,
@@ -324,19 +324,33 @@ route.post('/friends/cancel/:id',verifyJwt,validateMongoObjectId,async(req,res)=
   //   return res.json("couldn't find request expired")
   // }
 
-  const friend = await friendModel.findOneAndUpdate(
-          {user_id:user_id},
+  await friendModel.findOneAndUpdate(
+          {user_id:req.body._id},
           {
-              $pull: { friend_request_sent :{user_id:req.body._id} },
+              $pull: { friend_request_sent :{user_id:user_id} },
            },
            { new:true }   
           )
-  let notifications = await notificationModel.findOneAndDelete({
+  const friend = await friendModel.findOneAndUpdate(
+            {user_id:user_id},
+            {
+                $pull: { friend_request_sent :{user_id:req.body._id} },
+             },
+             { new:true }   
+        )
+
+  await notificationModel.findOneAndDelete({
        receiver_id:req.body._id,
        type:"friend request",
       'content.sender_id': user_id} ,
       { new:true }   
     )
+  await notificationModel.findOneAndDelete({
+      receiver_id:user_id,
+      type:"friend request",
+     'content.sender_id': req.body._id} ,
+     { new:true }   
+   )
   
   res.json(friend).status(200)
 })  
