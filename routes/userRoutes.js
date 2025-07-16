@@ -310,20 +310,7 @@ route.post('/friends/cancel/:id',verifyJwt,validateMongoObjectId,async(req,res)=
     email:req.body.email,
     profile_img:req.body.profile_img
   }
-  // const find_request = await friendModel.findOne({
-  //           user_id:req.body._id,
-  //           'friend_request_sent.user_id': user_id
-  //         })
-  // if(!find_request){ 
-  //   await notificationModel.findOneAndDelete({
-  //     receiver_id:user_id,
-  //     type:"friend request",
-  //    'content.sender_id': req.body._id} ,
-  //    { new:true }   
-  //  )
-  //   return res.json("couldn't find request expired")
-  // }
-
+  
   await friendModel.findOneAndUpdate(
           {user_id:req.body._id},
           {
