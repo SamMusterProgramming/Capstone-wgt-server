@@ -402,7 +402,6 @@ route.post('/friends/accept/:id',verifyJwt,validateMongoObjectId,async(req,res)=
 })  
 
 
-
 route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
   const user_id = req.params.id;
   const friendlist = await friendModel.findOne({user_id:user_id})
