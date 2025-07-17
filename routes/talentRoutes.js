@@ -275,7 +275,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
   return res.json(postComment).status(200)
 })
 
-//*****************************upload contestants */
+//***************************** upload contestants and more */
 
 route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     
@@ -612,6 +612,33 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
         
       }
       await notificationModel(notification).save()
+
+      const friend = await friendModel.findOne({user_id:el.user_id})
+    
+      if(friend)
+            friend.friends.forEach(async(friend) =>{
+              let   message = "has participated in a talent show"     
+              const notification = {
+                  receiver_id:friend.user_id,
+                  type:"talent",
+                  isRead:false,
+                  message:message , 
+                  content: {  
+                      sender_id:el.user_id,
+                      talentRoom_id:room_id,
+                      talentName:talentRoom.name,
+                      region:talentRoom.region, 
+                      profile_img:el.profile_img,
+                      name:el.name,
+                      email:el.email,  
+                  }
+                
+              }
+              await notificationModel(notification).save()
+              
+      })
+
+
     })
 
 
