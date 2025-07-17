@@ -321,54 +321,52 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     const friend = await friendModel.findOne({user_id:req.body.user_id})
     
     if(req.body.type == "new"){
-
-    if(friend)
-      friend.friends.forEach(async(friend) =>{
-      
-        let   message = "has participated in a talent show"     
-        const notification = {
-            receiver_id:friend.user_id,
-            type:"talent",
-            isRead:false,
-            message:message , 
-            content: {  
-                sender_id:req.body.user_id,
-                talentRoom_id:_id,
-                talentName:newTalent.name,
-                region:newTalent.region, 
-                profile_img:req.body.profile_img,
-                name:req.body.name,
-                email:req.body.email,  
-            }
+        if(friend)
+          friend.friends.forEach(async(friend) =>{
           
-        }
-        await notificationModel(notification).save()
-        
-    })
-
-    newTalent.contestants.forEach(async(c)=>{
-          if(req.body.user_id !== c.user_id && !friend.friends.find(f=> f.user_id == c.user_id)){
-            let   message = "has participated in  the Talent Contest you are posted in"     
+            let   message = "has participated in a talent show"     
             const notification = {
-              receiver_id:c.user_id,
-              type:"talent",
-              isRead:false,
-              message:message , 
-              content: {  
-                  sender_id:req.body.user_id,
-                  talentRoom_id:_id,
-                  talentName:newTalent.name,
-                  region:newTalent.region, 
-                  profile_img:req.body.profile_img,
-                  name:req.body.name,
-                  email:req.body.email,  
-              }
+                receiver_id:friend.user_id,
+                type:"talent",
+                isRead:false,
+                message:message , 
+                content: {  
+                    sender_id:req.body.user_id,
+                    talentRoom_id:_id,
+                    talentName:newTalent.name,
+                    region:newTalent.region, 
+                    profile_img:req.body.profile_img,
+                    name:req.body.name,
+                    email:req.body.email,  
+                }
+              
+            }
+            await notificationModel(notification).save()
             
-          }
+        })
+        newTalent.contestants.forEach(async(c)=>{
+              if(req.body.user_id !== c.user_id && !friend.friends.find(f=> f.user_id == c.user_id)){
+                let   message = "has participated in  the Talent Contest you are posted in"     
+                const notification = {
+                  receiver_id:c.user_id,
+                  type:"talent",
+                  isRead:false,
+                  message:message , 
+                  content: {  
+                      sender_id:req.body.user_id,
+                      talentRoom_id:_id,
+                      talentName:newTalent.name,
+                      region:newTalent.region, 
+                      profile_img:req.body.profile_img,
+                      name:req.body.name,
+                      email:req.body.email,  
+                  }
+                
+              }
 
-          await notificationModel(notification).save()
-        }
-    })
+              await notificationModel(notification).save()
+            }
+        })
    }
 
     if(!newTalent) return res.json({error:"expired"}).status(404)
@@ -376,7 +374,6 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 })
 
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
-    
     const _id = req.params.id
     const query = req.body.type == "update" ? 
     {
@@ -407,21 +404,18 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
     )
 
    if(req.body.type =="update"){
+
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+
     if(friend)
       friend.friends.forEach(async(friend) =>{
-      
         let   message = "has updated his participation in a talent show"     
         const notification = {
-            receiver_id:friend.sender_id,
+            receiver_id:friend.user_id,
             type:"talent",
             isRead:false,
-            message:message , 
+            message:message, 
             content: {  
-                // sender_id:req.body.user_id,
-                // talentRoom_id:_id,
-                // name:newTalent.name,
-                // region:newTalent.region,   
                 sender_id:req.body.user_id,
                 talentRoom_id:_id,
                 talentName:newTalent.name,
@@ -434,8 +428,32 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
         }
 
         await notificationModel(notification).save()
-        
      })
+    
+     newTalent.contestants.forEach(async(c)=>{
+      if(req.body.user_id !== c.user_id && !friend.friends.find(f => f.user_id == c.user_id)){
+        let   message = "has updated his post in the Talent Contest you are posted in"     
+        const notification = {
+          receiver_id:c.user_id,
+          type:"talent",
+          isRead:false,
+          message:message , 
+          content: {  
+              sender_id:req.body.user_id,
+              talentRoom_id:_id,
+              talentName:newTalent.name,
+              region:newTalent.region, 
+              profile_img:req.body.profile_img,
+              name:req.body.name,
+              email:req.body.email,  
+          }
+        
+      }
+
+      await notificationModel(notification).save()
+    }
+    })
+     
     }
 
     if(!newTalent) return res.json({error:"expired"}).status(404)
@@ -495,10 +513,44 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
         talentRoom.eliminations.push({
                  user_id:user_id
                 })
+        let   message = "you have been eliminated from  talent show"     
+        const notification = {
+              receiver_id:user_id,
+              type:"talent",
+              isRead:false,
+              message:message , 
+              content: {  
+                   sender_id:user_id,
+                   talentRoom_id:room_id,
+                   talentName:talentRoom.name,
+                   name:"Admin",
+                   profile_img:"admin",
+                   region:talentRoom.region,   
+                 }
+                  
+                }
+                await notificationModel(notification).save()
         let userQueue = null ; 
         if(talentRoom.queue.length > 0)
                userQueue = talentRoom.queue.shift()
-        userQueue && talentRoom.contestants.push(userQueue)
+       if(userQueue) {
+         talentRoom.contestants.push(userQueue)
+         let   message = "your partiicipation has been posted in the talent contest"     
+         await notificationModel({
+                  receiver_id:userQueue.user_id,
+                  type:"talent",
+                  isRead:false,
+                  message:message , 
+                  content: {  
+                      sender_id:userQueue.user_id,
+                      talentRoom_id:room_id,
+                      talentName:talentRoom.name,
+                      name:userQueue.name,
+                      profile_img:userQueue.profile_img,
+                      region:talentRoom.region,   
+                    }
+                }).save()
+        }
     }
     if(type == "queued"){
         talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
