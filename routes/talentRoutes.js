@@ -318,15 +318,16 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
          })
     await newPostData.save()
 
-    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+    const friend = await friendModel.findOne({user_id:req.body.user_id})
     
     if(req.body.type == "new"){
+
     if(friend)
       friend.friends.forEach(async(friend) =>{
       
         let   message = "has participated in a talent show"     
         const notification = {
-            receiver_id:friend.sender_id,
+            receiver_id:friend.user_id,
             type:"talent",
             isRead:false,
             message:message , 
@@ -341,9 +342,32 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
             }
           
         }
-
         await notificationModel(notification).save()
         
+    })
+
+    newTalent.contestants.forEach(async(c)=>{
+          if(req.body.user_id !== c.user_id && friend.friends.find(f=> f.user_id !== c.user_id)){
+            let   message = "has participated in  the Talent Contest you are posted in"     
+            const notification = {
+              receiver_id:c.user_id,
+              type:"talent",
+              isRead:false,
+              message:message , 
+              content: {  
+                  sender_id:req.body.user_id,
+                  talentRoom_id:_id,
+                  talentName:newTalent.name,
+                  region:newTalent.region, 
+                  profile_img:req.body.profile_img,
+                  name:req.body.name,
+                  email:req.body.email,  
+              }
+            
+          }
+
+          await notificationModel(notification).save()
+        }
     })
    }
 
