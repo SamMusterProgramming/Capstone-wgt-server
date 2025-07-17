@@ -595,7 +595,6 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     } )
 
     queuedContestants.forEach(async(el)=> {
-      await talentPostDataModel.findByIdAndDelete(el._id)
       let   message = "you have been posted in a Talent Show , you can start tracking progress"     
       const notification = {
           receiver_id:el.user_id,
