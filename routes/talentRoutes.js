@@ -564,7 +564,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
     const talentRoom = await talentModel.findById(room_id)
 
-    if(talentRoom.contestants.length < 10) return res.json(talentRoom)
+    if(talentRoom.contestants.length < 22) return res.json(talentRoom)
 
     const eliminatedContestants = talentRoom.contestants.splice(-5)
     talentRoom.eliminations.push(...eliminatedContestants)
@@ -584,6 +584,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
               content: {  
                   sender_id:el.user_id,
                   talentRoom_id:room_id,
+                  talentName:talentRoom.name,
                   name:el.name,
                   profile_img:el.profile_img,
                   region:talentRoom.region,   
@@ -592,6 +593,27 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
           }
           await notificationModel(notification).save()
     } )
+
+    queuedContestants.forEach(async(el)=> {
+      await talentPostDataModel.findByIdAndDelete(el._id)
+      let   message = "you have been posted in a Talent Show , you can start tracking progress"     
+      const notification = {
+          receiver_id:el.user_id,
+          type:"talent",
+          isRead:false,
+          message:message , 
+          content: {  
+              sender_id:el.user_id,
+              talentRoom_id:room_id,
+              talentName:talentRoom.name,
+              name:el.name,
+              profile_img:el.profile_img,
+              region:talentRoom.region,   
+          }
+        
+      }
+      await notificationModel(notification).save()
+    })
 
 
 
