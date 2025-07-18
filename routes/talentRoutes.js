@@ -26,7 +26,8 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-      talent.name = roomTalentName;
+     talent.name = roomTalentName;
+     talent.round = 1;
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
                            return b.votes - a.votes

@@ -17,7 +17,9 @@ const talentSchema = new mongoose.Schema({
         type:Number,
         min:[0]
     },
-  
+    round:{
+        type: Number,
+    },
      desc:{
         type:String,
         required:false,
