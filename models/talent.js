@@ -13,6 +13,7 @@ const talentSchema = new mongoose.Schema({
     ,
     queue:[]
     ,
+    voters:[],
     like_count:{
         type:Number,
         min:[0]

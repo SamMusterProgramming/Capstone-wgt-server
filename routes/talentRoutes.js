@@ -26,7 +26,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-     talent.name = roomTalentName;
+     talent.voters =[]
      talent.round = 1;
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
@@ -170,38 +170,97 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     
     const post_id =  req.params.id
     const owner_id = req.body.owner_id
+    const voter_id = req.body.voter_id
+
     const vote = {
        voter_id : req.body.voter_id
     }
 
+    const talent = await talentModel.findById(req.body.room_id)
     const talentPost = await talentPostDataModel.findOne(
-        {post_id:post_id}
-        )
+      {post_id:post_id}
+      )
+    
+    const post_owner_name = talent.contestants.find(c => c._id == post_id).name
+    
 
-    if(! talentPost) { 
+    if(!talentPost) { 
         return res.json("expired")
     }
+    const voter = talent.voters.find(  v => 
+                                    v.voter_id == voter_id
+                            )
+
+    // let votedTalentPost = null
+    // if(voter) votedTalentPost = await talentPostDataModel.findOne(
+    //                {post_id:voter.post_id}
+    //              )
+    if(!voter){
+        talent.voters.push({
+                  voter_id : req.body.voter_id,
+                  post_id : post_id,
+                  name : post_owner_name
+        })
+        talentPost.votes.push(vote)
+        await talent.save()
+        await talentPost.save()
+    }else{   
+        talent.voters = talent.voters.filter(v => v.voter_id !== voter_id)
+        
+        if(voter.post_id !== post_id){
+            talent.voters.push({
+            voter_id : voter_id,
+            post_id : post_id,
+            name : post_owner_name
+               })
+            talentPost.votes.push(vote)   
+            await talentPostDataModel.findOneAndUpdate(
+                  {post_id:voter.post_id},
+                  { $pull: { votes: vote } },
+                  { new: true } 
+                );
+
+        }else{
+            talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
+            }
+        }
+
+    await talent.save()
+    await talentPost.save()
     
-    let updateQuery;
+  
 
-    const userLiked = talentPost.votes.find(vote => vote.voter_id == req.body.voter_id);
-    if (userLiked) {
-        updateQuery = { $pull: { votes: vote } };
-      } else {
-        updateQuery = { $addToSet: { votes: vote } }; // $addToSet ensures unique entries
-      }
-    const updatedPost = await talentPostDataModel.findOneAndUpdate(
-        {post_id:post_id},
-         updateQuery,
-        { new: true } 
-      );
 
+    // const talentPost = await talentPostDataModel.findOne(
+    //     {post_id:post_id}
+    //     )
+  //   if(! talentPost) { 
+  //     return res.json("expired")
+  // }
+ 
+    
+    // let updateQuery;
+    // const userLiked = talentPost.votes.find(vote => vote.voter_id == req.body.voter_id);
+    // if (userLiked) {
+    //     updateQuery = { $pull: { votes: vote } };
+    //   } else {
+    //     updateQuery = { $addToSet: { votes: vote } }; // $addToSet ensures unique entries
+    //   }
+    // const updatedPost = await talentPostDataModel.findOneAndUpdate(
+    //     {post_id:post_id},
+    //      updateQuery,
+    //     { new: true } 
+    //   );
+
+
+
+    
     const talentRoom = await talentModel.findByIdAndUpdate(
         req.body.room_id,
         {
             $set: {
-              "contestants.$[item].votes":updatedPost.votes.length,
-              "contestants.$[item].likes":updatedPost.likes.length,
+              "contestants.$[item].votes":talentPost.votes.length,
+              "contestants.$[item].likes":talentPost.likes.length,
             }
           },
           {
@@ -209,6 +268,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
             new: true 
           }
     )
+
     talentRoom.contestants.sort((a, b) => {
         if(a.votes !== b.votes){
             b.votes - a.votes
@@ -219,7 +279,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
         })
     await talentRoom.save()
     
-    return res.json(updatedPost)
+    return res.json(talentPost)
 })
 
 // **************************** Comments ***************************
