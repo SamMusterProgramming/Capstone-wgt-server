@@ -570,7 +570,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
     if(type == "resign"){
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
-        talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id == post_id)
+        talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== post_id)
         talentRoom.eliminations.push({
                  user_id:user_id
                 })
@@ -636,7 +636,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
 
     eliminatedContestants.forEach(async(el)=> {
           await talentPostDataModel.findByIdAndDelete(el._id)
-          talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id == el._id)
+          talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== el._id)
           let   message = "you have been eliminated from  talent show"     
           const notification = {
               receiver_id:el.user_id,
@@ -654,6 +654,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
             
           }
           await notificationModel(notification).save()
+          await talentRoom.save()
     } )
 
     queuedContestants.forEach(async(el)=> {
