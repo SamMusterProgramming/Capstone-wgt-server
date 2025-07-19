@@ -26,7 +26,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-     talent.voters =[]
+    if(talent.voters == undefined) talent.voters =[]
      talent.round = 1;
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
@@ -189,8 +189,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     }
     const voter = talent.voters.find(  v => 
                                     v.voter_id == voter_id
-                            )
-
+                                 )
     // let votedTalentPost = null
     // if(voter) votedTalentPost = await talentPostDataModel.findOne(
     //                {post_id:voter.post_id}
@@ -199,19 +198,20 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
         talent.voters.push({
                   voter_id : req.body.voter_id,
                   post_id : post_id,
-                  name : post_owner_name
+                  name : post_owner_name,
+                  createdAt: new Date()
         })
         talentPost.votes.push(vote)
         await talent.save()
         await talentPost.save()
     }else{   
         talent.voters = talent.voters.filter(v => v.voter_id !== voter_id)
-        
         if(voter.post_id !== post_id){
             talent.voters.push({
             voter_id : voter_id,
             post_id : post_id,
-            name : post_owner_name
+            name : post_owner_name,
+            createdAt:new Date()
                })
             talentPost.votes.push(vote)   
             await talentPostDataModel.findOneAndUpdate(
@@ -219,7 +219,6 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
                   { $pull: { votes: vote } },
                   { new: true } 
                 );
-
         }else{
             talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
             }
@@ -228,7 +227,6 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     await talent.save()
     await talentPost.save()
     
-  
 
 
     // const talentPost = await talentPostDataModel.findOne(
@@ -572,6 +570,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
     if(type == "resign"){
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
+        talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id == post_id)
         talentRoom.eliminations.push({
                  user_id:user_id
                 })
@@ -637,6 +636,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
 
     eliminatedContestants.forEach(async(el)=> {
           await talentPostDataModel.findByIdAndDelete(el._id)
+          talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id == el._id)
           let   message = "you have been eliminated from  talent show"     
           const notification = {
               receiver_id:el.user_id,
