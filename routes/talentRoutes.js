@@ -219,6 +219,10 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
                   { $pull: { votes: vote } },
                   { new: true } 
                 );
+             let index = talent.contestants.findIndex(c => c._id == voter.post_id) 
+             let contestant = talent.contestants[index]
+             contestant.votes --;
+             talent.contestants[index]=contestant
         }else{
             talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
             }
