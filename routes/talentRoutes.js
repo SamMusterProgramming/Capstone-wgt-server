@@ -27,7 +27,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        return res.json(tal)
      }
     if(talent.voters == undefined) talent.voters =[]
-     talent.round = 1;
+    //  talent.round = 1;
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
                            return b.votes - a.votes
