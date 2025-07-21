@@ -382,8 +382,9 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
      }else{
       newTalent.queue.push(contestant)
      }
-   
     await newTalent.save()
+
+
 
 
     const newPostData = new talentPostDataModel(
