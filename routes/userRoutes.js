@@ -41,18 +41,22 @@ route.route('/')
       const user = {...req.body,name:req.body.firstname+" "+req.body.lastname}
       const newUser = new userModel(user)
       if(! newUser) return res.json({error:"can't save user"})
-        console.log(newUser)
       await newUser.save() 
-      const findFriend = await friendModel.findOne({receiver_id:user._id})  
+      const findFriend = await friendModel.findOne({user_id:user._id})  
       if(!findFriend)  await  new friendModel(
         {
-          receiver_id:newUser._id,
-          user_email:user.email,
-          user_name:user.name,
+          user_id:newUser._id,
+          email:user.email,
+          name:user.name,
           profile_img:user.profile_img
       }).save() 
       const findFollower = await followerModel.findOne({user_id:newUser._id})  
-      if(!findFollower)  await  new followerModel({user_id:newUser._id,user_email:user.email}).save()   
+      if(!findFollower)  await  new followerModel({
+                               user_id:newUser._id,
+                               email:user.email,
+                               profile_img:user.profile_img,
+                               name:user.name
+                        }).save()   
        const id = newUser._id  
        const  token = jwt.sign(
           {id}, process.env.ACCESS_TOKEN_SECRET,{ expiresIn: '23h' }
