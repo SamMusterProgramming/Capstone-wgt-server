@@ -633,17 +633,20 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
 
     const eliminatedContestants = talentRoom.contestants.splice(-5)
     talentRoom.eliminations.push(...eliminatedContestants)
+    // talentRoom.queue.push(...eliminatedContestants)
+
     
     const queuedContestants = talentRoom.queue.splice(0,5)
     talentRoom.contestants.push(...queuedContestants)
-    await talentRoom.save()
+
+    talentRoom.round = talentRoom.round + 1 ;
 
     eliminatedContestants.forEach(async(el)=> {
           await talentPostDataModel.findByIdAndDelete(el._id)
           talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== el._id)
           let   message = "you have been eliminated from  talent show"     
           const notification = {
-              receiver_id:el.user_id,
+              receiver_id:el.user_id,   
               type:"talent",
               isRead:false,
               message:message , 
@@ -656,9 +659,9 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
                   region:talentRoom.region,   
               }
             
-          }
+          }   
           await notificationModel(notification).save()
-          await talentRoom.save()
+          
     } )
 
     queuedContestants.forEach(async(el)=> {
@@ -708,8 +711,8 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
 
     })
 
-
-
+   
+    await talentRoom.save()
     res.json(talentRoom).status(201)   
    })
 
