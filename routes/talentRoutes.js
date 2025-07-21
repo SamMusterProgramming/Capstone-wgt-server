@@ -360,16 +360,32 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              talentRoom_id: req.body.room_id,
              createdAt: new Date()
             }  
-    const query = req.body.type =="new" ? 
-    {$push: { contestants : contestant }}
-    : {$push: { queue : contestant }}
+    // const query = req.body.type =="new" ? 
+    // {$push: { contestants : contestant }}
+    // : {$push: { queue : contestant }}
 
-    const newTalent = await talentModel.findByIdAndUpdate(
-        _id,
-         query
-         ,
-         { new:true } 
-    )
+    // const newTalent = await talentModel.findByIdAndUpdate(
+    //     _id,
+    //      query
+    //      ,
+    //      { new:true } 
+    // )
+
+    const newTalent = await talentModel.findById(_id)
+    
+     if(req.body.type =="new") {
+            if(newTalent.contestants.length <22){
+              newTalent.contestants.push(contestant)
+            }else[
+              newTalent.queue.push(contestant)
+            ]
+     }else{
+      newTalent.queue.push(contestant)
+     }
+   
+    await newTalent.save()
+
+
     const newPostData = new talentPostDataModel(
          {
           post_id : newObjectId,
