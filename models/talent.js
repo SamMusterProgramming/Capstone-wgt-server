@@ -16,14 +16,11 @@ const talentSchema = new mongoose.Schema({
     // waiting_list:[]
     // ,
     voters:[],
-    like_count:{
-        type:Number,
-        min:[0]
-    },
-    round:{
-        type: Number,
-    },
-     desc:{
+    editions:[],
+    // round:{
+    //     type: Number,
+    // },
+    desc:{
         type:String,
         required:false,
         default: "add description"
@@ -33,16 +30,13 @@ const talentSchema = new mongoose.Schema({
     },
     MAXCONTESTANTS: {
         type: Number,
-        default: 22,
-        // set(value) {
-        //   return this.a; // Always return the existing value
-        // },  
+        default: 22, 
       },
     invited_friends:[],
-    audience:{
-       type:String,
-       default: "open"
-    },
+    // audience:{
+    //    type:String,
+    //    default: "open"
+    // },
     thumbNail_URL : {
         type:String
     },
