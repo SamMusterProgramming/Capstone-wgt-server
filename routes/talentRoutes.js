@@ -26,13 +26,13 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-    if(talent.waiting_list == undefined) talent.waiting_list = [];
+    // if(talent.waiting_list == undefined) talent.waiting_list = [];
     if(talent.voters == undefined) talent.voters =[]
     if(talent.round == undefined) talent.round = 1;
-    if(talent.round < 4 && (talent.queue.length < ( 4 - talent.round) * 6)) {
-      const waitingUsers = talent.waiting_list.splice(0, ( 4 - talent.round) * 6 -talent.queue.length)
-      talent.queue.push(...waitingUsers)
-   }
+  //   if(talent.round < 4 && (talent.queue.length < ( 4 - talent.round) * 6)) {
+  //     const waitingUsers = talent.waiting_list.splice(0, ( 4 - talent.round) * 6 -talent.queue.length)
+  //     talent.queue.push(...waitingUsers)
+  //  }
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
                            return b.votes - a.votes
@@ -382,14 +382,14 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
             if(newTalent.contestants.length <22){
               newTalent.contestants.push(contestant)
             }else{
-              if(newTalent.queue.length < (4 - newTalent.round) * 6)
+              // if(newTalent.queue.length < (4 - newTalent.round) * 6)
                newTalent.queue.push(contestant)
-              else newTalent.waiting_list.push(contestant)
+              // else newTalent.waiting_list.push(contestant)
             }
      }else{
-          if(newTalent.queue.length < (4 - newTalent.round) * 6)
+          // if(newTalent.queue.length < (4 - newTalent.round) * 6)
             newTalent.queue.push(contestant)
-          else newTalent.waiting_list.push(contestant)
+          // else newTalent.waiting_list.push(contestant)
      }
     await newTalent.save()
 
@@ -562,7 +562,7 @@ route.patch('/queue/:id',verifyJwt,async(req,res)=>{
     if (userQued) {
         updateQuery = { $pull: { queue: user } };
       } else {
-        updateQuery = { $addToSet: { queue: user } }; // $addToSet ensures unique entries
+        updateQuery = { $addToSet: { queue: user } }; 
       }
     const updatedRoom = await talentModel.findByIdAndUpdate(
         _id,
@@ -617,11 +617,11 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
                    region:talentRoom.region,   
                  } 
           }
-                await notificationModel(notification).save()
+        await notificationModel(notification).save()
         let userQueue = null ; 
         if(talentRoom.contestants.length < 22 &&  talentRoom.queue.length > 0)
                userQueue = talentRoom.queue.shift()
-       if(userQueue) {
+        if(userQueue) {
          talentRoom.contestants.push(userQueue)
          let   message = "your partiicipation has been posted in the talent contest"     
          await notificationModel({
@@ -645,10 +645,10 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
         talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
         // talentRoom.eliminations.push({user_id:user_id})
     }
-    if(talentRoom.round < 4 && (talentRoom.queue.length < ( 4 - talentRoom.round) * 6)) {
-      const waitingUsers = talentRoom.waiting_list.splice(0, ( 4 - talentRoom.round) * 6 -talentRoom.queue.length)
-      talentRoom.queue.push(waitingUsers)
-   }
+  //   if(talentRoom.round < 4 && (talentRoom.queue.length < ( 4 - talentRoom.round) * 6)) {
+  //     const waitingUsers = talentRoom.waiting_list.splice(0, ( 4 - talentRoom.round) * 6 -talentRoom.queue.length)
+  //     talentRoom.queue.push(waitingUsers)
+  //  }
     await talentRoom.save()
     res.json(talentRoom).status(200)
    })
@@ -657,7 +657,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
     const talentRoom = await talentModel.findById(room_id)
      
-    if(talentRoom.round < 4 && (talentRoom.contestants.length < 22 || talentRoom.queue.length < 6))
+    if(talentRoom.round < 4 && (talentRoom.contestants.length < 22 || talentRoom.queue.length <  6 ))
             return res.json(talentRoom)
 
     let eliminatedContestants=[]
@@ -727,10 +727,8 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
               profile_img:el.profile_img,
               region:talentRoom.region,   
           }
-        
       }
       await notificationModel(notification).save()
-
       const friend = await friendModel.findOne({user_id:el.user_id})
     
       if(friend)
