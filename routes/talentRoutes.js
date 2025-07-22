@@ -26,8 +26,9 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
+    if(talent.waiting_list == undefined) talent.waiting_list = [];
     if(talent.voters == undefined) talent.voters =[]
-    //  talent.round = 1;
+    if(talent.round == undefined) talent.round = 1;
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
                            return b.votes - a.votes
@@ -376,15 +377,17 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
      if(req.body.type =="new") {
             if(newTalent.contestants.length <22){
               newTalent.contestants.push(contestant)
-            }else[
-              newTalent.queue.push(contestant)
-            ]
+            }else{
+              if(newTalent.queue.length < (4 - newTalent.round) * 6)
+               newTalent.queue.push(contestant)
+              else newTalent.waiting_list.push(contestant)
+            }
      }else{
-      newTalent.queue.push(contestant)
+          if(newTalent.queue.length < (4 - newTalent.round) * 6)
+            newTalent.queue.push(contestant)
+          else newTalent.waiting_list.push(contestant)
      }
     await newTalent.save()
-
-
 
 
     const newPostData = new talentPostDataModel(
@@ -587,7 +590,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const post_id = req.body.post_id;
     const type = req.body.type
     const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("post expired")
+    if(!talentRoom) return res.json("expired")
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
     if(type == "resign"){
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
@@ -613,7 +616,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
                 }
                 await notificationModel(notification).save()
         let userQueue = null ; 
-        if(talentRoom.queue.length > 0)
+        if(talentRoom.contestants.length < 22 &&  talentRoom.queue.length > 0)
                userQueue = talentRoom.queue.shift()
        if(userQueue) {
          talentRoom.contestants.push(userQueue)
@@ -645,21 +648,41 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
    route.patch('/elimination/:id',verifyJwt, async(req,res)=>{
     const room_id = req.params.id;
     const talentRoom = await talentModel.findById(room_id)
+     
+    if(talentRoom.round < 4 && (talentRoom.contestants.length < 22 || talentRoom.queue.length < 6))
+            return res.json(talentRoom)
 
-    if(talentRoom.contestants.length < 22) return res.json(talentRoom)
+    let eliminatedContestants=[]
 
-    const eliminatedContestants = talentRoom.contestants.splice(-5)
+    if(talentRoom.round < 4 ){
+    eliminatedContestants = talentRoom.contestants.splice(-6)
     talentRoom.eliminations.push(...eliminatedContestants)
-    // talentRoom.queue.push(...eliminatedContestants)
-
-    
-    const queuedContestants = talentRoom.queue.splice(0,5)
+    const queuedContestants = talentRoom.queue.splice(0,6)
     talentRoom.contestants.push(...queuedContestants)
+    }
+    if(talentRoom.round == 4 ){
+      eliminatedContestants = talentRoom.contestants.splice(-8)
+      talentRoom.eliminations.push(...eliminatedContestants)
+    }
+    if(talentRoom.round == 5 ){
+      eliminatedContestants = talentRoom.contestants.splice(-4)
+      talentRoom.eliminations.push(...eliminatedContestants)
+    }
 
-    talentRoom.round = talentRoom.round + 1 ;
+    if(talentRoom.round == 6 ){
+      eliminatedContestants = talentRoom.contestants.splice(-2)
+      talentRoom.eliminations.push(...eliminatedContestants)
+    }
+
+    if(talentRoom.round == 7 ){
+      eliminatedContestants = talentRoom.contestants.splice(-1)
+      talentRoom.eliminations.push(...eliminatedContestants)
+    }
+
+    if(talentRoom.round !== 7 )talentRoom.round = talentRoom.round + 1 ;
 
     eliminatedContestants.forEach(async(el)=> {
-          await talentPostDataModel.findByIdAndDelete(el._id)
+          // await talentPostDataModel.findByIdAndDelete(el._id)
           talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== el._id)
           let   message = "you have been eliminated from  talent show"     
           const notification = {
