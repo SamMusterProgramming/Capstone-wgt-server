@@ -29,6 +29,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
     if(talent.waiting_list == undefined) talent.waiting_list = [];
     if(talent.voters == undefined) talent.voters =[]
     if(talent.round == undefined) talent.round = 1;
+    if(talent.round < 4 && (talent.queue.length < ( 4 - talent.round) * 6)) {
+      const waitingUsers = talent.waiting_list.splice(0, ( 4 - talent.round) * 6 -talent.queue.length)
+      talent.queue.push(...waitingUsers)
+   }
      talent.contestants.sort((a, b) => {
                         if(a.votes !== b.votes){
                            return b.votes - a.votes
@@ -592,12 +596,12 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
+    
     if(type == "resign"){
+        const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
         talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== post_id)
-        talentRoom.eliminations.push({
-                 user_id:user_id
-                })
+        deletedUser && talentRoom.eliminations.push(deletedUser)
         let   message = "you have been eliminated from  talent show"     
         const notification = {
               receiver_id:user_id,
@@ -611,9 +615,8 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
                    name:"Admin",
                    profile_img:"admin",
                    region:talentRoom.region,   
-                 }
-                  
-                }
+                 } 
+          }
                 await notificationModel(notification).save()
         let userQueue = null ; 
         if(talentRoom.contestants.length < 22 &&  talentRoom.queue.length > 0)
@@ -636,11 +639,16 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
                     }
                 }).save()
         }
+        
     }
     if(type == "queued"){
         talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
         // talentRoom.eliminations.push({user_id:user_id})
     }
+    if(talentRoom.round < 4 && (talentRoom.queue.length < ( 4 - talentRoom.round) * 6)) {
+      const waitingUsers = talentRoom.waiting_list.splice(0, ( 4 - talentRoom.round) * 6 -talentRoom.queue.length)
+      talentRoom.queue.push(waitingUsers)
+   }
     await talentRoom.save()
     res.json(talentRoom).status(200)
    })
