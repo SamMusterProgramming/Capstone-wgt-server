@@ -48,37 +48,57 @@ route.post('/creates',verifyJwt,async(req,res)=>{
       
       })
     
-      let queuedUsers = []
-    if(talent.contestants.length < 22 &&  talent.queue.length > 0)
-                queuedUsers = talent.queue.splice(0,22-talent.contestants.length+1)
-    talent.contestants.push(...queuedUsers)
+
+    // let fix = talent.contestants.splice(-3)
+    // talent.eliminations.push(fix)
+
+    let edition = talent.editions.find(e => e.status == "open")
+    let edIndex = talent.editions.findIndex( e => e.status === "open")
+
+    let queuedUsers = []
+    if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
+          queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+          talent.contestants.push(...queuedUsers)
+    }
+
+    if(talent.eliminations.length > 0){
+       let contest = talent.eliminations.splice(0,talent.eliminations.length)
+       talent.queue.push(...contest)  
+    }
      
 
     //************************* elimination ****************/
-    let edition = talent.editions.find(e => e.status == "open")
-    let edIndex = talent.editions.findIndex( e => e.status === "open")
+    // let edition = talent.editions.find(e => e.status == "open")
+    // let edIndex = talent.editions.findIndex( e => e.status === "open")
     if(edition && ((edition.round < 4 && talent.contestants.length >= 22 && talent.queue.length >= 6)||
      (edition.round >= 4))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60*60)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
-
-        if(differenceInMilliseconds >= 0.7) {
+     
+        if(differenceInMilliseconds >= 1) {
 
           let eliminatedContestants=[]
-          let queuedContestants   
-
-          if(edition.round < 4 ){
+          let queuedContestants =[]
+    
+          if(edition.round < 3 ){
           eliminatedContestants = talent.contestants.splice(-6)
           talent.eliminations.push(...eliminatedContestants)
           queuedContestants = talent.queue.splice(0,6)
           talent.contestants.push(...queuedContestants)
           }
+
+          if(edition.round == 3 ){
+            eliminatedContestants = talent.contestants.splice(-6)
+            talent.eliminations.push(...eliminatedContestants)
+          }
+
           if(edition.round == 4 ){
             eliminatedContestants = talent.contestants.splice(-8)
             talent.eliminations.push(...eliminatedContestants)
           }
+      
           if(edition.round == 5 ){
             eliminatedContestants = talent.contestants.splice(-4)
             talent.eliminations.push(...eliminatedContestants)
@@ -88,7 +108,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             eliminatedContestants = talent.contestants.splice(-2)
             talent.eliminations.push(...eliminatedContestants)
           }
-      
+
           if(edition.round == 7 ){
             eliminatedContestants = talent.contestants.splice(-1)
             talent.eliminations.push(...eliminatedContestants)
@@ -100,7 +120,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             edition.updatedAt = new Date()
             talent.editions[edIndex] = edition
           } else {
-            edition.round = 7 
+            edition.round = 7
             edition.updatedAt = new Date()
             edition.status = "closed"
             edition.winner = talent.contestants[0]
@@ -364,7 +384,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
              let index = talent.contestants.findIndex(c => c._id == voter.post_id) 
              let contestant = talent.contestants[index]
              contestant.votes --;
-             talent.contestants[index]=contestant
+             talent.contestants[index]=contestant   
         }else{
             talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
             }
