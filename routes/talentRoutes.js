@@ -77,10 +77,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 1) {
+        if(differenceInMilliseconds >= 5) {
 
           let eliminatedContestants=[]
-          let queuedContestants =[]
+          let queuedContestants =[]  
     
           if(edition.round < 3 ){
           eliminatedContestants = talent.contestants.splice(-6)
@@ -113,6 +113,9 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             eliminatedContestants = talent.contestants.splice(-1)
             talent.eliminations.push(...eliminatedContestants)
           }
+
+       
+
       
           if(edition.round !== 7 ) {
             // edIndex = talent.editions.findIndex( e => e.status === "open")
@@ -137,12 +140,16 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           }
       
           eliminatedContestants.forEach(async(el)=> {
-                // await talentPostDataModel.findByIdAndDelete(el._id)
-                talent.voters =  talent.voters.filter(v=>v.post_id !== el._id)
+                // const post = await  talentPostDataModel.findOneAndUpdate(
+                //   {post_id:el._id},
+                //   { $set: { votes: [] } },
+                //   { new: true } 
+                // )
+                // talent.voters =  talent.voters.filter(v => v.post_id !== el._id)
                 let   message = "you have been eliminated from  talent show"     
                 const notification = {
                     receiver_id:el.user_id,   
-                    type:"talent",
+                    type:"talent",   
                     isRead:false,
                     message:message , 
                     content: {  
@@ -152,8 +159,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
                         name:el.name,
                         profile_img:el.profile_img,
                         region:talent.region,   
-                    }
-                  
+                    }              
                 }   
                 await notificationModel(notification).save()
                 
@@ -381,10 +387,31 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
                   { $pull: { votes: vote } },
                   { new: true } 
                 );
-             let index = talent.contestants.findIndex(c => c._id == voter.post_id) 
-             let contestant = talent.contestants[index]
-             contestant.votes --;
-             talent.contestants[index]=contestant   
+             let contestant = null
+             let contestantPost = talent.contestants.find(c => c._id == voter.post_id) 
+             if(contestantPost){
+              let index = talent.contestants.findIndex(c => c._id == voter.post_id) 
+              let contestant = talent.contestants[index]
+              contestant.votes --;
+              talent.contestants[index]=contestant   
+             }else{
+              contestantPost = talent.queue.find(c => c._id == voter.post_id) 
+                  if(contestantPost){
+                    let index = talent.queue.findIndex(c => c._id == voter.post_id) 
+                    let contestant = talent.queue[index]
+                    contestant.votes --;
+                    talent.queue[index]=contestant   
+                  }else{
+                    contestantPost = talent.eliminations.find(c => c._id == voter.post_id) 
+                    if(contestantPost){
+                      let index = talent.eliminations.findIndex(c => c._id == voter.post_id) 
+                      let contestant = talent.eliminations[index]
+                      contestant.votes --;
+                      talent.eliminations[index]=contestant   
+                    }
+                  }
+             }
+            
         }else{
             talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
             }
