@@ -77,7 +77,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 5) {
+        if(differenceInMilliseconds >= 2) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
