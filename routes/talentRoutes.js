@@ -56,17 +56,16 @@ route.post('/creates',verifyJwt,async(req,res)=>{
     let edIndex = talent.editions.findIndex( e => e.status === "open")
 
     let queuedUsers = []
-    if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
-          queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
-          talent.contestants.push(...queuedUsers)
-    }
+    // if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
+    //       queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+    //       talent.contestants.push(...queuedUsers)
+    // }
 
     if(talent.eliminations.length > 0){
        let contest = talent.eliminations.splice(0,talent.eliminations.length)
        talent.queue.push(...contest)  
     }
      
-
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
     // let edIndex = talent.editions.findIndex( e => e.status === "open")
@@ -77,7 +76,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 2) {
+        if(differenceInMilliseconds >= 1) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
@@ -128,6 +127,8 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             edition.status = "closed"
             edition.winner = talent.contestants[0]
             talent.editions[edIndex] = edition
+            let queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+            talent.contestants.push(...queuedUsers)
             const newEdition = {
                _id:edition._id + 1 ,
                round : 1 ,
