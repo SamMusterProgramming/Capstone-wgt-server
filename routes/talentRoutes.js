@@ -73,7 +73,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      (edition.round >= 4))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60*60)
         console.log(differenceInMilliseconds)
      
         if(differenceInMilliseconds >= 1) {
