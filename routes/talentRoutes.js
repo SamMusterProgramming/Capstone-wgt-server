@@ -756,7 +756,10 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
        const index = talent.eliminations.findIndex( e => e.user_id == req.body.user_id)
        if(index !== -1) {
        const eliminatedContestant = talent.eliminations.splice(index,1)
-       talent.queue.push(...eliminatedContestant)
+       let contestant = eliminatedContestant[0]
+       contestant.video_url = req.body.video_url
+       contestant.thumbNail_URL = req.body.thumbNail
+       talent.queue.push(contestant)
        await talent.save()
         }
        res.json(talent)
