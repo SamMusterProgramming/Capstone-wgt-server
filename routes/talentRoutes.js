@@ -61,10 +61,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
     //       talent.contestants.push(...queuedUsers)
     // }
 
-    if(talent.eliminations.length > 0){
-       let contest = talent.eliminations.splice(0,talent.eliminations.length)
-       talent.queue.push(...contest)  
-    }
+    // if(talent.eliminations.length > 0){
+    //    let contest = talent.eliminations.splice(0,talent.eliminations.length)
+    //    talent.queue.push(...contest)  
+    // }
      
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
@@ -73,10 +73,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      (edition.round >= 4))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60*60)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 1) {
+        if(differenceInMilliseconds >= 100) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
@@ -96,21 +96,29 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           if(edition.round == 4 ){
             eliminatedContestants = talent.contestants.splice(-8)
             talent.eliminations.push(...eliminatedContestants)
+           
           }
       
           if(edition.round == 5 ){
             eliminatedContestants = talent.contestants.splice(-4)
-            talent.eliminations.push(...eliminatedContestants)
+            // talent.eliminations.push(...eliminatedContestants)
+            edition.quarter_finalists= eliminatedContestants
+            talent.editions[edIndex] = edition
+
           }
       
           if(edition.round == 6 ){
             eliminatedContestants = talent.contestants.splice(-2)
-            talent.eliminations.push(...eliminatedContestants)
+            // talent.eliminations.push(...eliminatedContestants)
+            edition.semi_finalists = eliminatedContestants
+            talent.editions[edIndex] = edition
           }
 
           if(edition.round == 7 ){
             eliminatedContestants = talent.contestants.splice(-1)
-            talent.eliminations.push(...eliminatedContestants)
+            // talent.eliminations.push(...eliminatedContestants)
+            edition.finalist = eliminatedContestants
+            talent.editions[edIndex] = edition
           }
 
        
@@ -127,8 +135,14 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             edition.status = "closed"
             edition.winner = talent.contestants[0]
             talent.editions[edIndex] = edition
-            let queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+
+            talent.queue.unshift(...edition.quarter_finalists)
+            talent.queue.unshift(...edition.semi_finalists)
+            talent.queue.unshift(...edition.finalist)
+
+            let queuedUsers = talent.queue.splice(0,21)
             talent.contestants.push(...queuedUsers)
+
             const newEdition = {
                _id:edition._id + 1 ,
                round : 1 ,
@@ -647,7 +661,9 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
     const _id = req.params.id
-    const query = req.body.type == "update" ? 
+
+    if(req.body.type !== "eupdate"){
+    const query =  req.body.type == "update" ? 
     {
         $set: {
           "contestants.$[item].name": req.body.name,
@@ -674,6 +690,9 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
             new: true 
           }
     )
+
+   
+
 
    if(req.body.type =="update"){
 
@@ -730,6 +749,18 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
 
     if(!newTalent) return res.json({error:"expired"}).status(404)
     res.json(newTalent)
+
+  }else {
+       const talent = await talentModel.findById(_id)
+       if(!talent) return res.json({error:"expired"}).status(404)
+       const index = talent.eliminations.findIndex( e => e.user_id == req.body.user_id)
+       if(index !== -1) {
+       const eliminatedContestant = talent.eliminations.splice(index,1)
+       talent.queue.push(...eliminatedContestant)
+       await talent.save()
+        }
+       res.json(talent)
+  } 
 })
 
 
