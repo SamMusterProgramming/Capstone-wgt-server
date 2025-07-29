@@ -56,10 +56,11 @@ route.post('/creates',verifyJwt,async(req,res)=>{
     let edIndex = talent.editions.findIndex( e => e.status === "open")
 
     let queuedUsers = []
-    // if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
-    //       queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
-    //       talent.contestants.push(...queuedUsers)
-    // }
+        if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
+          queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+          talent.contestants.push(...queuedUsers)
+       }
+
 
     // if(talent.eliminations.length > 0){
     //    let contest = talent.eliminations.splice(0,talent.eliminations.length)
@@ -76,7 +77,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 100) {
+        if(differenceInMilliseconds >= 1) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
@@ -120,9 +121,6 @@ route.post('/creates',verifyJwt,async(req,res)=>{
             edition.finalist = eliminatedContestants
             talent.editions[edIndex] = edition
           }
-
-       
-
       
           if(edition.round !== 7 ) {
             // edIndex = talent.editions.findIndex( e => e.status === "open")
@@ -813,7 +811,6 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const type = req.body.type
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
-    const deletedPost = await talentPostDataModel.findOneAndDelete({post_id:post_id})
     
     if(type == "resign"){
         const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
@@ -861,8 +858,14 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     }
     if(type == "queued"){
         talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
-        // talent.eliminations.push({user_id:user_id})
+        talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+        await talentPostDataModel.findOneAndDelete({post_id:post_id})
     }
+    if(type == "eliminated"){
+      talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
+      talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+      await talentPostDataModel.findOneAndDelete({post_id:post_id})
+  }
   //   if(talent.round < 4 && (talent.queue.length < ( 4 - talent.round) * 6)) {
   //     const waitingUsers = talent.waiting_list.splice(0, ( 4 - talent.round) * 6 -talent.queue.length)
   //     talent.queue.push(waitingUsers)
