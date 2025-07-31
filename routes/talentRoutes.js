@@ -531,14 +531,13 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
   console.log(req.body.comment_id)
   const post_id = req.params.id;
   const comment_id = req.body.comment_id
-  let postComment = await commentModel.findOne(
-      {post_id:post_id 
-      }
-     
+  let post = await talentPostDataModel.findOne(
+    {post_id : post_id}
   )
-  postComment.content = postComment.content.filter(el => el._id.toString() !== comment_id.toString())
-  await postComment.save()
-  return res.json(postComment).status(200)
+  console.log(post.comments)
+  post.comments = post.comments.filter(el => el._id.toString() !== comment_id.toString())
+  await post.save()
+  return res.json(post).status(200)
 })
 
 //***************************** upload contestants and more */
