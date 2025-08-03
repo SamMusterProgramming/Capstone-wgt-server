@@ -365,7 +365,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     const post_owner_name = talent.contestants.find(c => c._id == post_id).name
     
 
-    if(!talentPost) { 
+    if(!talentPost || !talent.contestants.find(c =>c._id == post_id)) { 
         return res.json("expired")
     }
     const voter = talent.voters.find(  v => 
