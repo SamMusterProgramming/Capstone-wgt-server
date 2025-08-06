@@ -62,10 +62,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        }
 
 
-    // if(talent.eliminations.length > 0){
-    //    let contest = talent.eliminations.splice(0,talent.eliminations.length)
-    //    talent.queue.push(...contest)  
-    // }
+    if(talent.eliminations.length > 0){
+       let contest = talent.eliminations.splice(0,talent.eliminations.length)
+       talent.queue.push(...contest)  
+    }
      
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
@@ -74,7 +74,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      (edition.round >= 4))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60*60*24)
         console.log(differenceInMilliseconds)
      
         if(differenceInMilliseconds >= 1) {
@@ -229,21 +229,28 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 
 
 
-
-
-
-
-    //  talent.contestants.sort((a, b) => {
-    //                     if(a.votes !== b.votes){
-    //                        return b.votes - a.votes
-    //                     }else {
-    //                        return b.likes - a.likes
-    //                     }
-                        
-    //                     })
      await talent.save()
      res.json(talent)   
 })
+
+
+
+route.get('/user/:id',verifyJwt,async(req,res)=>{
+  console.log(req.params.id)
+      const user_id = req.params.id
+      const userTalents = await talentModel.find({
+        'contestants': {
+          $elemMatch: {
+            user_id: user_id
+          }
+        }
+      });
+      console.log(userTalents)
+    
+      res.json(userTalents)
+})
+
+
 //******************************** post likes, votes, comments */
 
 route.get('/post/:id',verifyJwt,async(req,res)=>{
@@ -367,7 +374,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     if(!talentPost || !talent.contestants.find(c => c._id == post_id)) { 
         return res.json("expired")
     }
-    
+
     const post_owner_name = talent.contestants.find(c => c._id == post_id).name
 
     const voter = talent.voters.find(  v => 
