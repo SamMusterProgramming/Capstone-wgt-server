@@ -240,11 +240,18 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
       const user_id = req.params.id
       const userTalents = await talentModel.find({
-        'contestants': {
-          $elemMatch: {
-            user_id: user_id
-          }
-        }
+        // 'contestants': {
+        //   $elemMatch: {
+        //     user_id: user_id
+        //   }
+        // } 
+        $or: [
+          {  'contestants.user_id':  user_id
+            }, 
+          {  'queue.user_id': user_id
+            
+            }
+        ]
        });
       console.log(userTalents)
     
