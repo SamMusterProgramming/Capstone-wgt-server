@@ -234,6 +234,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 })
 
 
+//**********************************user talents , participations  */
 
 route.get('/user/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
@@ -244,11 +245,26 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
             user_id: user_id
           }
         }
-      });
+       });
       console.log(userTalents)
     
       res.json(userTalents)
 })
+
+route.get('/user/queue/:id',verifyJwt,async(req,res)=>{
+  console.log(req.params.id)
+      const user_id = req.params.id
+      const userTalents = await talentModel.find({
+        'queue': {
+          $elemMatch: {
+            user_id: user_id
+          }
+        }
+       });
+    
+      res.json(userTalents)
+})
+
 
 
 //******************************** post likes, votes, comments */
