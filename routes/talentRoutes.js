@@ -33,6 +33,9 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           round:1,
           status:"open",
           winner: null,
+          finalist:[],
+          semi_finalists: [],
+          quarter_finalists: [],
           createdAt : new Date(),
           updatedAt : new Date()
     })
@@ -146,6 +149,9 @@ route.post('/creates',verifyJwt,async(req,res)=>{
                round : 1 ,
                status : "open",
                winner : null,
+               finalist:[],
+               semi_finalists: [],
+               quarter_finalists: [],
                createdAt : new Date(),
                updatedAt : new Date()
             }
@@ -251,9 +257,8 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
           {  'queue.user_id': user_id
             
             }, 
-            { 'eliminations.user_id': user_id
-              
-              }
+            { 'eliminations.user_id': user_id             
+            }
         ]
        });
      
@@ -270,14 +275,14 @@ route.get('/user/performance/:id',verifyJwt,async(req,res)=>{
           t.editions.forEach( e => {
               let performance = null
 
-              if(e.status == "closed"){
-                if(e.winner.user_id == user_id ||
+              if(e.status == "closed" || (e.status == "open" && e.round > 4 ) ){
+                if( (e.winner && e.winner.user_id == user_id )||
                    e.quarter_finalists.find( c => c.user_id == user_id ) ||
                    e.semi_finalists.find( c => c.user_id == user_id ) || 
                    e.finalist.find( c => c.user_id == user_id ) 
-                   ){
+                   ){  
                     let cts = []
-                    cts.push(e.winner)
+                    e.winner && cts.push(e.winner)
                     cts.push(...e.finalist)
                     cts.push(...e.semi_finalists)
                     cts.push(...e.quarter_finalists)
@@ -286,12 +291,14 @@ route.get('/user/performance/:id',verifyJwt,async(req,res)=>{
                       edition_id: e._id,
                       name : t.name,
                       region : t.region,
+                      status: e.status,
                       createdAt : t.createdAt,
                       updatedAt : t.updatedAt,
                       contestants : cts
                     }
                    }
               }
+            
 
               if(performance) performances.push(performance)
           })
