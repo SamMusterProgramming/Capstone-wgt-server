@@ -74,10 +74,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      (edition.round >= 4))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60*60*24)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 1) {
+        if(differenceInMilliseconds >= 0.2) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
@@ -250,26 +250,54 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
             }, 
           {  'queue.user_id': user_id
             
-            }
+            }, 
+            { 'eliminations.user_id': user_id
+              
+              }
         ]
        });
-      console.log(userTalents)
+     
     
       res.json(userTalents)
 })
 
-route.get('/user/queue/:id',verifyJwt,async(req,res)=>{
+route.get('/user/performance/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
       const user_id = req.params.id
-      const userTalents = await talentModel.find({
-        'queue': {
-          $elemMatch: {
-            user_id: user_id
-          }
-        }
-       });
-    
-      res.json(userTalents)
+      const userTalents = await talentModel.find({});
+      let performances = []
+      userTalents.forEach( t => {
+          t.editions.forEach( e => {
+              let performance = null
+
+              if(e.status == "closed"){
+                if(e.winner.user_id == user_id ||
+                   e.quarter_finalists.find( c => c.user_id == user_id ) ||
+                   e.semi_finalists.find( c => c.user_id == user_id ) || 
+                   e.finalist.find( c => c.user_id == user_id ) 
+                   ){
+                    let cts = []
+                    cts.push(e.winner)
+                    cts.push(...e.finalist)
+                    cts.push(...e.semi_finalists)
+                    cts.push(...e.quarter_finalists)
+                    performance = {
+                      _id: t._id,
+                      edition_id: e._id,
+                      name : t.name,
+                      region : t.region,
+                      createdAt : t.createdAt,
+                      updatedAt : t.updatedAt,
+                      contestants : cts
+                    }
+                   }
+              }
+
+              if(performance) performances.push(performance)
+          })
+       })
+      console.log(performances)
+      res.json(performances)
 })
 
 
