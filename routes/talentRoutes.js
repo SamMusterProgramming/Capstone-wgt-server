@@ -64,10 +64,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           talent.contestants.push(...queuedUsers)
        }
     
-    if(talent.eliminations.length > 0){
-       let contest = talent.eliminations.splice(0,talent.eliminations.length)
-       talent.queue.push(...contest)  
-    }
+    // if(talent.eliminations.length > 0){
+    //    let contest = talent.eliminations.splice(0,talent.eliminations.length)
+    //    talent.queue.push(...contest)  
+    // }
      
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
@@ -79,7 +79,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
         const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 0.10) {
+        if(differenceInMilliseconds >= 1) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
