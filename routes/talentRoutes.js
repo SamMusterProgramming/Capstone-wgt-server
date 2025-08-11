@@ -63,8 +63,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
           talent.contestants.push(...queuedUsers)
        }
-
-
+    
     if(talent.eliminations.length > 0){
        let contest = talent.eliminations.splice(0,talent.eliminations.length)
        talent.queue.push(...contest)  
@@ -77,10 +76,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      (edition.round >= 4))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60* 60 * 24)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 1) {
+        if(differenceInMilliseconds >= 0.10) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
@@ -159,12 +158,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           }
       
           eliminatedContestants.forEach(async(el)=> {
-                // const post = await  talentPostDataModel.findOneAndUpdate(
-                //   {post_id:el._id},
-                //   { $set: { votes: [] } },
-                //   { new: true } 
-                // )
-                // talent.voters =  talent.voters.filter(v => v.post_id !== el._id)
+             
                 let   message = "you have been eliminated from  talent show"     
                 const notification = {
                     receiver_id:el.user_id,   
