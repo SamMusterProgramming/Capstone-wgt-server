@@ -73,7 +73,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
     // let edition = talent.editions.find(e => e.status == "open")
     // let edIndex = talent.editions.findIndex( e => e.status === "open")
     if(edition && ((edition.round < 4 && talent.contestants.length >= 22 && talent.queue.length >= 6)||
-     (edition.round >= 4))) {
+     (edition.round >= 3))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
         const differenceInMilliseconds = (now - roundDate)/(1000*60)
