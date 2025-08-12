@@ -65,7 +65,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        }
     
     // if(talent.eliminations.length > 0){
-    //    let contest = talent.eliminations.splice(0,talent.eliminations.length)
+    //    let contest = talent.eliminations.splice(0,6)
     //    talent.queue.push(...contest)  
     // }
      
