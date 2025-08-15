@@ -328,7 +328,6 @@ route.post('/likes/:id',verifyJwt,async(req,res)=>{
         {post_id:post_id}
         )
     if(! talentPost) {
-      
         return res.json("expired")
     }
     
@@ -346,7 +345,7 @@ route.post('/likes/:id',verifyJwt,async(req,res)=>{
         { new: true } 
       );
       const talent = await talentModel.findByIdAndUpdate(
-        req.body._id,
+        req.body.room_id,
         {
             $set: {
               "contestants.$[item].votes":updatedPost.votes.length,
@@ -494,31 +493,6 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     await talent.save()
     await talentPost.save()
     
-
-
-    // const talentPost = await talentPostDataModel.findOne(
-    //     {post_id:post_id}
-    //     )
-  //   if(! talentPost) { 
-  //     return res.json("expired")
-  // }
- 
-    
-    // let updateQuery;
-    // const userLiked = talentPost.votes.find(vote => vote.voter_id == req.body.voter_id);
-    // if (userLiked) {
-    //     updateQuery = { $pull: { votes: vote } };
-    //   } else {
-    //     updateQuery = { $addToSet: { votes: vote } }; // $addToSet ensures unique entries
-    //   }
-    // const updatedPost = await talentPostDataModel.findOneAndUpdate(
-    //     {post_id:post_id},
-    //      updateQuery,
-    //     { new: true } 
-    //   );
-
-
-
     
     const talentRoom = await talentModel.findByIdAndUpdate(
         req.body.room_id,
@@ -536,12 +510,12 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
 
     talentRoom.contestants.sort((a, b) => {
         if(a.votes !== b.votes){
-            b.votes - a.votes
+           return b.votes - a.votes
         }else {
-            b.likes - a.likes
+           return b.likes - a.likes
         }
         
-        })
+    } )
     await talentRoom.save()
     
     return res.json(talentPost)

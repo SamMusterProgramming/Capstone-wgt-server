@@ -13,6 +13,7 @@ const notificationModel = require('../models/notifications.js')
 const friendModel = require('../models/friends.js')
 const viewerModel = require('../models/postViewers')
 const jwt = require('jsonwebtoken')
+const talentPostDataModel = require('../models/talentPostData.js')
 
 route = express.Router();
 
@@ -65,8 +66,10 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
              email:req.body.email,
              thumbNail_URL: req.body.thumbNail,
              createdAt:timeLapse
-            }]    
+            }] ,
+        voters:[]
     }
+
     const newChallenge = await challengeModel(challenge)
     await newChallenge.save()
 
@@ -309,10 +312,10 @@ route.get('/all/:id',verifyJwt, async(req,res)=> {
 route.get('/original/public/:id',verifyJwt, async(req,res)=> {
     const origin_id = req.params.id;
     let challenges = await challengeModel.find({origin_id:origin_id}).sort({ createdAt: 'desc' })
-    challenges = challenges.filter(challenge => challenge.privacy == "Public")
-    challenges = challenges.filter(challenge => 
-       challenge.participants.find(participant => participant.user_id == challenge.origin_id)
-    )
+    // challenges = challenges.filter(challenge => challenge.privacy == "Public")
+    // challenges = challenges.filter(challenge => 
+    //    challenge.participants.find(participant => participant.user_id == challenge.origin_id)
+    // )
     res.json(challenges)   
 })
 
@@ -334,9 +337,10 @@ route.get('/participate/public/:id',verifyJwt,async(req,res)=> {
         participants:{$elemMatch: {user_id:origin_id }}
     }).sort({ updatedAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.origin_id != origin_id)
-    challenges = challenges.filter(challenge =>challenge.privacy == "Public")
+    // challenges = challenges.filter(challenge =>challenge.privacy == "Public")
     res.json(challenges)   
 })
+
 route.get('/participate/private/:id',verifyJwt,async(req,res)=> {
     const origin_id = req.params.id;   
     // const challenges = await challengeModel.find({origin_id:origin_id})
@@ -344,7 +348,7 @@ route.get('/participate/private/:id',verifyJwt,async(req,res)=> {
         participants:{$elemMatch: {user_id:origin_id }}
     }).sort({ createdAt: 'desc' })
     challenges = challenges.filter(challenge => challenge.origin_id != origin_id)
-    challenges=challenges.filter(challenge =>challenge.privacy == "Private")
+    // challenges=challenges.filter(challenge =>challenge.privacy == "Private")
 
     res.json(challenges)   
 })
@@ -365,109 +369,353 @@ route.get('/top/:id',verifyJwt,validateMongoObjectId,verifyJwt,async(req,res)=> 
     
 
 
-/// likes **********************************
-route.route('/challenge/like/')
-    .get(verifyJwt,async(req,res)=>{  
-        const ids = req.query.ids.split(',');
-        const query = {
-            user_id:ids[0],
-            post_id:ids[1],
-            challenge_id :ids[2]
-        }
+// ********************************** post data and operations ********************
 
-        let like = await likeModel.findOneAndUpdate(
-           { user_id:query.user_id,post_id:query.post_id},
-           [ { "$set": { "like": { "$eq": [false, "$like"] } } } ] , 
-           { new: true } 
-        )   
-   
-        if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
-        const challenge = await challengeModel.findById(query.challenge_id)
-        if(!challenge) return res.json("post expired").status(404)
-        if(!challenge.participants.find(el => el._id.toString() === query.post_id))
-                return res.json("post expired")
-        const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
 
-        let likes = challenge.participants[elementIndex].likes 
-        if (like.like)  likes = likes + 1 
-        else {
-            if(like.like !== 0)  likes = likes - 1  
-        } 
-        challenge.participants[elementIndex] ={...challenge.participants[elementIndex],likes:likes};
-        await challenge.save()
-        res.json({isLiked:like.like,like_count:likes}).status(200)    
-    })   
-         
-route.route('/load/like/' )
-    .get(verifyJwt,async(req,res)=>{  
-            const ids = req.query.ids.split(',');
-            const query = {
-                user_id:ids[0],
-                post_id:ids[1],   
+route.post('/post/:id',verifyJwt,async(req,res)=>{
+    const post_id =  req.params.id
+    console.log(req.body)
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+     if(!talentPost) 
+      { const newPostData = new talentPostDataModel(
+        {
+         post_id : post_id,
+         owner_id : req.body.owner_id,
+         room_id:req.body.room_id,
+         likes:[],
+         votes:[],
+         flags:[],
+         comments:[]
+        })
+        await newPostData.save()
+        return res.json(newPostData)   
+      }
+    return res.json(talentPost)
+})
+
+
+route.post('/likes/:id',verifyJwt,async(req,res)=>{
+    
+    const post_id =  req.params.id
+    const owner_id = req.body.owner_id
+    const like = {
+       liker_id : req.body.liker_id
+    }
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+    if(! talentPost) {
+        return res.json("expired")
+    }
+    
+    let updateQuery;
+
+    const userLiked = talentPost.likes.find(like => like.liker_id == req.body.liker_id);
+    if (userLiked) {
+        updateQuery = { $pull: { likes: like } };
+      } else {
+        updateQuery = { $addToSet: { likes: like } }; // $addToSet ensures unique entries
+      }
+    const updatedPost = await talentPostDataModel.findOneAndUpdate(
+        {post_id:post_id},
+         updateQuery,
+        { new: true } 
+      );
+      const talent = await challengeModel.findByIdAndUpdate(
+        req.body.room_id,
+        {
+            $set: {
+              "participants.$[item].votes":updatedPost.votes.length,
+              "participants.$[item].likes":updatedPost.likes.length,
             }
-            const challenge_id = ids[2]
-            let like = await likeModel.findOne(
-                query             
-            )  
-            const challenge = await challengeModel.findById(challenge_id) 
-            if(!challenge) return res.json("post expired").status(404)
-            if(!challenge.participants.find(el => el._id.toString() === query.post_id))
-                return res.json("post expired")
-            if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
-            const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
-            const likes = challenge.participants[elementIndex].likes 
-            const votes = challenge.participants[elementIndex].votes 
-            const likeData = {isLiked:like.like,like_count:likes,isVoted:like.vote,vote_count:votes}
-            res.json(likeData).status(200)      
-    })   
-            
-    // challenge vote    
-    route.route('/challenge/vote/' )
-    .get(verifyJwt,async(req,res)=>{  
-        const ids = req.query.ids.split(',');
-        const query = {
-            user_id:ids[0],   
-            post_id:ids[1],
-            challenge_id :ids[2]
-        }      
-        let  find = await likeModel.findOne({user_id:query.user_id,post_id:query.post_id})
-        // if(!find) return res.json("post expired").status(404) 
-        let challenge = await challengeModel.findById(query.challenge_id)
-        if(!challenge) return res.json("post expired").status(404)
-        if(!challenge.participants.find(el => el._id.toString() === query.post_id))
-            return res.json("post expired")
-        const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);             
-        let votes = challenge.participants[elementIndex].votes 
-        if (find.vote) {      
-           find.vote = false
-           challenge.participants[elementIndex] ={...challenge.participants[elementIndex],votes:votes-1};
-           await find.save()
-           await challenge.save()
-           return res.json({isVoted:false,vote_count:votes-1})
-        }
-        else {
-            let participants = challenge.participants.filter(participant => participant._id != query.post_id)
-            let exist = null
-            for (const participant of participants) {
-              exist = await likeModel.findOne({user_id:query.user_id,post_id:participant._id})
-              if (exist) if(exist.vote) break;
+          },
+          {
+            arrayFilters: [{ "item.user_id": owner_id }],
+            new: true 
           }
-        if(exist) if(exist.vote) return res.json({isVoted:false,vote_count:votes})
-        challenge.participants[elementIndex] ={...challenge.participants[elementIndex],votes:votes+1};
-        find.vote = true
-        await find.save()
-        await challenge.save()   
-        return res.json({isVoted:true , vote_count:votes+1}).status(200)
-        }   
+    )
+    return res.json(updatedPost)
+})
 
-    })   
+
+
+route.post('/votes/:id',verifyJwt,async(req,res)=>{
+    
+    const post_id =  req.params.id
+    const owner_id = req.body.owner_id
+    const voter_id = req.body.voter_id
+
+    const vote = {
+       voter_id : req.body.voter_id
+    }
+
+    const talent = await challengeModel.findById(req.body.room_id)
+
+    const talentPost = await talentPostDataModel.findOne(
+      {post_id:post_id}
+      )
+    
+
+    if(!talentPost || !talent.participants.find(c => c._id == post_id)) { 
+        return res.json("expired")
+    }
+
+    const post_owner_name = talent.participants.find(c => c._id == post_id).name
+
+    const voter = talent.voters.find(  v => 
+                                    v.voter_id == voter_id
+                                 )
+    // let votedTalentPost = null
+    // if(voter) votedTalentPost = await talentPostDataModel.findOne(
+    //                {post_id:voter.post_id}
+    //              )
+    if(!voter){
+        talent.voters.push({
+                  voter_id : req.body.voter_id,
+                  post_id : post_id,
+                  name : post_owner_name,
+                  createdAt: new Date()
+        })
+        talentPost.votes.push(vote)
+        await talent.save()
+        await talentPost.save()
+    }else{   
+        talent.voters = talent.voters.filter(v => v.voter_id !== voter_id)
+        if(voter.post_id !== post_id){
+            talent.voters.push({
+            voter_id : voter_id,
+            post_id : post_id,
+            name : post_owner_name,
+            createdAt:new Date()
+               })
+            talentPost.votes.push(vote)   
+            await talentPostDataModel.findOneAndUpdate(
+                  {post_id:voter.post_id},
+                  { $pull: { votes: vote } },
+                  { new: true } 
+                );
+             let contestant = null
+             let contestantPost = talent.participants.find(c => c._id == voter.post_id) 
+            //  if(contestantPost){
+            //   let index = talent.participants.findIndex(c => c._id == voter.post_id) 
+            //   let contestant = talent.participants[index]
+            //   contestant.votes --;
+            //   talent.participants[index]=contestant   
+            //  }else{
+            //   contestantPost = talent.queue.find(c => c._id == voter.post_id) 
+            //       if(contestantPost){
+            //         let index = talent.queue.findIndex(c => c._id == voter.post_id) 
+            //         let contestant = talent.queue[index]
+            //         contestant.votes --;
+            //         talent.queue[index]=contestant   
+            //       }else{
+            //         contestantPost = talent.eliminations.find(c => c._id == voter.post_id) 
+            //         if(contestantPost){
+            //           let index = talent.eliminations.findIndex(c => c._id == voter.post_id) 
+            //           let contestant = talent.eliminations[index]
+            //           contestant.votes --;
+            //           talent.eliminations[index]=contestant   
+            //         }
+            //       }
+            //  }
+            
+        }else{
+            talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
+            }
+        }
+
+    await talent.save()
+    await talentPost.save()
+    
+    
+    const talentRoom = await challengeModel.findByIdAndUpdate(
+        req.body.room_id,
+        {
+            $set: {
+              "participants.$[item].votes":talentPost.votes.length,
+              "participants.$[item].likes":talentPost.likes.length,
+            }
+          },
+          {
+            arrayFilters: [{ "item.user_id": owner_id }],
+            new: true 
+          }
+    )
+    talentRoom.participants.sort((a, b) => {
+        if(a.votes !== b.votes){
+            b.votes - a.votes
+        }else {
+            b.likes - a.likes
+        }
+        
+        })
+    
+    await talentRoom.save()
+    
+    return res.json(talentPost)
+})
+
+
+
+route.post('/flags/:id',verifyJwt,async(req,res)=>{
+    const post_id =  req.params.id
+    const owner_id = req.body.owner_id
+    const flag = {
+       flagger_id : req.body.flagger_id
+    }
+
+    const talentPost = await talentPostDataModel.findOne(
+        {post_id:post_id}
+        )
+    if(! talentPost) { 
+        return res.json("expired")
+    }
+    
+    let updateQuery;
+
+    const userFlagged = talentPost.flags.find(flag => flag.flagger_id == req.body.flagger_id);
+    if (userFlagged) {
+        updateQuery = { $pull: { flags: flag } };
+      } else {
+        updateQuery = { $addToSet: { flags: flag } }; // $addToSet ensures unique entries
+      }
+    const updatedPost = await talentPostDataModel.findOneAndUpdate(
+        {post_id:post_id},
+         updateQuery,
+        { new: true } 
+      );
+    const talent = await challengeModel.findById(talentPost.room_id)
+    if(updatedPost.flags.length >= 7)  {
+         if(updatedPost.likes.length < updatedPost.flags.length * 10 )
+         {
+            talent.participants = talent.participants.filter(contestant => contestant.user_id !== owner_id)
+            await talent.save()
+            // await talentPostDataModel.findOneAndDelete({post_id:post_id})
+         }
+    }
+    return res.json(updatedPost)
+})
+
+
+
+// route.route('/challenge/like/')
+//     .get(verifyJwt,async(req,res)=>{  
+//         const ids = req.query.ids.split(',');
+//         const query = {
+//             user_id:ids[0],
+//             post_id:ids[1],
+//             challenge_id :ids[2]
+//         }
+
+//         let like = await likeModel.findOneAndUpdate(
+//            { user_id:query.user_id,post_id:query.post_id},
+//            [ { "$set": { "like": { "$eq": [false, "$like"] } } } ] , 
+//            { new: true } 
+//         )   
+        
+//         if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
+//         const challenge = await challengeModel.findById(query.challenge_id)
+//         if(!challenge) return res.json("post expired").status(404)
+//         if(!challenge.participants.find(el => el._id.toString() === query.post_id))
+//                 return res.json("post expired")
+//         const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
+
+//         let likes = challenge.participants[elementIndex].likes 
+//         if (like.like)  likes = likes + 1 
+//         else {
+//             if(like.like !== 0)  likes = likes - 1  
+//         } 
+//         challenge.participants[elementIndex] ={...challenge.participants[elementIndex],likes:likes};
+//         await challenge.save()
+//         res.json({isLiked:like.like,like_count:likes}).status(200)    
+//     })   
+         
+// route.route('/load/like/' )
+//     .get(verifyJwt,async(req,res)=>{  
+//             const ids = req.query.ids.split(',');
+//             const query = {
+//                 user_id:ids[0],
+//                 post_id:ids[1],   
+//             }
+//             const challenge_id = ids[2]
+//             let like = await likeModel.findOne(
+//                 query             
+//             )  
+//             const challenge = await challengeModel.findById(challenge_id) 
+//             if(!challenge) return res.json("post expired").status(404)
+//             if(!challenge.participants.find(el => el._id.toString() === query.post_id))
+//                 return res.json("post expired")
+//             if(!like) like = await new likeModel({user_id:query.user_id,post_id:query.post_id}).save()
+//             const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);
+//             const likes = challenge.participants[elementIndex].likes 
+//             const votes = challenge.participants[elementIndex].votes 
+//             const likeData = {isLiked:like.like,like_count:likes,isVoted:like.vote,vote_count:votes}
+//             res.json(likeData).status(200)      
+//     })   
+            
+
+    // route.route('/challenge/vote/' )
+    // .get(verifyJwt,async(req,res)=>{  
+    //     const ids = req.query.ids.split(',');
+    //     const query = {
+    //         user_id:ids[0],   
+    //         post_id:ids[1],
+    //         challenge_id :ids[2]
+    //     }      
+    //     let  find = await likeModel.findOne({user_id:query.user_id,post_id:query.post_id})
+
+    //     let challenge = await challengeModel.findById(query.challenge_id)
+    //     if(!challenge) return res.json("post expired").status(404)
+    //     if(!challenge.participants.find(el => el._id.toString() === query.post_id))
+    //         return res.json("post expired")
+    //     const elementIndex = challenge.participants.findIndex(el => el._id.toString() === query.post_id);             
+    //     let votes = challenge.participants[elementIndex].votes 
+    //     if (find.vote) {      
+    //        find.vote = false
+    //        challenge.participants[elementIndex] ={...challenge.participants[elementIndex],votes:votes-1};
+    //        await find.save()
+    //        await challenge.save()
+    //        return res.json({isVoted:false,vote_count:votes-1})
+    //     }
+    //     else {
+    //         let participants = challenge.participants.filter(participant => participant._id != query.post_id)
+    //         let exist = null
+    //         for (const participant of participants) {
+    //           exist = await likeModel.findOne({user_id:query.user_id,post_id:participant._id})
+    //           if (exist) if(exist.vote) break;
+    //       }
+    //     if(exist) if(exist.vote) return res.json({isVoted:false,vote_count:votes})
+    //     challenge.participants[elementIndex] ={...challenge.participants[elementIndex],votes:votes+1};
+    //     find.vote = true
+    //     await find.save()
+    //     await challenge.save()   
+    //     return res.json({isVoted:true , vote_count:votes+1}).status(200)
+    //     }   
+
+    // })   
      
 
     route.get('/find/:id',verifyJwt,validateMongoObjectId, async(req,res)=>{
      const challenge_id = req.params.id;
      const challenge = await challengeModel.findById(challenge_id)
      if(!challenge) return res.json("post expired")
-     res.json(challenge).status(200)
+     if(challenge.voters == undefined) {
+        challenge.voters = []
+    }
+
+    challenge.participants.sort((a, b) => {
+        if(a.votes !== b.votes){
+           return b.votes - a.votes
+        }else {
+           return b.likes - a.likes
+        }
+    }
+    )
+    await challenge.save()
+    console.log(challenge)
+    res.json(challenge).status(200)
     })
     
 

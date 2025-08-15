@@ -13,6 +13,7 @@ const challengeSchema = new mongoose.Schema({
     },
     participants:[]
     ,
+    voters :[],
     like_count:{
         type:Number,
         min:[0]
