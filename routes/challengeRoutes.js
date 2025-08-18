@@ -204,13 +204,13 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
     } 
     })
 
-    const like =  new likeModel({
-            post_id: newObjectId,
-            user_id:req.body.user_id,
-            like:false,
-            vote:false
-    })  
-    await like.save()
+    // const like =  new likeModel({
+    //         post_id: newObjectId,
+    //         user_id:req.body.user_id,
+    //         like:false,
+    //         vote:false
+    // })  
+    // await like.save()
 
     const viewerPost = new viewerModel({
         post_id:newObjectId,
@@ -240,27 +240,27 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
     // })
 
 
-    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+    const friend = await friendModel.findOne({user_id:req.body.user_id})
     const filterFriends = friend.friends.filter(friend =>
                     !challenge.participants.find(
-                     participant => participant.user_id == friend.sender_id
+                     participant => participant.user_id == friend.user_id
                    ) )
     if(friend)
       filterFriends.forEach(async(friend) =>{
-        if(challenge.origin_id !== friend.sender_id ){
+        if(challenge.origin_id !== friend.user_id ){
         let message =""
-        if(challenge.participants.find(participant => participant.user_id == friend.sender_id)) {
+        if(challenge.participants.find(participant => participant.user_id == friend.user_id)) {
              message = "has replied to the challenge you've participated in  "
         }else {
             if(challenge.privacy == "Private") {
-                if(challenge.invited_friends.find(invite=>invite.sender_id == friend.sender_id))
+                if(challenge.invited_friends.find(invite=>invite.sender_id == friend.user_id))
                      message = "has joined the challenge you are intvied to"
                 else message = "has participated in a Challenge"
             }else
             message = "has participated in a Challenge"
         }
         const notification = {
-            receiver_id:friend.sender_id,
+            receiver_id:friend.user_id,
             type:"followers",
             isRead:false,
             message: message,
@@ -276,6 +276,18 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
         await notificationModel(notification).save()
     } 
     })
+
+    const newPostData = new talentPostDataModel(
+        {
+         post_id : newObjectId,
+         owner_id : req.body.user_id,
+         room_id:challenge._id,
+         likes:[],
+         votes:[],
+         flags:[],
+         comments:[]
+        })
+        await newPostData.save()
 
     res.json(challenge)
 })
