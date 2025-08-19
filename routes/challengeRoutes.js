@@ -51,7 +51,6 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         type:req.body.type,
         privacy:req.body.privacy,
         invited_friends:req.body.friendList,
-        audience:req.body.audience,
         name:req.body.name,
         thumbNail_URL: req.body.thumbNail,
         profile_img:req.body.profile_img,
@@ -72,14 +71,6 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
 
     const newChallenge = await challengeModel(challenge)
     await newChallenge.save()
-
-    const like =  new likeModel({
-        post_id:newObjectId,
-        user_id:req.body.origin_id,
-        like:false,
-        vote:false
-    })    
-    await like.save()
 
     const viewerPost = new viewerModel({
         post_id:newObjectId,
@@ -106,7 +97,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
 //         await notificationModel(notification).save()
 //    }) 
 
-    const friend = await friendModel.findOne({receiver_id:req.body.origin_id})
+    const friend = await friendModel.findOne({user_id:req.body.origin_id})
    
     if(friend)
       friend.friends.forEach(async(friend) =>{
@@ -114,14 +105,14 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         // {
         let message = ""
         if (req.body.privacy == "Private") {
-            if(req.body.friendList.find(fr => fr.sender_id == friend.sender_id))
-             message = "Invited you to a participate in his challenge"
+            if(req.body.friendList.find(fr => fr.user_id == friend.user_id))
+             message = "Invited you to  participate in his challenge"
             else message =  "has create new Challenge" 
         }
         else message = "has create new Challenge"
                 
         const notification = {
-            receiver_id:friend.sender_id,
+            receiver_id:friend.user_id,
             type:"followers",
             isRead:false,
             message:message , 
@@ -140,6 +131,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
 
     res.json(newChallenge)
 })
+
 
 route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
     
