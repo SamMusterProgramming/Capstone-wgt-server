@@ -468,13 +468,10 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
 
     const post_owner_name = talent.participants.find(c => c._id == post_id).name
 
-    const voter = talent.voters.find(  v => 
+    const voter = talent.voters.find( v => 
                                     v.voter_id == voter_id
-                                 )
-    // let votedTalentPost = null
-    // if(voter) votedTalentPost = await talentPostDataModel.findOne(
-    //                {post_id:voter.post_id}
-    //              )
+                                     )
+    
     if(!voter){
         talent.voters.push({
                   voter_id : req.body.voter_id,
@@ -483,8 +480,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
                   createdAt: new Date()
         })
         talentPost.votes.push(vote)
-        await talent.save()
-        await talentPost.save()
+
     }else{   
         talent.voters = talent.voters.filter(v => v.voter_id !== voter_id)
         if(voter.post_id !== post_id){
@@ -496,54 +492,32 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
                })
             talentPost.votes.push(vote)   
             await talentPostDataModel.findOneAndUpdate(
-                  {post_id:voter.post_id},
-                  { $pull: { votes: vote } },
-                  { new: true } 
-                );
-             let contestant = null
-             let contestantPost = talent.participants.find(c => c._id == voter.post_id) 
-            //  if(contestantPost){
-            //   let index = talent.participants.findIndex(c => c._id == voter.post_id) 
-            //   let contestant = talent.participants[index]
-            //   contestant.votes --;
-            //   talent.participants[index]=contestant   
-            //  }else{
-            //   contestantPost = talent.queue.find(c => c._id == voter.post_id) 
-            //       if(contestantPost){
-            //         let index = talent.queue.findIndex(c => c._id == voter.post_id) 
-            //         let contestant = talent.queue[index]
-            //         contestant.votes --;
-            //         talent.queue[index]=contestant   
-            //       }else{
-            //         contestantPost = talent.eliminations.find(c => c._id == voter.post_id) 
-            //         if(contestantPost){
-            //           let index = talent.eliminations.findIndex(c => c._id == voter.post_id) 
-            //           let contestant = talent.eliminations[index]
-            //           contestant.votes --;
-            //           talent.eliminations[index]=contestant   
-            //         }
-            //       }
-            //  }
-            
-        }else{
+                  { post_id : voter.post_id },
+                  { $pull : { votes: vote } },
+                  { new : true } 
+            );
+            let index = talent.participants.findIndex(c => c._id == voter.post_id) 
+            let participant = talent.participants[index]
+            participant.votes --;
+            talent.participants[index]=participant  
+
+          }
+        else{
             talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
             }
-        }
-
+    }
     await talent.save()
     await talentPost.save()
-    
-    
     const talentRoom = await challengeModel.findByIdAndUpdate(
         req.body.room_id,
         {
             $set: {
               "participants.$[item].votes":talentPost.votes.length,
               "participants.$[item].likes":talentPost.likes.length,
-            }
+             }
           },
           {
-            arrayFilters: [{ "item.user_id": owner_id }],
+            arrayFilters : [{ "item.user_id" : owner_id }],
             new: true 
           }
     )
@@ -555,9 +529,7 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
         }
         
         })
-    
     await talentRoom.save()
-    
     return res.json(talentPost)
 })
 
