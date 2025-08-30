@@ -59,7 +59,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
     let edIndex = talent.editions.findIndex( e => e.status === "open")
 
     let queuedUsers = []
-        if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
+    if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
           queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
           talent.contestants.push(...queuedUsers)
        }
