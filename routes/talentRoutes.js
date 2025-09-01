@@ -68,7 +68,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        let contest = talent.eliminations.splice(0,6)
        talent.queue.push(...contest)  
     }
-     
+         
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
     // let edIndex = talent.editions.findIndex( e => e.status === "open")
@@ -419,8 +419,6 @@ route.post('/votes/:id',verifyJwt,async(req,res)=>{
     const talentPost = await talentPostDataModel.findOne(
       {post_id:post_id}
       )
-    
-    
 
     if(!talentPost || !talent.contestants.find(c => c._id == post_id)) { 
         return res.json("expired")
