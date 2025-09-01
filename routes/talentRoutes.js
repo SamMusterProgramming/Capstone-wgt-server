@@ -64,10 +64,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
           talent.contestants.push(...queuedUsers)
        }
     
-    // if(talent.eliminations.length > 0){
-    //    let contest = talent.eliminations.splice(0,6)
-    //    talent.queue.push(...contest)  
-    // }
+    if(talent.eliminations.length > 0){
+       let contest = talent.eliminations.splice(0,6)
+       talent.queue.push(...contest)  
+    }
      
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
