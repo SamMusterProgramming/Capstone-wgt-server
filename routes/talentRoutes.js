@@ -238,7 +238,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 })
 
 
-//**********************************user talents , participations  */
+//********************************** user talents , participations  */
 
 route.get('/user/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
@@ -260,7 +260,7 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
         ]
        });
      
-    
+      
       res.json(userTalents)
 })
 
@@ -611,7 +611,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 
     const newTalent = await talentModel.findById(_id)
     
-     if(req.body.type =="new") {
+    if(req.body.type =="new") {
             if(newTalent.contestants.length <22){
               newTalent.contestants.push(contestant)
             }else{
@@ -619,12 +619,26 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
                newTalent.queue.push(contestant)
               // else newTalent.waiting_list.push(contestant)
             }
-     }else{
+            newTalent.contestants.sort((a, b) => {
+              if(a.votes !== b.votes){
+                 return b.votes - a.votes
+              }else {
+                 return b.likes - a.likes
+              }
+              
+              })
+        
+            newTalent.contestants.forEach((c ,index) =>{
+                newTalent.contestants[index] = {...c,rank:index + 1};
+            })
+    }else{
           // if(newTalent.queue.length < (4 - newTalent.round) * 6)
             newTalent.queue.push(contestant)
           // else newTalent.waiting_list.push(contestant)
-     }
+    }
+
     await newTalent.save()
+    
 
     const newPostData = new talentPostDataModel(
          {
