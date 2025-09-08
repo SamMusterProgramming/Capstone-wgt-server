@@ -50,6 +50,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
       }
       
       })
+
+    talent.contestants.forEach((c ,index) =>{
+           talent.contestants[index] = {...c,rank:index + 1};
+    })
     
 
     // let fix = talent.contestants.splice(-3)
