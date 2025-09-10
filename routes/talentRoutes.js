@@ -712,7 +712,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
 
     if(req.body.type !== "eupdate"){
     const query =  req.body.type == "update" ? 
-    {
+    {  
         $set: {
           "contestants.$[item].name": req.body.name,
           "contestants.$[item].profile_img": req.body.profile_img,
@@ -720,8 +720,8 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
           "contestants.$[item].country":req.body.country,
           "contestants.$[item].video_url":req.body.video_url,
         }
-      }:
-      {
+      }: 
+      { 
         $set: {
           "queue.$[item].name": req.body.name,
           "queue.$[item].profile_img": req.body.profile_img,
