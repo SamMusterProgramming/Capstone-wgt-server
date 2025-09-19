@@ -641,20 +641,47 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
         res.json(challenge).status(200)
     })          
     
-    
-    route.patch('/mode/:id',verifyJwt,validateMongoObjectId, async(req,res)=> {
 
-        const challenge_id = req.params.id;
-        const newMode = req.body.mode; 
-        console.log(newMode)
-        let challenge = await challengeModel.findByIdAndUpdate(
-             challenge_id ,
-             { $set: { audience: newMode } },
-             { new: true }
-            )
+    route.get('/general/:id',verifyJwt,async(req,res)=>{
+        const user_id = req.params.id
+        const friends = await friendModel.findOne({
+                       user_id : user_id
+                   })
+       let friendIDS = []
+       friends.friends.forEach(f => friendIDS.push(f.user_id))
+
+       const challenges = await challengeModel.find({
+        'participants.user_id': { $in: friendIDS }
+       })
+       console.log(challenges)
+        // const userTalents = await talentModel.find({
+        //   $or: [
+        //     { 'contestants.user_id':  user_id
+        //       }, 
+        //     { 'queue.user_id': user_id
+              
+        //       }, 
+        //       { 'eliminations.user_id': user_id             
+        //       }
+        //   ]
+        //  });
+      
+        res.json(challenges)
+  })
+    
+    // route.patch('/mode/:id',verifyJwt,validateMongoObjectId, async(req,res)=> {
+
+    //     const challenge_id = req.params.id;
+    //     const newMode = req.body.mode; 
+    //     console.log(newMode)
+    //     let challenge = await challengeModel.findByIdAndUpdate(
+    //          challenge_id ,
+    //          { $set: { audience: newMode } },
+    //          { new: true }
+    //         )
         
-        res.json(challenge).status(200)
-    }) 
+    //     res.json(challenge).status(200)
+    // }) 
   // **************************** Comments ***************************
 
    route.get('/posts/:id',verifyJwt,async(req,res)=> {

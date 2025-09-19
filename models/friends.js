@@ -28,7 +28,7 @@ const friendSchema = new mongoose.Schema({
    { versionKey: false }           
  )
          
-friendSchema.index({receiver_id:1});   
+friendSchema.index({user_id:1});   
 
 let friendModel = mongoose.model("friends",friendSchema);
 

@@ -301,10 +301,22 @@ route.get('/user/performance/:id',verifyJwt,async(req,res)=>{
               if(performance) performances.push(performance)
           })
        })
-      console.log(performances)
       res.json(performances)
 })
 
+route.get('/general/:id',verifyJwt,async(req,res)=>{
+      const user_id = req.params.id
+      const friends = await friendModel.findOne({
+                     user_id : user_id
+                 })
+      let friendIDS = []
+      friends && friends.friends.forEach(f => friendIDS.push(f.user_id))
+      const talents = await talentModel.find({
+                  'contestants.user_id': { $in: friendIDS }
+                 })
+    
+      res.json(talents)
+})
 
 
 //******************************** post likes, votes, comments */
