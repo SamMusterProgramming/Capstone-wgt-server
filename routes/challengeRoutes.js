@@ -653,21 +653,31 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
        const challenges = await challengeModel.find({
         'participants.user_id': { $in: friendIDS }
        })
-       console.log(challenges)
-        // const userTalents = await talentModel.find({
-        //   $or: [
-        //     { 'contestants.user_id':  user_id
-        //       }, 
-        //     { 'queue.user_id': user_id
-              
-        //       }, 
-        //       { 'eliminations.user_id': user_id             
-        //       }
-        //   ]
-        //  });
-      
-        res.json(challenges)
+        
+       res.json(challenges)
   })
+
+
+  route.get('/user/:id',verifyJwt,async(req,res)=>{
+   const user_id = req.params.id
+   const challenges = await challengeModel.find({
+    'participants.user_id': user_id
+   })
+    // const userTalents = await talentModel.find({
+    //   $or: [
+    //     { 'contestants.user_id':  user_id
+    //       }, 
+    //     { 'queue.user_id': user_id
+          
+    //       }, 
+    //       { 'eliminations.user_id': user_id             
+    //       }
+    //   ]
+    //  });
+    console.log(challenges)
+   res.json(challenges)
+})
+
     
     // route.patch('/mode/:id',verifyJwt,validateMongoObjectId, async(req,res)=> {
 

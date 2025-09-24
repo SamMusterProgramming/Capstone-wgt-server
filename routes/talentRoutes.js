@@ -240,15 +240,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 
 //********************************** user talents , participations  */
 
-route.get('/user/:id',verifyJwt,async(req,res)=>{
+route.get('/user/talent/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
       const user_id = req.params.id
       const userTalents = await talentModel.find({
-        // 'contestants': {
-        //   $elemMatch: {
-        //     user_id: user_id
-        //   }
-        // } 
         $or: [
           {  'contestants.user_id':  user_id
             }, 
@@ -259,10 +254,8 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
             }
         ]
        });
-     
-      
       res.json(userTalents)
-})
+   })
 
 route.get('/user/performance/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
@@ -318,6 +311,13 @@ route.get('/general/:id',verifyJwt,async(req,res)=>{
       res.json(talents)
 })
 
+route.get('/user/:id',verifyJwt,async(req,res)=>{
+      const user_id = req.params.id
+      const talents = await talentModel.find({
+        'contestants.user_id': user_id
+       })
+      res.json(talents)
+   })
 
 //******************************** post likes, votes, comments */
 
