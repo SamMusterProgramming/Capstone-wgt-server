@@ -122,9 +122,7 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
                 name:req.body.name,
                 profile_img:req.body.profile_img,   
             }
-          
         }
-
         await notificationModel(notification).save()
         
     })

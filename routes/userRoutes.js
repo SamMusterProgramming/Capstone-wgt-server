@@ -400,7 +400,7 @@ route.post('/friends/accept/:id',verifyJwt,validateMongoObjectId,async(req,res)=
     },
     message:"has accepted your friend request, start sharing",
     type:"friends",   
-    isRead:false,
+    isRead:true,
   })
   await newNotification.save()
   res.json(friend_sender).status(200)
