@@ -121,6 +121,8 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
                 challenge_id:newChallenge._id.toString(),
                 name:req.body.name,
                 profile_img:req.body.profile_img,   
+                challengeType: challenge.type,
+                challengePrivacy : challenge.privacy
             }
         }
         await notificationModel(notification).save()
@@ -168,6 +170,8 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
                 challenge_id:_id,
                 name:req.body.name,
                 profile_img:req.body.profile_img,
+                challengeType: challenge.type,
+                challengePrivacy : challenge.privacy
             }
             
     }
@@ -186,6 +190,8 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
                 challenge_id:_id,
                 name:req.body.name,
                 profile_img:req.body.profile_img,
+                challengeType: challenge.type,
+                challengePrivacy : challenge.privacy
             }
           
         }
@@ -259,6 +265,8 @@ route.post('/uploads/:id',verifyJwt,validateMongoObjectId,async(req,res)=>{
                 challenge_id:_id,
                 name:req.body.name,
                 profile_img:req.body.profile_img,
+                challengeType: challenge.type,
+                challengePrivacy : challenge.privacy
             }
           
         }

@@ -255,7 +255,7 @@ route.get('/user/talent/:id',verifyJwt,async(req,res)=>{
         ]
        });
       res.json(userTalents)
-   })
+})
 
 route.get('/user/performance/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
@@ -307,7 +307,6 @@ route.get('/general/:id',verifyJwt,async(req,res)=>{
       const talents = await talentModel.find({
                   'contestants.user_id': { $in: friendIDS }
                  })
-    
       res.json(talents)
 })
 
@@ -317,7 +316,7 @@ route.get('/user/:id',verifyJwt,async(req,res)=>{
         'contestants.user_id': user_id
        })
       res.json(talents)
-   })
+})
 
 //******************************** post likes, votes, comments */
 
