@@ -107,9 +107,9 @@ route.post('/uploads',verifyJwt,async(req,res)=>{
         if (req.body.privacy == "Private") {
             if(req.body.friendList.find(fr => fr.user_id == friend.user_id))
              message = "Invited you to  participate in his challenge"
-            else message =  "has create new Challenge" 
+            else message =  "has created a new Challenge" 
         }
-        else message = "has create new Challenge"
+        else message = "has created a new Challenge"
                 
         const notification = {
             receiver_id:friend.user_id,
