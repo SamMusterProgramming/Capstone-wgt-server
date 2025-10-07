@@ -243,7 +243,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 route.get('/user/talent/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
       const user_id = req.params.id
-      const userTalents = await talentModel.find({
+      let userTalents = await talentModel.find({
         $or: [
           {  'contestants.user_id':  user_id
             }, 
@@ -254,6 +254,7 @@ route.get('/user/talent/:id',verifyJwt,async(req,res)=>{
             }
         ]
        });
+      userTalents = userTalents.filter(t => t.contestants.length !== 0)
       res.json(userTalents)
 })
 
