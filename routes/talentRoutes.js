@@ -80,10 +80,10 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      (edition.round >= 3))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60*60*24*7)
+        const differenceInMilliseconds = (now - roundDate)/(1000*60000)
         console.log(differenceInMilliseconds)
      
-        if(differenceInMilliseconds >= 1) {
+        if(differenceInMilliseconds >= 100) {
 
           let eliminatedContestants=[]
           let queuedContestants =[]  
