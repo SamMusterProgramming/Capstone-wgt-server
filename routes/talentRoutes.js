@@ -246,10 +246,10 @@ route.get('/top/:id',verifyJwt,async(req,res)=>{
       let userTalents = await talentModel.find();
       // userTalents = userTalents.filter( t => !(t.contestants.some(c=> c.user_id === user_id)
       // || t.queue.some(c=> c.user_id === user_id)))
-      userTalents = userTalents.filter( t => t.contestants.length > 8 || t.round > 3)
+      userTalents = userTalents.filter( t => t.contestants.length > 1 || t.round > 3)
       userTalents.sort((a, b) => {
            return b.editions.length  - a.editions.length
-        })
+      })
       console.log(userTalents.length)
       res.json(userTalents)
 })
