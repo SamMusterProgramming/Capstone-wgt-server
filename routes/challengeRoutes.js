@@ -656,10 +656,11 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
        let friendIDS = []
        friends.friends.forEach(f => friendIDS.push(f.user_id))
 
-       const challenges = await challengeModel.find({
+       let challenges = await challengeModel.find({
         'participants.user_id': { $in: friendIDS }
        })
-        
+       challenges = challenges.filter(c => !c.participants.some(p => p.user_id === user_id) &&
+                                         c.origin_id !== user_id )
        res.json(challenges)
   })
 
