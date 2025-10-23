@@ -755,26 +755,29 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
  })
  //***************************favourites */
  route.post('/favourite/:id',verifyJwt,async(req,res)=> {
+    console.log(req.body.data)
     const user_id = req.params.id;
-    const challenge = await challengeModel.findById(
-        req.body._id 
-       )
-    if(!challenge) return res.json("challenge expired").status(404)   
-    let favourite = await favouriteModel.findOne(
-        {user_id:user_id  } 
-    )
-    if(!favourite)  {
-        const newFavourite = new favouriteModel({
-            user_id:user_id,
-            favourites:[req.body]
-        }
-        )
-        await newFavourite.save()
-        return res.json(newFavourite)
-    }
-    favourite.favourites.push(req.body)
-    await favourite.save()
-    return res.json(favourite).status(200)
+    // if(req.body.dataType == "challenge"){
+    // const challenge = await challengeModel.findById(
+    //     req.body._id 
+    //    )
+    // if(!challenge) return res.json("challenge expired").status(404)   
+    // }
+    // let favourite = await favouriteModel.findOne(
+    //     {user_id:user_id } 
+    // )
+    // if(!favourite)  {
+    //     const newFavourite = new favouriteModel({
+    //         user_id:user_id,
+    //         favourites:[req.body]
+    //     } 
+    //     )
+    //     await newFavourite.save()
+    //     return res.json(newFavourite)
+    // }
+    // favourite.favourites.push(req.body)
+    // await favourite.save()
+    // return res.json(favourite).status(200)
  })
  
 

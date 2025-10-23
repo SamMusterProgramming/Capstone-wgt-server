@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
 const friendModel = require('../models/friends.js')
 const notificationModel = require('../models/notifications.js')
+const favouriteModel = require('../models/favourites.js')
 
 
 route = express.Router();
@@ -240,6 +241,43 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 
 //********************************** user talents , participations  */
 
+route.post('/favourite/:id',verifyJwt,async(req,res)=> {
+  const user_id = req.params.id;
+  const talent = await talentModel.findById(
+      req.body.talentRoom_id 
+     )
+  let favourite = await favouriteModel.findOne(
+      {user_id:user_id } 
+  )
+  if(!favourite)  {
+      const newFavourite = new favouriteModel({
+          user_id:user_id,
+          favourites:[talent]
+      } 
+      )
+      await newFavourite.save()
+      return res.json(newFavourite)
+  }
+  favourite.favourites.push(talent)
+  await favourite.save()
+  return res.json(favourite).status(200)
+})
+
+
+route.patch('/favourite/:id',verifyJwt,async(req,res)=> {
+  const user_id = req.params.id;
+  let favourite = await favouriteModel.findOne(
+      {user_id : user_id} 
+      // { $pull : {favourites : {_id:req.body.talentRoom_id} } },
+      // { new : true } 
+  )
+  favourite.favourites = favourite.favourites.filter(f=> f._id !== req.body.talentRoom_id.toString() )
+  await favourite.save()
+  console.log(favourite)
+  return res.json(favourite).status(200)
+})
+
+
 route.get('/top/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)
       const user_id = req.params.id
@@ -265,7 +303,7 @@ route.get('/user/talent/:id',verifyJwt,async(req,res)=>{
           {  'queue.user_id': user_id
             
             }, 
-            { 'eliminations.user_id': user_id             
+          {  'eliminations.user_id': user_id             
             }
         ]
        });
