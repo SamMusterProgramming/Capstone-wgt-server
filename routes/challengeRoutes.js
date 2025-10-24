@@ -617,8 +617,6 @@ route.post('/flags/:id',verifyJwt,async(req,res)=>{
             'participants.user_id': { $nin: [user_id] },
             'invited_friends.user_id': user_id
           }).sort({ createdAt: -1 });
-        
-
         console.log(challenges)
        res.json(challenges).status(200)
 })
@@ -755,31 +753,36 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
  })
  //***************************favourites */
  route.post('/favourite/:id',verifyJwt,async(req,res)=> {
-    console.log(req.body.data)
     const user_id = req.params.id;
-    // if(req.body.dataType == "challenge"){
-    // const challenge = await challengeModel.findById(
-    //     req.body._id 
-    //    )
-    // if(!challenge) return res.json("challenge expired").status(404)   
-    // }
-    // let favourite = await favouriteModel.findOne(
-    //     {user_id:user_id } 
-    // )
-    // if(!favourite)  {
-    //     const newFavourite = new favouriteModel({
-    //         user_id:user_id,
-    //         favourites:[req.body]
-    //     } 
-    //     )
-    //     await newFavourite.save()
-    //     return res.json(newFavourite)
-    // }
-    // favourite.favourites.push(req.body)
-    // await favourite.save()
-    // return res.json(favourite).status(200)
- })
- 
+    console.log(req.body)
+    let favourite = await favouriteModel.findOne(
+        {user_id:user_id } 
+    )
+    if(!favourite)  {
+        const newFavourite = new favouriteModel({
+            user_id:user_id,
+            favourites:[{_id:req.body.challenge_id , dataType:"challenge"}]
+        } 
+        )
+        await newFavourite.save()
+        return res.json(newFavourite)
+    }
+    favourite.favourites.push({_id:req.body.challenge_id, dataType:"challenge"})
+    await favourite.save()
+    return res.json(favourite).status(200)
+  })
+  
+  route.patch('/favourite/:id',verifyJwt,async(req,res)=> {
+    const user_id = req.params.id;
+    let favourite = await favouriteModel.findOne(
+        {user_id : user_id}
+    )
+    favourite.favourites = favourite.favourites.filter(f => f._id !== req.body.challenge_id  )
+    await favourite.save()
+    console.log(favourite)
+    return res.json(favourite).status(200)
+  })
+  
 
  route.get('/favourite/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
