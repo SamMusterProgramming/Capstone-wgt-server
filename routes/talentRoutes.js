@@ -252,15 +252,48 @@ route.post('/favourite/:id',verifyJwt,async(req,res)=> {
   if(!favourite)  {
       const newFavourite = new favouriteModel({
           user_id:user_id,
-          favourites:[{_id:req.body.talentRoom_id , dataType:"talent"}]
+          favourites:[{
+                     _id:req.body.talentRoom_id , 
+                     dataType:"talent",
+                     createdAt : new Date()
+                     }]
       } 
       )
       await newFavourite.save()
       return res.json(newFavourite)
   }
-  favourite.favourites.push({_id:req.body.talentRoom_id , dataType:"talent"})
+  favourite.favourites.push({
+                              _id:req.body.talentRoom_id ,
+                               dataType:"talent",
+                               createdAt : new Date()
+                              })
   await favourite.save()
   return res.json(favourite).status(200)
+})
+
+
+
+route.post('/favourites/:id',verifyJwt,async(req,res)=> {
+  const ids = req.body
+  const favourites = await talentModel.find({ _id: { $in: ids } });
+  // const talent = await talentModel.findById(
+  //     req.body.talentRoom_id 
+  //    )
+  // let favourite = await favouriteModel.findOne(
+  //     {user_id:user_id } 
+  // )
+  // if(!favourite)  {
+  //     const newFavourite = new favouriteModel({
+  //         user_id:user_id,
+  //         favourites:[{_id:req.body.talentRoom_id , dataType:"talent"}]
+  //     } 
+  //     )
+  //     await newFavourite.save()
+  //     return res.json(newFavourite)
+  // }
+  // favourite.favourites.push({_id:req.body.talentRoom_id , dataType:"talent"})
+  // await favourite.save()
+  return res.json(favourites).status(200)
 })
 
 
@@ -276,6 +309,7 @@ route.patch('/favourite/:id',verifyJwt,async(req,res)=> {
   return res.json(favourite).status(200)
 })
 
+//********************************************************
 
 route.get('/top/:id',verifyJwt,async(req,res)=>{
   console.log(req.params.id)

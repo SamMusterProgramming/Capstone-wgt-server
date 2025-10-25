@@ -761,13 +761,21 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
     if(!favourite)  {
         const newFavourite = new favouriteModel({
             user_id:user_id,
-            favourites:[{_id:req.body.challenge_id , dataType:"challenge"}]
+            favourites:[{
+                         _id:req.body.challenge_id , 
+                         dataType:"challenge",
+                         createdAt : new Date()
+                        }]
         } 
         )
         await newFavourite.save()
         return res.json(newFavourite)
     }
-    favourite.favourites.push({_id:req.body.challenge_id, dataType:"challenge"})
+    favourite.favourites.push({
+                           _id:req.body.challenge_id,
+                            dataType:"challenge",
+                            createdAt : new Date()
+                        })
     await favourite.save()
     return res.json(favourite).status(200)
   })
@@ -784,6 +792,29 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
   })
   
 
+  route.post('/favourites/:id',verifyJwt,async(req,res)=> {
+    const ids = req.body
+    const favourites = await challengeModel.find({ _id: { $in: ids } });
+    // const talent = await talentModel.findById(
+    //     req.body.talentRoom_id 
+    //    )
+    // let favourite = await favouriteModel.findOne(
+    //     {user_id:user_id } 
+    // )
+    // if(!favourite)  {
+    //     const newFavourite = new favouriteModel({
+    //         user_id:user_id,
+    //         favourites:[{_id:req.body.talentRoom_id , dataType:"talent"}]
+    //     } 
+    //     )
+    //     await newFavourite.save()
+    //     return res.json(newFavourite)
+    // }
+    // favourite.favourites.push({_id:req.body.talentRoom_id , dataType:"talent"})
+    // await favourite.save()
+    return res.json(favourites).status(200)
+  })
+
  route.get('/favourite/:id',verifyJwt,async(req,res)=> {
     const user_id = req.params.id;
     let favourite = await favouriteModel.findOne(
@@ -798,40 +829,22 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
         await newFavourite.save()
         return res.json(newFavourite)
     }
-    // let challenges =[]
-    // favourite.favourites.forEach(async(challenge) => {
-    //      const chall = await challengeModel.findById(challenge._id)
-    //      if(chall) challenges.push(chall)
-    // })
-    // console.log(challenges.length)
-    // favourite.favourites = favourite.favourites.filter(chall => challenges.find(c => c._id === chall._id) )
-    // console.log(favourite.favourites.length)
-    // await favourite.save()
     return res.json(favourite).status(200)
  })
 
- route.patch('/favourite/:id',verifyJwt,async(req,res)=> {
-    const user_id = req.params.id;
-    // const challenge = await challengeModel.findById(
-    //     req.body._id 
-    //    )
-    // if(!challenge) return res.json("challenge expired").status(404)   
-    let favourite = await favouriteModel.findOneAndUpdate(
-        {user_id:user_id} ,
-       { $pull: {favourites : {_id:req.body._id} } },
-       { new:true } 
-    )
-    // if(!favourite)  {
-    //     const newFavourite = new favouriteModel({
-    //         user_id:user_id,
-    //         favourites:[]
-    //     }
-    //     )
-    //     await newFavourite.save()
-    //     return res.json(newFavourite)
-    // }
-    return res.json(favourite).status(200)
- })
+//  route.patch('/favourite/:id',verifyJwt,async(req,res)=> {
+//     const user_id = req.params.id;
+//     let favourite = await favouriteModel.findOneAndUpdate(
+//         {user_id:user_id} ,
+//        { $pull: {favourites : {_id:req.body._id} } },
+//        { new:true } 
+//     )
+//     return res.json(favourite).status(200)
+//  })
+
+
+
+
 
   //*************************** Viewers */
   route.get('/viewer/:id',verifyJwt,async(req,res)=> {
