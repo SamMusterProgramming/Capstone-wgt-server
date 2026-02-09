@@ -34,7 +34,8 @@ route.post("/getUploadUrl", async (req, res) => {
     `users/${userId}/${type}_contests/submission_${Date.now()}.mp4`;
 
     await b2.authorize();
-
+    console.log("B2 authorized OK");
+    
     const uploadUrlResponse = await b2.getUploadUrl({
       bucketId: process.env.B2_BUCKET_ID,
     });

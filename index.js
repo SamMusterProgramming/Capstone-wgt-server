@@ -56,3 +56,10 @@ function validateRequestNetwork(req,res,next) {
 app.listen(process.env.PORT,()=> {
     console.log("running on port" + process.env.PORT)
 })
+
+console.log("B2 ENV CHECK:", {
+    B2_KEY_ID: !!process.env.B2_KEY_ID,
+    B2_APP_KEY: !!process.env.B2_APP_KEY,
+    B2_BUCKET_ID: !!process.env.B2_BUCKET_ID,
+    B2_BUCKET_NAME: !!process.env.B2_BUCKET_NAME,
+  });
