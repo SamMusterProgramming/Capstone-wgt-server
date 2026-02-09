@@ -721,9 +721,9 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              talentRoom_id: req.body.room_id,
              createdAt: new Date(),
              video: {
-              fileId,
-              fileName,
-              signedUrl,
+              fileId:fileId,
+              fileName:fileName,
+              signedUrl:signedUrl,
               signedUrlExpiresAt: new Date(
                 Date.now() + validForSeconds * 1000
               ),
