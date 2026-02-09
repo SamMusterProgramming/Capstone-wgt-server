@@ -694,8 +694,9 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     
     const fileName = req.body.fileName
     const fileId = req.body.fileId
-    const auth = await b2.authorize();
-    const downloadUrl = auth.data.downloadUrl;
+
+    await b2.authorize();
+    const downloadUrl = b2.authorization.downloadUrl;
     const validForSeconds = 60 * 60 * 24 * 7; // 7 days
     const signedAuth = await b2.getDownloadAuthorization({
       bucketId: process.env.B2_BUCKET_ID,
