@@ -21,7 +21,7 @@ const route = express.Router();
 
 // Backblaze client
 
-await b2.authorize();
+// await b2.authorize();
 
 route.post("/getUploadUrl", async (req, res) => {
   try {
@@ -35,7 +35,7 @@ route.post("/getUploadUrl", async (req, res) => {
 
     await b2.authorize();
     console.log("B2 authorized OK");
-    
+
     const uploadUrlResponse = await b2.getUploadUrl({
       bucketId: process.env.B2_BUCKET_ID,
     });

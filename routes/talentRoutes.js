@@ -691,6 +691,21 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
+
+    const fileName = req.body.fileName
+    fileId = req.body.fileId
+    const auth = await b2.authorize();
+    const downloadUrl = auth.data.downloadUrl;
+    const validForSeconds = 60 * 60 * 24 * 7; // 7 days
+    const signedAuth = await b2.getDownloadAuthorization({
+      bucketId: process.env.B2_BUCKET_ID,
+      fileNamePrefix: fileName,
+      validDurationInSeconds: validForSeconds,
+    });
+    const signedUrl =
+    `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${fileName}?Authorization=${signedAuth.data.authorizationToken}`;
+
+
     const contestant = {
              _id: newObjectId,    
              user_id:req.body.user_id ,
@@ -704,18 +719,17 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              likes:0,
              thumbNail_URL: req.body.thumbNail,
              talentRoom_id: req.body.room_id,
-             createdAt: new Date()
+             createdAt: new Date(),
+             video: {
+              fileId,
+              fileName,
+              signedUrl,
+              signedUrlExpiresAt: new Date(
+                Date.now() + validForSeconds * 1000
+              ),
+            },
             }  
-    // const query = req.body.type =="new" ? 
-    // {$push: { contestants : contestant }}
-    // : {$push: { queue : contestant }}
-
-    // const newTalent = await talentModel.findByIdAndUpdate(
-    //     _id,
-    //      query
-    //      ,
-    //      { new:true } 
-    // )
+    
 
     const newTalent = await talentModel.findById(_id)
     
