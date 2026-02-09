@@ -1,16 +1,20 @@
-const express = require('express')
-const cors = require('cors')
-const bodyParser = require('body-parser')
-const connectDB = require('./db.js')
-require('dotenv').config()
-const userModel = require('./models/users.js')
-const userRoute = require('./routes/userRoutes.js')
-const challengeRoute = require('./routes/challengeRoutes.js')
-const talentRoute = require('./routes/talentRoutes.js')
-const urlencodedParser = bodyParser.urlencoded({ extended: false })
-const PORT = process.env.PORT || 8000
-const app = express()   
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import connectDB from './db.js';
+import userModel from './models/users.js';
+import userRoute from './routes/userRoutes.js';
+import challengeRoute from './routes/challengeRoutes.js';
+import talentRoute from './routes/talentRoutes.js';
+import B2 from 'backblaze-b2';
+
+dotenv.config();
+
+
 connectDB() 
+const app = express();
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 app.use(cors())
 app.use(urlencodedParser)
@@ -26,6 +30,16 @@ app.get('/',(req,res)=>{
      res.send('welcome to our app')
 })    
     
+// // Backblaze client
+// const b2 = new B2({
+//     applicationKeyId: process.env.B2_KEY_ID,
+//     applicationKey: process.env.B2_APP_KEY,
+//   });
+  
+// await b2.authorize();
+
+
+
 function validateRequestNetwork(req,res,next) {
     try {  
         next()
@@ -35,6 +49,6 @@ function validateRequestNetwork(req,res,next) {
 }
     
     
-app.listen(PORT,()=> {
-    console.log("running on port" + PORT)
+app.listen(process.env.PORT,()=> {
+    console.log("running on port" + process.env.PORT)
 })

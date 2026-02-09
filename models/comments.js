@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+import  mongoose from 'mongoose'
+
 
 
 const commentSchema = new mongoose.Schema({
@@ -20,4 +21,4 @@ commentSchema.index({user_id:1,post_id:1});
 
 let commentModel = mongoose.model("comments",commentSchema);
 
-module.exports = commentModel ;
+export default  commentModel ;

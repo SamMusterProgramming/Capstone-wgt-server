@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
-const validator = require('validator');
+import  mongoose from 'mongoose'
+// const validator = require('validator');
 
 
 const challengeSchema = new mongoose.Schema({ 
@@ -58,4 +58,4 @@ challengeSchema.index({user_id:1,id:1});
 
 let challengeModel = mongoose.model("challenges",challengeSchema);
 
-module.exports = challengeModel ;    
+export default  challengeModel ;    

@@ -1,21 +1,37 @@
-const express = require('express')
-const {ObjectId} = require('mongodb')
-const commentModel = require('../models/comments.js')
-const challengeModel = require('../models/challenge.js')
-const favouriteModel = require('../models/favourites.js')
-const data = require('../utilities/data.js')
-const upload = require('../multer.js')
-const likeModel = require ('../models/likes.js')
-const mongoose = require('mongoose')
-const followerModel = require('../models/followers.js')
-const { findByIdAndUpdate } = require('../models/users.js')
-const notificationModel = require('../models/notifications.js')
-const friendModel = require('../models/friends.js')
-const viewerModel = require('../models/postViewers')
-const jwt = require('jsonwebtoken')
-const talentPostDataModel = require('../models/talentPostData.js')
+// const express = require('express')
+// const {ObjectId} = require('mongodb')
+// const commentModel = require('../models/comments.js')
+// const challengeModel = require('../models/challenge.js')
+// const favouriteModel = require('../models/favourites.js')
+// const data = require('../utilities/data.js')
+// const upload = require('../multer.js')
+// const likeModel = require ('../models/likes.js')
+// const mongoose = require('mongoose')
+// const followerModel = require('../models/followers.js')
+// const { findByIdAndUpdate } = require('../models/users.js')
+// const notificationModel = require('../models/notifications.js')
+// const friendModel = require('../models/friends.js')
+// const viewerModel = require('../models/postViewers')
+// const jwt = require('jsonwebtoken')
+// const talentPostDataModel = require('../models/talentPostData.js')
 
-route = express.Router();
+import express from 'express';
+import { ObjectId } from 'mongodb';
+import commentModel from '../models/comments.js';
+import challengeModel from '../models/challenge.js';
+import favouriteModel from '../models/favourites.js';
+import { users, challenges } from '../utilities/data.js';
+// import upload from '../multer.js';
+import likeModel from '../models/likes.js';
+import mongoose from 'mongoose';
+import followerModel from '../models/followers.js';
+// import { findByIdAndUpdate } from '../models/users.js';
+import notificationModel from '../models/notifications.js';
+import friendModel from '../models/friends.js';
+import viewerModel from '../models/postViewers.js';
+import jwt from 'jsonwebtoken';  
+import talentPostDataModel from '../models/talentPostData.js';
+const route = express.Router();
 
 
 route.get('/like/seed',async(req,res)=>{
@@ -907,4 +923,4 @@ function  verifyJwt(req,res,next){
   
 }
             
-module.exports = route; 
+export default route; 

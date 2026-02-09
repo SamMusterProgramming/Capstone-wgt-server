@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+import  mongoose from 'mongoose'
 
 
 const friendSchema = new mongoose.Schema({
@@ -32,4 +32,4 @@ friendSchema.index({user_id:1});
 
 let friendModel = mongoose.model("friends",friendSchema);
 
-module.exports = friendModel;
+export default  friendModel;

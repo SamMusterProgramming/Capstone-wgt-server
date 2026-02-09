@@ -1,15 +1,82 @@
-const express = require('express')
-const userModel = require('../models/users')
-const session = require('express-session')
-const {ObjectId} = require('mongodb')
-const data = require('../utilities/data')
-const followerModel = require('../models/followers')
-const friendModel = require('../models/friends')
-const notificationModel = require('../models/notifications')
-const jwt = require('jsonwebtoken')
+
+
+import express from 'express';
+import userModel from '../models/users.js';
+import session from 'express-session';
+import { ObjectId } from 'mongodb';
+import { users, challenges } from '../utilities/data.js';
+import followerModel from '../models/followers.js';
+import friendModel from '../models/friends.js';
+import notificationModel from '../models/notifications.js';
+import jwt from 'jsonwebtoken';
+import B2 from 'backblaze-b2';
+import dotenv from 'dotenv';
+import b2 from '../B2.js' 
+
 // const friendModel = require('../models/friends')
-require('dotenv').config()
-route = express.Router();
+// require('dotenv').config()
+
+dotenv.config();
+const route = express.Router();
+
+// Backblaze client
+
+await b2.authorize();
+
+route.post("/getUploadUrl", async (req, res) => {
+  try {
+    const {uploadType , userId ,name , type } = req.body;
+    console.log(userId + name)
+    // type = "profile" | "cover" | "post"
+    const fileName = 
+    type == "profile" || type == "cover" ?
+    `users/${userId}/${type}/${type}_${Date.now()}.jpg` :
+    `users/${userId}/${type}_contests/submission_${Date.now()}.mp4`;
+
+    await b2.authorize();
+
+    const uploadUrlResponse = await b2.getUploadUrl({
+      bucketId: process.env.B2_BUCKET_ID,
+    });
+
+    res.json({
+      uploadUrl: uploadUrlResponse.data.uploadUrl,
+      authorizationToken: uploadUrlResponse.data.authorizationToken,
+      fileName:fileName,
+    
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+route.post("/saveProfileImage", async (req, res) => {
+  const { userId,fileId ,  fileName } = req.body;
+
+  const auth = await b2.authorize();
+  const downloadUrl = auth.data.downloadUrl;
+
+  const validForSeconds = 60 * 60 * 24 * 30; // 30 days
+
+  const signedUrlResponse = await b2.getDownloadAuthorization({
+    bucketId: process.env.B2_BUCKET_ID,
+    fileNamePrefix: fileName,
+    validDurationInSeconds: 604800,
+  });
+
+  const signedUrl = `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${fileName}?Authorization=${signedUrlResponse.data.authorizationToken}`;
+  await userModel.findByIdAndUpdate(userId, {
+    profileImage: {
+      fileId : fileId ,
+      fileName :fileName,
+      signedUrl : signedUrl,
+      signedUrlExpiresAt: new Date(Date.now() + validForSeconds * 1000),
+    },
+  });   
+  res.json({ signedUrl });
+
+});
 
 
 // seeds the database with prototype data
@@ -522,4 +589,4 @@ function verifyJwt  (req,res,next){
 }
 
 
-module.exports = route; 
+export default route; 

@@ -1,17 +1,27 @@
-const express = require('express')
-const {ObjectId} = require('mongodb')
-const commentModel = require('../models/comments.js')
-const talentModel = require('../models/talent.js')
-const talentPostDataModel  = require('../models/talentPostData.js')
+// const express = require('express')
+// const {ObjectId} = require('mongodb')
+// const commentModel = require('../models/comments.js')
+// const talentModel = require('../models/talent.js')
+// const talentPostDataModel  = require('../models/talentPostData.js')
 
-const jwt = require('jsonwebtoken')
-const mongoose = require('mongoose')
-const friendModel = require('../models/friends.js')
-const notificationModel = require('../models/notifications.js')
-const favouriteModel = require('../models/favourites.js')
+// const jwt = require('jsonwebtoken')
+// const mongoose = require('mongoose')
+// const friendModel = require('../models/friends.js')
+// const notificationModel = require('../models/notifications.js')
+// const favouriteModel = require('../models/favourites.js')
 
+import express from 'express';
+import { ObjectId } from 'mongodb';
+import commentModel from '../models/comments.js';
+import talentModel from '../models/talent.js';
+import talentPostDataModel from '../models/talentPostData.js';
+import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
+import friendModel from '../models/friends.js';
+import notificationModel from '../models/notifications.js';
+import favouriteModel from '../models/favourites.js';
 
-route = express.Router();
+const route = express.Router();
 
 
 route.post('/creates',verifyJwt,async(req,res)=>{
@@ -1150,4 +1160,4 @@ function  verifyJwt(req,res,next){
 
 
 
-module.exports = route; 
+export default route; 

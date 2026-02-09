@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+import  mongoose from 'mongoose'
+
 
 
 const followerSchema = new mongoose.Schema({
@@ -30,4 +31,4 @@ followerSchema.index({user_id:1});
 
 let followerModel = mongoose.model("followers",followerSchema);
 
-module.exports = followerModel;
+export default followerModel;

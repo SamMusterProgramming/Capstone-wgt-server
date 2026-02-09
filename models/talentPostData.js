@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
-const validator = require('validator');
+import  mongoose from 'mongoose'
+
 
 
 const dataSchema = new mongoose.Schema({ 
@@ -28,4 +28,4 @@ dataSchema.index({user_id:1,post_id:1});
 
 let talentPostDataModel = mongoose.model("postData",dataSchema);
 
-module.exports = talentPostDataModel ;
+export default talentPostDataModel ;

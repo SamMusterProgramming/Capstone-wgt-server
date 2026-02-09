@@ -91,4 +91,4 @@ const challenges = [{
 }]
 
 
-module.exports = { users ,challenges};
+export { users, challenges };

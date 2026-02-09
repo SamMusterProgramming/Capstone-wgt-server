@@ -1,4 +1,5 @@
-const mongoose = require('mongoose')
+import  mongoose from 'mongoose'
+
 
 
 const viewerSchema = new mongoose.Schema({
@@ -19,4 +20,4 @@ viewerSchema.index({post_id:1})
 
 let viewerModel = mongoose.model("viewers",viewerSchema);
 
-module.exports = viewerModel ;
+export default viewerModel ;

@@ -1,5 +1,4 @@
-const mongoose = require('mongoose')
-const validator = require('validator');
+import  mongoose from 'mongoose'
 
 
 const talentSchema = new mongoose.Schema({ 
@@ -48,4 +47,4 @@ talentSchema.index({region:1 , name:1});
 
 let talentModel = mongoose.model("talents",talentSchema);
 
-module.exports = talentModel ;    
+export default talentModel ;    

@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
-const validator = require('validator');
+import mongoose from 'mongoose';
+import validator from 'validator';
 
 const userSchema = new mongoose.Schema({
     
@@ -12,6 +12,12 @@ const userSchema = new mongoose.Schema({
         required:false,
         default:"/static/images/avatar.avif"
      },
+     profileImage: {
+      fileId: String,
+      fileName: String,
+      signedUrl: String,
+      signedUrlExpiresAt: Date,
+    },
      cover_img:{
       type:String,
       required:false,
@@ -69,4 +75,4 @@ userSchema.index({email:1,password:1});
 
 let userModel = mongoose.model("users",userSchema);
 
-module.exports = userModel ;
+export default  userModel ;

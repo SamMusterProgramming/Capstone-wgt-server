@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
-const validator = require('validator');
+import  mongoose from 'mongoose'
+
 
 
 const likeSchema = new mongoose.Schema({ 
@@ -29,4 +29,4 @@ likeSchema.index({user_id:1,post_id:1});
 
 let likeModel = mongoose.model("like",likeSchema);
 
-module.exports = likeModel ;
+export default likeModel ;
