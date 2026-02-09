@@ -691,9 +691,9 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
-
+    
     const fileName = req.body.fileName
-    fileId = req.body.fileId
+    const fileId = req.body.fileId
     const auth = await b2.authorize();
     const downloadUrl = auth.data.downloadUrl;
     const validForSeconds = 60 * 60 * 24 * 7; // 7 days
