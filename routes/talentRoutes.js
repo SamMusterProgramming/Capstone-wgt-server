@@ -688,7 +688,7 @@ route.patch('/posts/comment/:id',verifyJwt,async(req,res)=> {
 //***************************** upload contestants and more */
 
 route.post('/uploads/:id',verifyJwt,async(req,res)=>{
-    
+  try {
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
     
@@ -827,6 +827,10 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 
     if(!newTalent) return res.json({error:"expired"}).status(404)
     res.json(newTalent)
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Failed to upload contestant" });
+  }
 })
 
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
@@ -931,6 +935,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
         }
        res.json(talent)
   } 
+  
 })
 
 
