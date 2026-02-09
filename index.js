@@ -14,10 +14,14 @@ dotenv.config();
 
 connectDB() 
 const app = express();
+app.use(express.urlencoded({ extended: true, limit: "200mb" }));
+
+app.use(express.json({ limit: "200mb" }));
+
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 app.use(cors())
-app.use(urlencodedParser)
+// app.use(urlencodedParser)
 app.use('/static', express.static('public'))
 app.use(express.json())
 app.use('/users',userRoute)
