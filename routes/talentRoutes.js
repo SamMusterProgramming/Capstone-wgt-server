@@ -20,6 +20,7 @@ import mongoose from 'mongoose';
 import friendModel from '../models/friends.js';
 import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
+import b2 from '../B2.js';
 
 const route = express.Router();
 
