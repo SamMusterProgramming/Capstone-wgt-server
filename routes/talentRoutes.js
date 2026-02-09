@@ -709,7 +709,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     const contestant = {
              _id: newObjectId,    
              user_id:req.body.user_id ,
-             video_url:req.body.video_url,
+            //  video_url:req.body.video_url,
              profile_img:req.body.profile_img,
              name:req.body.name,
              email:req.body.email,
@@ -717,7 +717,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              city:req.body.city,
              votes:0,
              likes:0,
-             thumbNail_URL: req.body.thumbNail,
+            //  thumbNail_URL: req.body.thumbNail,
              talentRoom_id: req.body.room_id,
              createdAt: new Date(),
              video: {
