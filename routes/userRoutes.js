@@ -29,9 +29,13 @@ route.post("/getUploadUrl", async (req, res) => {
     console.log(userId + name)
     // type = "profile" | "cover" | "post"
     const fileName = 
-    type == "profile" || type == "cover" ?
-    `users/${userId}/${type}/${type}_${Date.now()}.jpg` :
-    `users/${userId}/${type}_contests/submission_${Date.now()}.mp4`;
+    type == "profile" || type == "cover" &&
+          `users/${userId}/${type}/${type}_${Date.now()}.jpg` 
+    type == "talent" || type == "challenge" &&
+           `users/${userId}/${type}_contests/submission_${Date.now()}.mp4`
+    type == "thumbnail"  &&
+           `users/${userId}/${type}/thumbnail_${Date.now()}.mp4`
+
 
     await b2.authorize();
   
