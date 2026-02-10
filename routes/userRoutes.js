@@ -34,7 +34,7 @@ route.post("/getUploadUrl", async (req, res) => {
     if (type == "talent" || type == "challenge" )
         fileName = `users/${userId}/${type}_contests/submission_${Date.now()}.mp4`
     if (type == "thumbnail")  
-         fileName = `users/${userId}/${type}/thumbnail_${Date.now()}.mp4`
+         fileName = `users/${userId}/${type}/thumbnail_${Date.now()}.jpg`
 
     await b2.authorize();
   
