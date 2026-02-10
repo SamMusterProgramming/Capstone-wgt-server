@@ -25,7 +25,7 @@ const route = express.Router();
 
 route.post("/getUploadUrl", async (req, res) => {
   try {
-    const {uploadType , userId ,name , type } = req.body;
+    const { userId ,name , type } = req.body;
     console.log(userId + name)
     // type = "profile" | "cover" | "post"
     const fileName = 
