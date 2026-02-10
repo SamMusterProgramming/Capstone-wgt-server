@@ -36,7 +36,6 @@ route.post("/getUploadUrl", async (req, res) => {
     type == "thumbnail"  &&
            `users/${userId}/${type}/thumbnail_${Date.now()}.mp4`
 
-
     await b2.authorize();
   
 

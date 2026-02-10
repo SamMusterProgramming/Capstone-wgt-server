@@ -692,14 +692,13 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
   try {
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
-    
     const fileName = req.body.fileName
     const fileId = req.body.fileId
     console.log(fileName)
 
     const auth = await b2.authorize();
     const downloadUrl = auth.data.downloadUrl;
-    
+
     const validForSeconds = 60 * 60 * 24 * 7; // 7 days
     const signedAuth = await b2.getDownloadAuthorization({
       bucketId: process.env.B2_BUCKET_ID,
