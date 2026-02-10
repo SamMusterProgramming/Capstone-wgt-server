@@ -698,8 +698,6 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
     const thumbnailFileName = req.body.thumbnailFileName
     const thumbnailFileId = req.body.thumbnailFileId
 
-    console.log(fileName)
-
     const auth = await b2.authorize();
     const downloadUrl = auth.data.downloadUrl;
 
