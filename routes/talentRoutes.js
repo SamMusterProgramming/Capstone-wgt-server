@@ -26,9 +26,9 @@ const route = express.Router();
 
 
 
-route.patch('/:roomId/contestants/:contestantId', verifyJwt, async (req, res) => {
-  const { roomId, contestantId } = req.params;
-  const { video, thumbnail } = req.body; 
+route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
+  const { roomId } = req.params;
+  const { contestantId ,video, thumbnail } = req.body; 
   // video = { fileId, fileName, signedUrl }
   // thumbnail = { fileId, fileName, signedUrl }
 
