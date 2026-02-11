@@ -49,7 +49,7 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
 
     // Update contestant with video & thumbnail signed URLs
     talentRoom.contestants[contestantIndex] = {
-      ...talentRoom.contestants[contestantIndex].toObject(),
+      ...talentRoom.contestants[contestantIndex],
       video,
       thumbnail,
     };
