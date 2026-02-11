@@ -25,6 +25,45 @@ import b2 from '../B2.js';
 const route = express.Router();
 
 
+
+route.patch('/:roomId/contestants/:contestantId', verifyJwt, async (req, res) => {
+  const { roomId, contestantId } = req.params;
+  const { video, thumbnail } = req.body; 
+  // video = { fileId, fileName, signedUrl }
+  // thumbnail = { fileId, fileName, signedUrl }
+
+  try {
+    const talentRoom = await talentModel.findById(roomId);
+
+    if (!talentRoom) {
+      return res.status(404).json({ error: "Talent room not found" });
+    }
+
+    const contestantIndex = talentRoom.contestants.findIndex(
+      (c) => c._id.toString() === contestantId
+    );
+
+    if (contestantIndex === -1) {
+      return res.status(404).json({ error: "Contestant not found" });
+    }
+
+    // Update contestant with video & thumbnail signed URLs
+    talentRoom.contestants[contestantIndex] = {
+      ...talentRoom.contestants[contestantIndex].toObject(),
+      video,
+      thumbnail,
+    };
+
+    await talentRoom.save();
+
+    res.json({ success: true, contestant: talentRoom.contestants[contestantIndex] });
+  } catch (err) {
+    console.error("Failed to update contestant:", err);
+    res.status(500).json({ error: "Failed to update contestant" });
+  }
+});
+
+
 route.post('/creates',verifyJwt,async(req,res)=>{
      const TalentName =  req.body.name
      const regionName =  req.body.region
