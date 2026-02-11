@@ -30,11 +30,11 @@ route.post("/getUploadUrl", async (req, res) => {
     // type = "profile" | "cover" | "post"
     let fileName =  ""
     if(type == "profile" || type == "cover") 
-         fileName =`users/${userId}/${type}/${type}_${Date.now()}.jpg` 
+         fileName =`users/${name.replace(/\s+/g, "")}+"_"+${userId}/${type}/${type}_${Date.now()}.jpg` 
     if (type == "talent" || type == "challenge" )
-        fileName = `users/${userId}/${type}_contests/submission_${Date.now()}.mp4`
+        fileName = `users/${name.replace(/\s+/g, "")}+"_"+${userId}/${type}_contests/submission_${Date.now()}.mp4`
     if (type == "thumbnail")  
-         fileName = `users/${userId}/${type}/thumbnail_${Date.now()}.jpg`
+         fileName = `users/${name.replace(/\s+/g, "")}+"_"+${userId}/${type}/thumbnail_${Date.now()}.jpg`
 
     await b2.authorize();
   
