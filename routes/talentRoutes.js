@@ -21,6 +21,7 @@ import friendModel from '../models/friends.js';
 import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
 import b2 from '../B2.js';
+import { getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
 
 const route = express.Router();
 
@@ -87,6 +88,39 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     res.status(500).json({ error: "Failed to update contestant" });
   }
 });
+
+
+route.post("/video-url", verifyJwt, async (req, res) => {
+  const { roomId, contestantId } = req.body;
+
+  try {
+    const talentRoom = await talentModel.findById(roomId);
+
+    if (!talentRoom) {
+      return res.status(404).json({ error: "Talent room not found" });
+    }
+
+    const contestant = talentRoom.contestants.find(
+      (c) => c._id.toString() === contestantId
+    );
+
+    if (!contestant || !contestant.video) {
+      return res.status(404).json({ error: "Video not found" });
+    }
+
+    // Generate signed URL from Backblaze
+    const signedUrl = await getSignedUrlFromB2(
+      contestant.video.fileName
+    );
+
+    return res.json({ signedUrl });
+
+  } catch (err) {
+    console.error("Error generating signed URL:", err);
+    res.status(500).json({ error: "Failed to generate signed URL" });
+  }
+});
+
 
 
 route.post('/creates',verifyJwt,async(req,res)=>{
