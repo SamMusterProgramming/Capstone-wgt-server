@@ -21,3 +21,14 @@ export const getSignedUrlFromB2 = async (fileName) => {
 
   return downloadUrl;
 };
+
+export const deleteFileFromB2 = async (fileName, fileId) => {
+  await b2.authorize();
+
+  const response = await b2.deleteFileVersion({
+    fileName,
+    fileId,
+  });
+
+  return response.data;
+};

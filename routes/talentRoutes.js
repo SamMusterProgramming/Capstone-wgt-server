@@ -21,7 +21,7 @@ import friendModel from '../models/friends.js';
 import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
 import b2 from '../B2.js';
-import { getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
+import { deleteFileFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
 
 const route = express.Router();
 
@@ -127,6 +127,8 @@ route.post('/creates',verifyJwt,async(req,res)=>{
      const TalentName =  req.body.name
      const regionName =  req.body.region
      const talent = await talentModel.findOne({name:TalentName , region:regionName})
+
+
      if(! talent) {
         const tal = new talentModel({
             name:TalentName,
@@ -136,7 +138,6 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-
     if(talent.editions.length == 0)
     talent.editions.push({
           _id:1,
@@ -182,19 +183,19 @@ route.post('/creates',verifyJwt,async(req,res)=>{
        let contest = talent.eliminations.splice(0,6)
        talent.queue.push(...contest)  
     }
-         
+
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
     // let edIndex = talent.editions.findIndex( e => e.status === "open")
     if(edition && ((edition.round < 3 && talent.contestants.length >= 22 && talent.queue.length >= 6)||
-     (edition.round >= 3))) {
+     (edition.round >= 3 ))) {
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
         const differenceInMilliseconds = (now - roundDate)/(1000*60000)
         console.log(differenceInMilliseconds)
-     
-        if(differenceInMilliseconds >= 100) {
 
+        if(differenceInMilliseconds >= 100) {
+               
           let eliminatedContestants=[]
           let queuedContestants =[]  
     
@@ -1104,8 +1105,11 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
     const type = req.body.type
+    console.log(post_id)
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
+
+   
     
     if(type == "resign"){
         const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
@@ -1151,14 +1155,57 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
         }
         
     }
+
+    const filesToDelete = [];
+
+   
+
     if(type == "queued"){
+        const deletedContestant = talentRoom.queue.find(c => c.user_id == user_id)
         talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
         talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+        if (deletedContestant.video?.fileId) {
+          filesToDelete.push(
+            deleteFileFromB2(
+              deletedContestant.video.fileName,
+              deletedContestant.video.fileId
+            )
+          );
+        }
+    
+        if (deletedContestant.thumbnail?.fileId) {
+          filesToDelete.push(
+            deleteFileFromB2(
+              deletedContestant.thumbnail.fileName,
+              deletedContestant.thumbnail.fileId
+            )
+          );
+        }
+        await Promise.all(filesToDelete);
         await talentPostDataModel.findOneAndDelete({post_id:post_id})
     }
     if(type == "eliminated"){
+      const deletedContestant = talentRoom.eliminations.find(c => c.user_id == user_id)
       talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
       talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+      if (deletedContestant.video?.fileId) {
+        filesToDelete.push(
+          deleteFileFromB2(
+            deletedContestant.video.fileName,
+            deletedContestant.video.fileId
+          )
+        );
+      }
+  
+      if (deletedContestant.thumbnail?.fileId) {
+        filesToDelete.push(
+          deleteFileFromB2(
+            deletedContestant.thumbnail.fileName,
+            deletedContestant.thumbnail.fileId
+          )
+        );
+      }
+      await Promise.all(filesToDelete);
       await talentPostDataModel.findOneAndDelete({post_id:post_id})
   }
   //   if(talent.round < 4 && (talent.queue.length < ( 4 - talent.round) * 6)) {
