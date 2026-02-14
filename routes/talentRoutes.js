@@ -1048,7 +1048,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
      })
     
      newTalent.contestants.forEach(async(c)=>{
-      if(req.body.user_id !== c.user_id && !friend.friends.find(f => f.user_id == c.user_id)){
+      if(req.body.user_id !== c.user_id && !friend?.friends.find(f => f.user_id == c.user_id)){
         let   message = "has updated his post in the Talent Contest you are posted in"     
         const notification = {
           receiver_id:c.user_id,
