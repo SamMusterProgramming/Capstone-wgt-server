@@ -964,12 +964,12 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
     const filesToDelete = [];
     const videoToDelete  = req.body.videoToDelete ;
     const thumbnailToDelete  = req.body.thumbnailToDelete ;
+    
     console.log(req.body.videoToDelete)
-
     filesToDelete.push(
         deleteFileFromB2(
           videoToDelete.fileName,
-          videoToDelete.video.fileId
+          videoToDelete.fileId
         )
       );
     filesToDelete.push(
