@@ -955,20 +955,42 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
   }
 })
 
+
+
 route.patch('/update/:id',verifyJwt,async(req,res)=>{
+
     const _id = req.params.id
+
+    const filesToDelete = [];
+    const {videoToDelete } = req.body.videoToDelete ;
+    const {thumbnailToDelete } = req.body.thumbnailToDelete ;
+   
+    filesToDelete.push(
+        deleteFileFromB2(
+          videoToDelete.fileName,
+          videoToDelete.video.fileId
+        )
+      );
+    filesToDelete.push(
+        deleteFileFromB2(
+          thumbnailToDelete.fileName,
+          thumbnailToDelete.fileId
+        )
+      );
+    await Promise.all(filesToDelete);
+    console.log(videoToDelete)
 
     if(req.body.type !== "eupdate"){
     const query =  req.body.type == "update" ? 
-    {  
+      {  
         $set: {
           "contestants.$[item].name": req.body.name,
           "contestants.$[item].profile_img": req.body.profile_img,
           "contestants.$[item].thumbNail_URL": req.body.thumbNail,
           "contestants.$[item].country":req.body.country,
           "contestants.$[item].video_url":req.body.video_url,
-        }
-      }: 
+        } 
+      } : 
       { 
         $set: {
           "queue.$[item].name": req.body.name,
@@ -1068,7 +1090,6 @@ route.patch('/queue/:id',verifyJwt,async(req,res)=>{
     const talent = await talentModel.findById(
         _id 
     )
-    
     let updateQuery;
     const userQued = talent.queue.find(user => user.user_id == req.body.user_id);
     if (userQued) {
@@ -1108,9 +1129,6 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     console.log(post_id)
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
-
-   
-    
     if(type == "resign"){
         const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
         talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
