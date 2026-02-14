@@ -964,7 +964,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
     const filesToDelete = [];
     const videoToDelete  = req.body.videoToDelete ;
     const thumbnailToDelete  = req.body.thumbnailToDelete ;
-    
+
     console.log(req.body.videoToDelete)
     filesToDelete.push(
         deleteFileFromB2(
@@ -989,16 +989,26 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
           "contestants.$[item].profile_img": req.body.profile_img,
           "contestants.$[item].thumbNail_URL": req.body.thumbNail,
           "contestants.$[item].country":req.body.country,
-          "contestants.$[item].video_url":req.body.video_url,
-        } 
-      } : 
+          "contestants.$[item].video":{fileName :req.body.videoFileName,
+                                     fileId :req.body.videoFileId
+                                },
+          "contestants.$[item].thumbnail":{fileName :req.body.thumbnailFileName,
+                                          fileId: req.body.thumbnailFileName
+                                            } 
+      } 
+      } 
+      : 
       { 
         $set: {
           "queue.$[item].name": req.body.name,
           "queue.$[item].profile_img": req.body.profile_img,
           "queue.$[item].thumbNail_URL": req.body.thumbNail,
-          "queue.$[item].country":req.body.country,
-          "queue.$[item].video_url":req.body.video_url,
+          "queue.$[item].video":{fileName :req.body.videoFileName,
+                                     fileId :req.body.videoFileId
+                                },
+          "queue.$[item].thumbnail":{fileName :req.body.thumbnailFileName,
+                                          fileId: req.body.thumbnailFileName
+                                            } 
         }
       }
     const newTalent = await talentModel.findByIdAndUpdate(
