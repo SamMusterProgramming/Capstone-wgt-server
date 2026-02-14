@@ -987,13 +987,13 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
         $set: {
           "contestants.$[item].name": req.body.name,
           "contestants.$[item].profile_img": req.body.profile_img,
-          "contestants.$[item].thumbNail_URL": req.body.thumbNail,
+          // "contestants.$[item].thumbNail_URL": req.body.thumbNail,
           "contestants.$[item].country":req.body.country,
           "contestants.$[item].video":{fileName :req.body.videoFileName,
                                      fileId :req.body.videoFileId
                                 },
-          "contestants.$[item].thumbnail":{fileName :req.body.thumbnailFileName,
-                                          fileId: req.body.thumbnailFileName
+          "contestants.$[item].thumbnail":{fileName : req.body.thumbnailFileName,
+                                          fileId : req.body.thumbnailFileId
                                             } 
       } 
       } 
@@ -1002,7 +1002,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
         $set: {
           "queue.$[item].name": req.body.name,
           "queue.$[item].profile_img": req.body.profile_img,
-          "queue.$[item].thumbNail_URL": req.body.thumbNail,
+          // "queue.$[item].thumbNail_URL": req.body.thumbNail,
           "queue.$[item].video":{fileName :req.body.videoFileName,
                                      fileId :req.body.videoFileId
                                 },
