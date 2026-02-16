@@ -12,7 +12,7 @@ import jwt from 'jsonwebtoken';
 import B2 from 'backblaze-b2';
 import dotenv from 'dotenv';
 import b2 from '../B2.js' 
-import { getUploadPrivateUrl } from '../utilities/blackBlazeb2.js';
+import { getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
 
 // const friendModel = require('../models/friends')
 // require('dotenv').config()
