@@ -791,12 +791,13 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
   try {
     const newObjectId = new mongoose.Types.ObjectId();
     const _id = req.params.id
+
     const videoFileName = req.body.videoFileName
     const videoFileId = req.body.videoFileId
 
     const thumbnailFileName = req.body.thumbnailFileName
     const thumbnailFileId = req.body.thumbnailFileId
-    const thumbnailSignedUrl = req.body.thumbnailFileId
+    const thumbnailSignedUrl = req.body.thumbnailSignedUrl
 
     // const auth = await b2.authorize();
     // const downloadUrl = auth.data.downloadUrl;
@@ -921,7 +922,10 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
             
         })
         newTalent.contestants.forEach(async(c)=>{
-              if(req.body.user_id !== c.user_id && !friend.friends.find(f=> f.user_id == c.user_id)){
+          if (
+            req.body.user_id !== c.user_id &&
+            (!friend || !friend.friends.find(f => f.user_id == c.user_id))
+          ) {
                 let   message = "has participated in  the Talent Contest you are posted in"     
                 const notification = {
                   receiver_id:c.user_id,
