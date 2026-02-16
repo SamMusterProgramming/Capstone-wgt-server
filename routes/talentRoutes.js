@@ -966,16 +966,17 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
     const filesToDelete = [];
     const videoToDelete  = req.body.videoToDelete ;
     const thumbnailToDelete  = req.body.thumbnailToDelete ;
+    const thumbnailSignedUrl = await getPublicUrlFromB2(req.body.thumbnailFileName)
 
     console.log(req.body.videoToDelete)
     filesToDelete.push(
-        deleteFileFromB2(
+        deleteFileFromB2_Private(
           videoToDelete.fileName,
           videoToDelete.fileId
         )
       );
     filesToDelete.push(
-        deleteFileFromB2(
+        deleteFileFromB2_Public(
           thumbnailToDelete.fileName,
           thumbnailToDelete.fileId
         )
@@ -995,7 +996,8 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
                                      fileId :req.body.videoFileId
                                 },
           "contestants.$[item].thumbnail":{fileName : req.body.thumbnailFileName,
-                                          fileId : req.body.thumbnailFileId
+                                          fileId : req.body.thumbnailFileId ,
+                                          publicUrl :thumbnailSignedUrl
                                             } 
       } 
       } 
@@ -1009,7 +1011,8 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
                                      fileId :req.body.videoFileId
                                 },
           "queue.$[item].thumbnail":{fileName :req.body.thumbnailFileName,
-                                          fileId: req.body.thumbnailFileName
+                                          fileId: req.body.thumbnailFileName ,
+                                          publicUrl :thumbnailSignedUrl
                                             } 
         }
       }
