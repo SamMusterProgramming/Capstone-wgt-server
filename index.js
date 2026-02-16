@@ -57,3 +57,6 @@ app.listen(process.env.PORT,()=> {
     console.log("running on port" + process.env.PORT)
 })
 
+
+console.log("PUBLIC KEY ID:", process.env.B2_PUBLIC_KEY_ID);
+console.log("PUBLIC BUCKET ID:", process.env.B2_PUBLIC_BUCKET_ID);

@@ -29,17 +29,45 @@ export const getUploadPublicUrl = async () => {
   return uploadUrlResponse;
 };
 
+// export const getSignedUrlFromB2 = async (fileName) => {
+//   await b2_PRIVATE.authorize();
+
+//   const response = await b2_PRIVATE.getDownloadAuthorization({
+//     bucketId: BUCKET_PRIVATE_ID ,
+//     fileNamePrefix: fileName,
+//     validDurationInSeconds: 3600,
+//   });
+//   const downloadUrl = `${b2_PRIVATE.downloadUrl}/file/${process.env.B2_PRIVATE_BUCKET_NAME}/${fileName}?Authorization=${response.data.authorizationToken}`;
+//   return downloadUrl;
+// };
+
 export const getSignedUrlFromB2 = async (fileName) => {
-  await b2_PRIVATE.authorize();
-  // Get download authorization
+  const authResponse = await b2_PRIVATE.authorize();
+
+  const downloadUrlBase = authResponse.data.downloadUrl;
+
   const response = await b2_PRIVATE.getDownloadAuthorization({
-    bucketId: BUCKET_PRIVATE_ID ,
+    bucketId: BUCKET_PRIVATE_ID,
     fileNamePrefix: fileName,
-    validDurationInSeconds: 3600, // 1 hour
+    validDurationInSeconds: 3600,
   });
-  const downloadUrl = `${b2_PRIVATE.downloadUrl}/file/${process.env.B2_PRIVATE_BUCKET_NAME}/${fileName}?Authorization=${response.data.authorizationToken}`;
-  return downloadUrl;
+
+  const signedUrl =
+    `${downloadUrlBase}/file/${process.env.B2_PRIVATE_BUCKET_NAME}/${fileName}` +
+    `?Authorization=${response.data.authorizationToken}`;
+
+  return signedUrl;
 };
+
+export const getPublicUrlFromB2 = async (fileName) => {
+  const auth = await b2_PUBLIC.authorize();
+  const downloadUrl = auth.data.downloadUrl;
+   const publicUrl = `${downloadUrl}/file/${process.env.B2_PUBLIC_BUCKET_NAME}/${fileName}`;
+return publicUrl;
+};
+
+
+
 
 export const deleteFileFromB2 = async (fileName, fileId) => {
   await b2_PRIVATE.authorize();

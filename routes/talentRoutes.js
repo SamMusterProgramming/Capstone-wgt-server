@@ -21,7 +21,7 @@ import friendModel from '../models/friends.js';
 import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
 import b2 from '../B2.js';
-import { deleteFileFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
+import { deleteFileFromB2, getPublicUrlFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
 
 const route = express.Router();
 
@@ -797,7 +797,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 
     const thumbnailFileName = req.body.thumbnailFileName
     const thumbnailFileId = req.body.thumbnailFileId
-    const thumbnailSignedUrl = req.body.thumbnailSignedUrl
+    const thumbnailSignedUrl = await getPublicUrlFromB2(thumbnailFileName)
 
     // const auth = await b2.authorize();
     // const downloadUrl = auth.data.downloadUrl;
@@ -847,7 +847,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
             thumbnail: {
               fileId:thumbnailFileId,
               fileName:thumbnailFileName,
-              signedUrl:thumbnailSignedUrl,
+              publicUrl:thumbnailSignedUrl,
             },
             }  
     
