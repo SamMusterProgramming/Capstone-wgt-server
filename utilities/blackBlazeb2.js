@@ -69,9 +69,18 @@ return publicUrl;
 
 
 
-export const deleteFileFromB2 = async (fileName, fileId) => {
+export const deleteFileFromB2_Private = async (fileName, fileId) => {
   await b2_PRIVATE.authorize();
   const response = await b2_PRIVATE.deleteFileVersion({
+    fileName,
+    fileId,
+  });
+  return response.data;
+};
+
+export const deleteFileFromB2_Public = async (fileName, fileId) => {
+  await b2_PUBLIC.authorize();
+  const response = await b2_PUBLIC.deleteFileVersion({
     fileName,
     fileId,
   });

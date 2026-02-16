@@ -21,7 +21,7 @@ import friendModel from '../models/friends.js';
 import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
 import b2 from '../B2.js';
-import { deleteFileFromB2, getPublicUrlFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
+import { deleteFileFromB2, deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
 
 const route = express.Router();
 
@@ -1197,7 +1197,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
         talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
         if (deletedContestant.video?.fileId) {
           filesToDelete.push(
-            deleteFileFromB2(
+            deleteFileFromB2_Private(
               deletedContestant.video.fileName,
               deletedContestant.video.fileId
             )
@@ -1206,7 +1206,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
     
         if (deletedContestant.thumbnail?.fileId) {
           filesToDelete.push(
-            deleteFileFromB2(
+            deleteFileFromB2_Public(
               deletedContestant.thumbnail.fileName,
               deletedContestant.thumbnail.fileId
             )
@@ -1221,7 +1221,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
       talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
       if (deletedContestant.video?.fileId) {
         filesToDelete.push(
-          deleteFileFromB2(
+          deleteFileFromB2_Private(
             deletedContestant.video.fileName,
             deletedContestant.video.fileId
           )
@@ -1230,7 +1230,7 @@ route.patch('/delete/:id',verifyJwt, async(req,res)=>{
   
       if (deletedContestant.thumbnail?.fileId) {
         filesToDelete.push(
-          deleteFileFromB2(
+          deleteFileFromB2_Public(
             deletedContestant.thumbnail.fileName,
             deletedContestant.thumbnail.fileId
           )
