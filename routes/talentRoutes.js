@@ -796,29 +796,30 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
 
     const thumbnailFileName = req.body.thumbnailFileName
     const thumbnailFileId = req.body.thumbnailFileId
+    const thumbnailSignedUrl = req.body.thumbnailFileId
 
-    const auth = await b2.authorize();
-    const downloadUrl = auth.data.downloadUrl;
+    // const auth = await b2.authorize();
+    // const downloadUrl = auth.data.downloadUrl;
 
-    const validForSeconds = 60 * 60 * 24 * 7; // 7 days
+    // const validForSeconds = 60 * 60 * 24 * 7; // 7 days
 
-    const videoSignedAuth = await b2.getDownloadAuthorization({
-      bucketId: process.env.B2_BUCKET_ID,
-      fileNamePrefix: videoFileName,
-      validDurationInSeconds: validForSeconds,
-    });
+    // const videoSignedAuth = await b2.getDownloadAuthorization({
+    //   bucketId: process.env.B2_BUCKET_ID,
+    //   fileNamePrefix: videoFileName,
+    //   validDurationInSeconds: validForSeconds,
+    // });
 
-    const thumbnailSignedAuth = await b2.getDownloadAuthorization({
-      bucketId: process.env.B2_BUCKET_ID,
-      fileNamePrefix: thumbnailFileName,
-      validDurationInSeconds: validForSeconds,
-    });
+    // const thumbnailSignedAuth = await b2.getDownloadAuthorization({
+    //   bucketId: process.env.B2_BUCKET_ID,
+    //   fileNamePrefix: thumbnailFileName,
+    //   validDurationInSeconds: validForSeconds,
+    // });
 
-    const videoSignedUrl =
-    `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${videoFileName}?Authorization=${videoSignedAuth.data.authorizationToken}`;
+    // const videoSignedUrl =
+    // `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${videoFileName}?Authorization=${videoSignedAuth.data.authorizationToken}`;
 
-    const thumbnailSignedUrl =
-    `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${thumbnailFileName}?Authorization=${thumbnailSignedAuth.data.authorizationToken}`;
+    // const thumbnailSignedUrl =
+    // `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${thumbnailFileName}?Authorization=${thumbnailSignedAuth.data.authorizationToken}`;
 
     const contestant = {
              _id: newObjectId,    
@@ -837,18 +838,15 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              video: {
               fileId:videoFileId,
               fileName:videoFileName,
-              signedUrl:videoSignedUrl,
-              signedUrlExpiresAt: new Date(
-                Date.now() + validForSeconds * 1000
-              ),
+              // signedUrl:videoSignedUrl,
+              // signedUrlExpiresAt: new Date(
+              //   Date.now() + validForSeconds * 1000
+              // ),
             },
             thumbnail: {
               fileId:thumbnailFileId,
               fileName:thumbnailFileName,
               signedUrl:thumbnailSignedUrl,
-              signedUrlExpiresAt: new Date(
-                Date.now() + validForSeconds * 1000
-              ),
             },
             }  
     

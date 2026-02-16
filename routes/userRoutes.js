@@ -12,6 +12,7 @@ import jwt from 'jsonwebtoken';
 import B2 from 'backblaze-b2';
 import dotenv from 'dotenv';
 import b2 from '../B2.js' 
+import { getUploadPrivateUrl } from '../utilities/blackBlazeb2.js';
 
 // const friendModel = require('../models/friends')
 // require('dotenv').config()
@@ -23,7 +24,7 @@ const route = express.Router();
 
 // await b2.authorize();
 
-route.post("/getUploadUrl", async (req, res) => {
+route.post("/getUploadVideoUrl", async (req, res) => {
   try {
     const { userId ,name , type } = req.body;
     console.log(userId + name)
@@ -35,24 +36,40 @@ route.post("/getUploadUrl", async (req, res) => {
         fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}_contests/submission_${Date.now()}.mp4`
     if (type == "thumbnail")  
           fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}/thumbnail_${Date.now()}.jpg`;
-
-    await b2.authorize();
-  
-
-    const uploadUrlResponse = await b2.getUploadUrl({
-      bucketId: process.env.B2_BUCKET_ID,
-    });
-
+    const uploadUrlResponse = await getUploadPrivateUrl()
     res.json({
       uploadUrl: uploadUrlResponse.data.uploadUrl,
       authorizationToken: uploadUrlResponse.data.authorizationToken,
       fileName:fileName,
-    
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+route.post("/getUploadImageUrl", async (req, res) => {
+  try {
+    const { userId ,name , type } = req.body;
+    console.log(userId + name)
+    // type = "profile" | "cover" | "post"
+    let fileName =  ""
+    if(type == "profile" || type == "cover") 
+         fileName =`users/${name.replace(/\s+/g, "")}_${userId}/${type}/${type}_${Date.now()}.jpg` 
+    // if (type == "talent" || type == "challenge" )
+    //     fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}_contests/submission_${Date.now()}.mp4`
+    if (type == "thumbnail")  
+          fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}/thumbnail_${Date.now()}.jpg`;
+    const uploadUrlResponse = await getUploadPublicUrl ()
+    res.json({
+      uploadUrl: uploadUrlResponse.data.uploadUrl,
+      authorizationToken: uploadUrlResponse.data.authorizationToken,
+      fileName:fileName,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 
 route.post("/saveProfileImage", async (req, res) => {
