@@ -30,6 +30,7 @@ const route = express.Router();
 
 route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
   console.log("🔥 MIGRATE ROUTE HIT 🔥");
+
   const roomId  = req.params.roomId;
   const  contestantId = req.body.contestantId
   const fileId = req.body.fileId 
@@ -37,10 +38,11 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
   try {
     const talentRoom = await talentModel.findById(roomId);
     const signedUrl = await getPublicUrlFromB2(fileName)
+    console.log(roomId)
     if (!talentRoom) {
       return res.status(404).json({ error: "Talent room not found" });
      }
-
+     console.log(contestantId)
     const contestantIndex = talentRoom.contestants.findIndex(
       (c) => c._id.toString() === contestantId
     );
