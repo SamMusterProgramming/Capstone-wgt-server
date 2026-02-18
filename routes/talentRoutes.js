@@ -94,16 +94,23 @@ route.patch('/migrateProfile/:userId', verifyJwt, async (req, res) => {
     const fileName = req.body.fileName 
     const fileId = req.body.fileId
     const signedUrl = await getPublicUrlFromB2(fileName)
-    console.log(user_id)
-    await userModel.findByIdAndUpdate(user_id, {
-      profileImage: {
-        fileId : fileId ,
-        fileName :fileName,
-        publicUrl : signedUrl,
+    const updatedUser = await userModel.findByIdAndUpdate(
+      user_id,
+      {
+        $set: {
+          profileImage: {
+            fileId,
+            fileName,
+            publicUrl: signedUrl,
+          },
+        },
       },
-    });   
+      { new: true }
+    );
     
-    res.json( signedUrl );
+    res.json({
+      profileImage: updatedUser.profileImage
+    });
 })
 
 
