@@ -102,8 +102,8 @@ route.patch('/migrateProfile/:userId', verifyJwt, async (req, res) => {
         publicUrl : signedUrl,
       },
     });   
-    console.log(signedUrl)
-    res.json({ signedUrl });
+    
+    res.json( signedUrl );
 })
 
 

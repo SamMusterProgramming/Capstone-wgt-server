@@ -15,8 +15,7 @@ const userSchema = new mongoose.Schema({
      profileImage: {
       fileId: String,
       fileName: String,
-      signedUrl: String,
-      signedUrlExpiresAt: Date,
+      publicUrl: String,
     },
      cover_img:{
       type:String,
