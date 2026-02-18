@@ -73,10 +73,10 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     // }
 
     // Update contestant with video & thumbnail signed URLs
-    talentRoom.contestants[contestantIndex] = {
-      ...talentRoom.contestants[contestantIndex]._doc || talentRoom.contestants[contestantIndex], // fallback if _doc exists
-      profileImage: profileImage ? { ...profileImage, fileId: fileId ,fileName : fileName , publicUrl:signedUrl } : undefined,
-      // fileName: fileName ? { ...thumbnail, signedUrl: thumbnailSignedUrl } : undefined
+    talentRoom.contestants[contestantIndex].profileImage = {
+      fileId,
+      fileName,
+      publicUrl: signedUrl,
     };
 
     await talentRoom.save();
