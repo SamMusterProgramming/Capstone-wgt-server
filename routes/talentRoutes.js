@@ -99,8 +99,8 @@ route.patch('/migrateProfile/:userId', verifyJwt, async (req, res) => {
       {
         $set: {
           profileImage: {
-            fileId,
-            fileName,
+            fileId:fileId,
+            fileName:fileName,
             publicUrl: signedUrl,
           },
         },
