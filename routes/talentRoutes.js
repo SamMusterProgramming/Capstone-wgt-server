@@ -31,7 +31,9 @@ const route = express.Router();
 route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
   console.log("🔥 MIGRATE ROUTE HIT 🔥");
   const roomId  = req.params.roomId;
-  const { contestantId ,fileId, fileName } = req.body; 
+  const  contestantId = req.body.contestantId
+  const fileId = req.body.fileId 
+  const fileName = req.body.fileName
   try {
     const talentRoom = await talentModel.findById(roomId);
     const signedUrl = await getPublicUrlFromB2(fileName)
@@ -74,8 +76,8 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
 
     // Update contestant with video & thumbnail signed URLs
     talentRoom.contestants[contestantIndex].profileImage = {
-      fileId,
-      fileName,
+      fileId: fileId,
+      fileName: fileName,
       publicUrl: signedUrl,
     };
 
