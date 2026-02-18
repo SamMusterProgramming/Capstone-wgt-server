@@ -22,6 +22,7 @@ import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
 import b2 from '../B2.js';
 import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
+import userModel from '../models/users.js';
 
 const route = express.Router();
 
@@ -30,8 +31,7 @@ const route = express.Router();
 route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
   const roomId  = req.params.roomId;
   const { contestantId ,video, thumbnail } = req.body; 
-  // video = { fileId, fileName, signedUrl }
-  // thumbnail = { fileId, fileName, signedUrl }
+
 
   try {
     const talentRoom = await talentModel.findById(roomId);
@@ -88,6 +88,23 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     res.status(500).json({ error: "Failed to update contestant" });
   }
 });
+
+route.patch('/migrateProfile/:userId', verifyJwt, async (req, res) => {
+    const user_id = req.params.userId
+    const fileName = req.body.fileName 
+    const fileId = req.body.fileId
+    const signedUrl = await getPublicUrlFromB2(fileName)
+    console.log(user_id)
+    await userModel.findByIdAndUpdate(user_id, {
+      profileImage: {
+        fileId : fileId ,
+        fileName :fileName,
+        publicUrl : signedUrl,
+      },
+    });   
+    console.log(signedUrl)
+    res.json({ signedUrl });
+})
 
 
 route.post("/video-url", verifyJwt, async (req, res) => {
