@@ -29,7 +29,7 @@ const route = express.Router();
 
 
 route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
-
+  console.log("🔥 MIGRATE ROUTE HIT 🔥");
   const roomId  = req.params.roomId;
   const { contestantId ,fileId, fileName } = req.body; 
   try {
