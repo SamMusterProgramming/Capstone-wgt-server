@@ -42,10 +42,10 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     if (!talentRoom) {
       return res.status(404).json({ error: "Talent room not found" });
      }
-     console.log(contestantId)
     const contestantIndex = talentRoom.contestants.findIndex(
       (c) => c._id.toString() === contestantId
     );
+    console.log(contestantIndex)
 
     if (contestantIndex === -1) {
       return res.status(404).json({ error: "Contestant not found" });
