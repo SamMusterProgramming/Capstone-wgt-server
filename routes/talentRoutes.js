@@ -29,16 +29,15 @@ const route = express.Router();
 
 
 route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
+
   const roomId  = req.params.roomId;
-  const { contestantId ,video, thumbnail } = req.body; 
-
-
+  const { contestantId ,fileId, fileName } = req.body; 
   try {
     const talentRoom = await talentModel.findById(roomId);
-
+    const signedUrl = await getPublicUrlFromB2(fileName)
     if (!talentRoom) {
       return res.status(404).json({ error: "Talent room not found" });
-    }
+     }
 
     const contestantIndex = talentRoom.contestants.findIndex(
       (c) => c._id.toString() === contestantId
@@ -49,35 +48,35 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     }
 
      // Generate signed URLs here
-     const auth = await b2.authorize();
-     const downloadUrl = auth.data.downloadUrl;
-     const validForSeconds = 60 * 60 * 24 * 7; // 7 days
+    //  const auth = await b2.authorize();
+    //  const downloadUrl = auth.data.downloadUrl;
+     
  
-     const generateSignedUrl = async (fileName) => {
-       const signedAuth = await b2.getDownloadAuthorization({
-         bucketId: process.env.B2_BUCKET_ID,
-         fileNamePrefix: fileName,
-         validDurationInSeconds: validForSeconds,
-       });
-       return `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${fileName}?Authorization=${signedAuth.data.authorizationToken}`;
-     };
+    //  const generateSignedUrl = async (fileName) => {
+    //    const signedAuth = await b2.getDownloadAuthorization({
+    //      bucketId: process.env.B2_BUCKET_ID,
+    //      fileNamePrefix: fileName,
+    //      validDurationInSeconds: validForSeconds,
+    //    });
+    //    return `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${fileName}?Authorization=${signedAuth.data.authorizationToken}`;
+    //  };
  
-    let videoSignedUrl = null;
-    let thumbnailSignedUrl = null;
+    // let videoSignedUrl = null;
+    // let thumbnailSignedUrl = null;
 
-    if (video && video.fileName) {
-      videoSignedUrl = await generateSignedUrl(video.fileName);
-    }
+    // if (video && video.fileName) {
+    //   videoSignedUrl = await generateSignedUrl(video.fileName);
+    // }
 
-    if (thumbnail && thumbnail.fileName) {
-      thumbnailSignedUrl = await generateSignedUrl(thumbnail.fileName);
-    }
+    // if (thumbnail && thumbnail.fileName) {
+    //   thumbnailSignedUrl = await generateSignedUrl(thumbnail.fileName);
+    // }
 
     // Update contestant with video & thumbnail signed URLs
     talentRoom.contestants[contestantIndex] = {
       ...talentRoom.contestants[contestantIndex]._doc || talentRoom.contestants[contestantIndex], // fallback if _doc exists
-      video: video ? { ...video, signedUrl: videoSignedUrl } : undefined,
-      thumbnail: thumbnail ? { ...thumbnail, signedUrl: thumbnailSignedUrl } : undefined
+      profileImage: profileImage ? { ...profileImage, fileId: fileId ,fileName : fileName , publicUrl:signedUrl } : undefined,
+      // fileName: fileName ? { ...thumbnail, signedUrl: thumbnailSignedUrl } : undefined
     };
 
     await talentRoom.save();
