@@ -33,19 +33,19 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
 
   const roomId  = req.params.roomId;
   const  contestantId = req.body.contestantId
-  const fileId = req.body.fileId 
-  const fileName = req.body.fileName
+  // const fileId = req.body.fileId 
+  // const fileName = req.body.fileName
   try {
     const talentRoom = await talentModel.findById(roomId);
-    const signedUrl = await getPublicUrlFromB2(fileName)
-    console.log(roomId)
+    // const signedUrl = await getPublicUrlFromB2(fileName)
+    // console.log(roomId)
     if (!talentRoom) {
       return res.status(404).json({ error: "Talent room not found" });
      }
     const contestantIndex = talentRoom.contestants.findIndex(
       (c) => c.user_id === contestantId
     );
-    console.log(contestantIndex)
+    // console.log(contestantIndex)
 
     if (contestantIndex === -1) {
       return res.status(404).json({ error: "Contestant not found" });
@@ -77,8 +77,10 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     // }
 
     // Update contestant with video & thumbnail signed URLs
+    const user = await userModel.findById(contestantId)
+    console.log(user)
     let newcontestant  = talentRoom.contestants[contestantIndex]
-    newcontestant.profileImageUrl =  signedUrl
+    newcontestant.publicUrl =  user.profileImage.publicUrl
     talentRoom.contestants[contestantIndex] = newcontestant
     await talentRoom.save();
 
