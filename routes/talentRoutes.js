@@ -77,11 +77,8 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     // }
 
     // Update contestant with video & thumbnail signed URLs
-    talentRoom.contestants[contestantIndex].profileImage = {
-      fileId: fileId,
-      fileName: fileName,
-      publicUrl: signedUrl,
-    };
+    talentRoom.contestants[contestantIndex].profileImageUrl =  signedUrl
+   
 
     await talentRoom.save();
 
