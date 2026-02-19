@@ -75,24 +75,12 @@ route.post("/getUploadImageUrl", async (req, res) => {
 route.post("/saveProfileImage", async (req, res) => {
   const { userId,fileId ,  fileName } = req.body;
 
-  const auth = await b2.authorize();
-  const downloadUrl = auth.data.downloadUrl;
-
-  const validForSeconds = 60 * 60 * 24 * 30; // 30 days
-
-  const signedUrlResponse = await b2.getDownloadAuthorization({
-    bucketId: process.env.B2_BUCKET_ID,
-    fileNamePrefix: fileName,
-    validDurationInSeconds: 604800,
-  });
-
-  const signedUrl = `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${fileName}?Authorization=${signedUrlResponse.data.authorizationToken}`;
+  const signedUrl = await getPublicUrlFromB2(fileName)
   await userModel.findByIdAndUpdate(userId, {
     profileImage: {
       fileId : fileId ,
       fileName :fileName,
-      signedUrl : signedUrl,
-      signedUrlExpiresAt: new Date(Date.now() + validForSeconds * 1000),
+      publicUrl : signedUrl,
     },
   });   
   res.json({ signedUrl });
