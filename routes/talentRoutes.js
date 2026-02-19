@@ -852,7 +852,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              _id: newObjectId,    
              user_id:req.body.user_id ,
             //  video_url:req.body.video_url,
-             profile_img:req.body.profile_img,
+             publicUrl:req.body.publicUrl,
              name:req.body.name,
              email:req.body.email,
              country:req.body.country,
@@ -1015,7 +1015,7 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
       {  
         $set: {
           "contestants.$[item].name": req.body.name,
-          "contestants.$[item].profile_img": req.body.profile_img,
+          "contestants.$[item].publicUrl": req.body.publicUrl,
           // "contestants.$[item].thumbNail_URL": req.body.thumbNail,
           "contestants.$[item].country":req.body.country,
           "contestants.$[item].video":{fileName :req.body.videoFileName,
@@ -1029,9 +1029,9 @@ route.patch('/update/:id',verifyJwt,async(req,res)=>{
       } 
       : 
       { 
-        $set: {
+        $set: { 
           "queue.$[item].name": req.body.name,
-          "queue.$[item].profile_img": req.body.profile_img,
+          "queue.$[item].publicUrl": req.body.publicUrl,
           // "queue.$[item].thumbNail_URL": req.body.thumbNail,
           "queue.$[item].video":{fileName :req.body.videoFileName,
                                      fileId :req.body.videoFileId
