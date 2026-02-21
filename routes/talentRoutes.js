@@ -79,7 +79,7 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
   
     const user = await userModel.findById(contestantId)
     let newcontestant  = talentRoom.contestants[contestantIndex]
-    newcontestant.publicUrl =  user.profileImage.publicUrl
+    newcontestant.profileImageUrl =  user.profileImage.publicUrl
     talentRoom.contestants[contestantIndex] = newcontestant
     await talentRoom.save();
     
