@@ -82,7 +82,7 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     // newcontestant.profileImageUrl =  user.profileImage.publicUrl
     // talentRoom.contestants[contestantIndex] = newcontestant
 
-    const contestant = talentRoom.contestants[contestantIndex];
+    let contestant = talentRoom.contestants[contestantIndex];
     contestant.thumbnail = {
       fileName,
       fileId,
