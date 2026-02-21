@@ -70,8 +70,6 @@ route.post("/getUploadImageUrl", async (req, res) => {
   }
 });
 
-
-
 route.post("/saveProfileImage", async (req, res) => {
   const { userId,fileId ,  fileName } = req.body;
   const signedUrl = await getPublicUrlFromB2(fileName)
@@ -83,7 +81,6 @@ route.post("/saveProfileImage", async (req, res) => {
     },
   });   
   res.json({ signedUrl });
-
 });
 
 
