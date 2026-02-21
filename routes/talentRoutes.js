@@ -33,8 +33,8 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
 
   const roomId  = req.params.roomId;
   const  contestantId = req.body.contestantId
-  // const fileId = req.body.fileId 
-  // const fileName = req.body.fileName
+  const fileId = req.body.fileId 
+  const fileName = req.body.fileName
   try {
     const talentRoom = await talentModel.findById(roomId);
     // const signedUrl = await getPublicUrlFromB2(fileName)
@@ -72,15 +72,23 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
     // }
 
     // if (thumbnail && thumbnail.fileName) {
-    //   thumbnailSignedUrl = await generateSignedUrl(thumbnail.fileName);
+      const thumbnailSignedUrl = await getPublicUrlFromB2(fileName);
     // }
 
     // Update contestant with video & thumbnail signed URLs
   
-    const user = await userModel.findById(contestantId)
-    let newcontestant  = talentRoom.contestants[contestantIndex]
-    newcontestant.profileImageUrl =  user.profileImage.publicUrl
-    talentRoom.contestants[contestantIndex] = newcontestant
+    // const user = await userModel.findById(contestantId)
+    // let newcontestant  = talentRoom.contestants[contestantIndex]
+    // newcontestant.profileImageUrl =  user.profileImage.publicUrl
+    // talentRoom.contestants[contestantIndex] = newcontestant
+
+    const contestant = talentRoom.contestants[contestantIndex];
+    contestant.thumbnail = {
+      fileName,
+      fileId,
+      publicUrl: thumbnailSignedUrl
+    };
+    talentRoom.markModified('contestants');
     await talentRoom.save();
     
     // const user = await userModel.findByIdAndUpdate(
