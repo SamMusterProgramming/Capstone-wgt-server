@@ -80,6 +80,7 @@ route.post("/saveProfileImage", async (req, res) => {
       publicUrl : signedUrl,
     },
   });   
+  console.log(deleteFileName)
   await deleteFileFromB2_Public(deleteFileName,deleteFileId)
   res.json({ signedUrl });
 });
