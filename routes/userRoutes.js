@@ -12,7 +12,7 @@ import jwt from 'jsonwebtoken';
 import B2 from 'backblaze-b2';
 import dotenv from 'dotenv';
 import b2 from '../B2.js' 
-import { getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
+import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
 
 // const friendModel = require('../models/friends')
 // require('dotenv').config()
@@ -71,7 +71,7 @@ route.post("/getUploadImageUrl", async (req, res) => {
 });
 
 route.post("/saveProfileImage", async (req, res) => {
-  const { userId,fileId ,  fileName } = req.body;
+  const { userId ,fileId , fileName, deleteFileId, deleteFileName} = req.body;
   const signedUrl = await getPublicUrlFromB2(fileName)
   await userModel.findByIdAndUpdate(userId, {
     profileImage: {
@@ -80,6 +80,7 @@ route.post("/saveProfileImage", async (req, res) => {
       publicUrl : signedUrl,
     },
   });   
+  await deleteFileFromB2_Public(deleteFileName,deleteFileId)
   res.json({ signedUrl });
 });
 
