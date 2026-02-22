@@ -70,21 +70,64 @@ route.post("/getUploadImageUrl", async (req, res) => {
   }
 });
 
-route.post("/saveProfileImage", async (req, res) => {
-  const { userId ,fileId , fileName, deleteFileId, deleteFileName} = req.body;
-  const signedUrl = await getPublicUrlFromB2(fileName)
-  await userModel.findByIdAndUpdate(userId, {
-    profileImage: {
-      fileId : fileId ,
-      fileName :fileName,
-      publicUrl : signedUrl,
-    },
-  });   
-  console.log(deleteFileName)
-  await deleteFileFromB2_Public(deleteFileName,deleteFileId)
-  res.json({ signedUrl });
-});
+// route.post("/saveProfileImage", async (req, res) => {
+//   const { userId ,fileId , fileName, deleteFileId, deleteFileName} = req.body;
+//   const signedUrl = await getPublicUrlFromB2(fileName)
+//   await userModel.findByIdAndUpdate(userId, {
+//     profileImage: {
+//       fileId : fileId ,
+//       fileName :fileName,
+//       publicUrl : signedUrl,
+//     },
+//   });   
+//   console.log(deleteFileName)
+//   await deleteFileFromB2_Public(deleteFileName,deleteFileId)
+//   res.json({ signedUrl });
+// });
 
+route.post("/saveProfileImage", async (req, res) => {
+  try {
+    const { userId, fileId, fileName, deleteFileId, deleteFileName } = req.body;
+
+    if (!userId || !fileId || !fileName) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // 1️⃣ Get signed URL
+    const signedUrl = await getPublicUrlFromB2(fileName);
+
+    // 2️⃣ Update user
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          profileImage: {
+            fileId,
+            fileName,
+            publicUrl: signedUrl,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 3️⃣ Delete old file (NON-BLOCKING)
+    if (deleteFileId && deleteFileName) {
+      deleteFileFromB2_Public(deleteFileName, deleteFileId)
+        .catch(err => console.error("Delete error:", err));
+    }
+
+    return res.json({ signedUrl });
+
+  } catch (err) {
+    console.error("SAVE PROFILE IMAGE ERROR:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // seeds the database with prototype data
 route.get('/seed',async(req,res)=>{
