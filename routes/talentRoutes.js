@@ -115,28 +115,30 @@ route.patch('/migrate/:roomId', verifyJwt, async (req, res) => {
   }
 });
 
-route.patch('/migrateProfile/:userId', verifyJwt, async (req, res) => {
-    const user_id = req.params.userId
-    const fileName = req.body.fileName 
-    const fileId = req.body.fileId
-    const signedUrl = await getPublicUrlFromB2(fileName)
-    const updatedUser = await userModel.findByIdAndUpdate(
-      user_id,
-      {
-        $set: {
-          profileImage: {
-            fileId:fileId,
-            fileName:fileName,
-            publicUrl: signedUrl,
-          },
-        },
-      },
-      { new: true }
-    );
+route.patch('/migrateProfile/:roomId', verifyJwt, async (req, res) => {
+    const room_id = req.params.roomId
+    const userId = req.body.contestantId
+    // const signedUrl = await getPublicUrlFromB2(fileName)
+    const user = await userModel.findById(userId);
     
-    res.json({
-      profileImage: updatedUser.profileImage
-    });
+    const query = 
+    {  
+      $set: {
+        "contestants.$[item].profile_img": user.profileImage.publicUrl,
+    } 
+    } 
+  
+    const newTalent = await talentModel.findByIdAndUpdate(
+      room_id ,
+      query,
+        {
+          arrayFilters: [{ "item.user_id": userId }],
+          new: true 
+        }
+    )
+
+    await newTalent.save()
+    res.json(newTalent);
 })
 
 
@@ -876,8 +878,7 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              _id: newObjectId,    
              user_id:req.body.user_id ,
             //  video_url:req.body.video_url,
-             
-            profileImageUrl:req.body.publicUrl,
+             profile_ing:req.body.publicUrl,
              name:req.body.name,
              email:req.body.email,
              country:req.body.country,
@@ -890,8 +891,8 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
              video: {
               fileId:videoFileId,
               fileName:videoFileName,
-            },
-            thumbnail: {
+             },
+             thumbnail: {
               fileId:thumbnailFileId,
               fileName:thumbnailFileName,
               publicUrl:thumbnailSignedUrl,
