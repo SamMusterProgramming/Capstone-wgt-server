@@ -403,6 +403,14 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 
 //********************************** user talents , participations  */
 
+route.get('/:name',verifyJwt,async(req,res)=> {
+  const stageName = req.params.name;
+  const talentStages = await talentModel.find({ name: TalentName });
+   console.log(talentStages) 
+  
+  return res.json(talentStages).status(200)
+})
+
 route.post('/favourite/:id',verifyJwt,async(req,res)=> {
   const user_id = req.params.id;
   const talent = await talentModel.findById(
@@ -951,8 +959,9 @@ route.post('/uploads/:id',verifyJwt,async(req,res)=>{
           
             let   message = "has participated in a talent show"     
             const notification = {
-                receiver_id:friend.user_id,
+                receiver_id:friend.user_id ,
                 type:"talent",
+                stage: newTalent.name ,
                 isRead:false,
                 message:message , 
                 content: {  

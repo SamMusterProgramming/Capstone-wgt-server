@@ -14,6 +14,11 @@ const notificationSchema = new mongoose.Schema({
     enum: ['like', 'comment', 'followers','friends', "friend request","talent",'other'], 
     default: 'other'
   },
+  stage: {
+    type: String,
+    enum: ['singing', 'dancing', 'eating','magic', "comedy","fashion",'other'], 
+    default: 'other'
+  },
   isRead: {
     type: Boolean,
     default: false
