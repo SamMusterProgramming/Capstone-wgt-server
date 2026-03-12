@@ -405,7 +405,7 @@ route.post('/creates',verifyJwt,async(req,res)=>{
 
 route.get('/:name',verifyJwt,async(req,res)=> {
   const stageName = req.params.name;
-  const talentStages = await talentModel.find({ name: TalentName });
+  const talentStages = await talentModel.find({ name: stageName });
    console.log(talentStages) 
   
   return res.json(talentStages).status(200)
