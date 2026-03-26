@@ -9,36 +9,42 @@ import admin from "../service/firebase.js";
 export const signup = async (req, res) => {
     try {
       const { token } = req.body;
-  
       // 🔥 verify firebase token
       const decoded = await admin.auth().verifyIdToken(token);
-  
       const { uid , email, email_verified } = decoded;
-     
-     
-  
       // 🔥 check if user exists
       let user = await userModel.findOne({ uid: uid });
-  
+
       if (!user) {
         user = await userModel.create({
           uid: uid,
           email: email,
           username: email.split("@")[0], // default username
+          profileImage:{
+            fileId:null ,
+            fileName:null ,
+            publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/avatar.png"
+          },
+          coverImage:{
+            fileId:null ,
+            fileName:null ,
+            publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/challengify.jpg"
+          }
         });
       }
-
+      console.log(user)
+      user.save()
       if (!email_verified) {
         return res.status(400).json({ message: "Email not verified" });
       }
-  
+      
       const jwtToken = generateToken(user);
-  
+    
       res.json({   
         token: jwtToken,
         user,
       });    
-  
+    
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Signup failed" });
@@ -52,7 +58,7 @@ export const signup = async (req, res) => {
       const decoded = await admin.auth().verifyIdToken(token);
   
       const { uid } = decoded;
-    
+      console.log(uid)
       const user = await userModel.findOne({ uid: uid });
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -79,7 +85,6 @@ export const signup = async (req, res) => {
           friends:[]
       }).save()   
       const jwtToken = generateToken(user);
-      
       res.json({
         token: jwtToken,
         user,

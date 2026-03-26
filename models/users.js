@@ -11,20 +11,20 @@ const userSchema = new mongoose.Schema({
         type:String,
         default:"Unknown Some"
      },
-     profile_img:{
-        type:String,
-        required:false,
-        default:"/static/images/avatar.avif"
-     },
+   //   profile_img:{
+   //      type:String,
+   //      required:false,
+   //      default:"/static/images/avatar.avif"
+   //   },
      profileImage: {
       fileId: String,
       fileName: String,
       publicUrl: String,
     },
-     cover_img:{
-      type:String,
-      required:false,
-      default:"/static/images/avatar.avif"
+     coverImage:{
+      fileId: String,
+      fileName: String,
+      publicUrl: String,
      },
      email:{
         type:String,
