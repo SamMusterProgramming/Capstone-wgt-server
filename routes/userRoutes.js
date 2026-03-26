@@ -140,18 +140,20 @@ route.post("/getUploadImageUrl", async (req, res) => {
 //   res.json({ signedUrl });
 // });
 
-route.post("/saveProfileImage", async (req, res) => {
+route.post("/saveProfileImage", protect, async (req, res) => {
   try {
     const { userId, fileId, fileName, deleteFileId, deleteFileName } = req.body;
 
     if (!userId || !fileId || !fileName) {
       return res.status(400).json({ error: "Missing required fields" });
     }
-
-    // 1️⃣ Get signed URL
+    console.log(deleteFileId, deleteFileName)
     const signedUrl = await getPublicUrlFromB2(fileName);
+    const cdnUrl = signedUrl.replace(
+      "https://f005.backblazeb2.com",
+      "https://cdn.challenmemey.com"
+    );
 
-    // 2️⃣ Update user
     const updatedUser = await userModel.findByIdAndUpdate(
       userId,
       {
@@ -159,7 +161,7 @@ route.post("/saveProfileImage", async (req, res) => {
           profileImage: {
             fileId,
             fileName,
-            publicUrl: signedUrl,
+            publicUrl: cdnUrl,
           },
         },
       },
@@ -176,7 +178,52 @@ route.post("/saveProfileImage", async (req, res) => {
         .catch(err => console.error("Delete error:", err));
     }
 
-    return res.json({ signedUrl });
+    return res.json(updatedUser);
+
+  } catch (err) {
+    console.error("SAVE PROFILE IMAGE ERROR:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+route.post("/saveCoverImage",protect,  async (req, res) => {
+  try {
+    const { userId, fileId, fileName, deleteFileId, deleteFileName } = req.body;
+
+    if (!userId || !fileId || !fileName) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const signedUrl = await getPublicUrlFromB2(fileName);
+
+    const cdnUrl = signedUrl.replace(
+      "https://f005.backblazeb2.com",
+      "https://cdn.challenmemey.com"
+    );
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          coverImage: {
+            fileId,
+            fileName,
+            publicUrl: cdnUrl,
+          },
+        },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 3️⃣ Delete old file (NON-BLOCKING)
+    if (deleteFileId && deleteFileName) {
+      deleteFileFromB2_Public(deleteFileName, deleteFileId)
+        .catch(err => console.error("Delete error:", err));
+    }
+
+    return res.json( updatedUser );
 
   } catch (err) {
     console.error("SAVE PROFILE IMAGE ERROR:", err);
