@@ -308,7 +308,7 @@ route.route('/users/:id')
         if(!user) return res.json({error:"cant find the user"}).status(404)
         res.status(200).json(user)
       })
-      .patch(validateMongoObjectId,async(req,res)=>{ // update user infos by _id
+      .patch(validateMongoObjectId, protect, async(req,res)=>{ // update user infos by _id
         const userId = req.params.id
         const updatedUser = await userModel.findByIdAndUpdate(
             userId,
@@ -318,6 +318,8 @@ route.route('/users/:id')
         if(!updatedUser) return res.json({error:"cant find the user"}).status(404)
         res.status(200).json(updatedUser)
       })  
+
+
 
 function validateMongoObjectId(req,res,next) {
     if (!ObjectId.isValid(req.params.id)) return res.status(404).json({Error:"error in request ID"});
