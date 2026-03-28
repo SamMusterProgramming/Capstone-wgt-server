@@ -101,6 +101,8 @@ export const signup = async (req, res) => {
   export const getMe = async (req, res) => {
     try {
       const user = await userModel.findById(req.user._id);
+      console.log(user)
+      if(!user) return  res.json({user:false})
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });
