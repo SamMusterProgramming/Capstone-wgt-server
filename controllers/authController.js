@@ -128,11 +128,11 @@ export const googleLogin = async (req, res) => {
       }
   
       // 🔍 2. FIND USER
-      let user = await userModel.findOne({ uid: uid });
+      let user = await userModel.findOne({ uid : uid });
   
       // 🆕 3. CREATE USER IF NOT EXISTS
       if (!user) {
-        user = await User.create({
+        user = await userModel.create({
             uid: uid,
             email: email,
             username: email.split("@")[0], // default username
@@ -151,7 +151,6 @@ export const googleLogin = async (req, res) => {
             }
         });
       }
-  
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user._id);
       await user.save()
