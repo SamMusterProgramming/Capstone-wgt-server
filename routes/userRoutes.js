@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 import b2 from '../B2.js' 
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
-import { getMe, login, signup } from '../controllers/authController.js';
+import { getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
 // import admin from '../service/firebase.js';
 
@@ -58,6 +58,8 @@ route.post('/auth/google', async (req, res) => {
 route.post("/auth/login", login);
 route.post("/auth/signup", signup);
 route.get("/auth/me", protect, getMe);
+route.get("/auth/google", protect, googleLogin);
+
 
 
 // route.get("/me", verifyFirebaseToken, async (req, res) => {

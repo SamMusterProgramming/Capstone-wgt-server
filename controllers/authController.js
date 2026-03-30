@@ -20,6 +20,7 @@ export const signup = async (req, res) => {
           uid: uid,
           email: email,
           username: email.split("@")[0], // default username
+          email_verified:email_verified ,
           profileImage:{
             fileId:null ,
             fileName:null ,
@@ -63,6 +64,7 @@ export const signup = async (req, res) => {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      user.email_verified = true ;
       const findFollower = await followerModel.findOne({user_id:user._id})  
       if(!findFollower)  await  new followerModel(
               {
@@ -84,6 +86,7 @@ export const signup = async (req, res) => {
           friend_request_sent:[],
           friends:[]
       }).save()   
+      await user.save()
       const jwtToken = generateToken(user);
       res.json({
         token: jwtToken,
@@ -92,6 +95,77 @@ export const signup = async (req, res) => {
   
     } catch (err) {
       res.status(500).json({ message: "Login failed" });
+    }
+  };
+
+//********************google login  */
+
+export const googleLogin = async (req, res) => {
+    try {
+      const { token } = req.body;
+  
+      if (!token) {
+        return res.status(400).json({
+          message: "Firebase token is required",
+        });
+      }
+  
+      // 🔥 1. VERIFY FIREBASE TOKEN
+      const decoded = await admin.auth().verifyIdToken(token);
+  
+      const {
+        uid,
+        email,
+        email_verified,
+        name,
+      } = decoded;
+  
+      if (!email) {
+        return res.status(400).json({
+          message: "Email not found in Google account",
+        });
+      }
+  
+      // 🔍 2. FIND USER
+      let user = await userModel.findOne({ uid: uid });
+  
+      // 🆕 3. CREATE USER IF NOT EXISTS
+      if (!user) {
+        user = await User.create({
+            uid: uid,
+            email: email,
+            username: email.split("@")[0], // default username
+            email_verified:email_verified ,
+            name: name,
+            profileImage:{
+              fileId:null ,
+              fileName:null ,
+              publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/avatar.png"
+            },
+            coverImage:{
+              fileId:null ,
+              fileName:null ,
+              publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/challengify.jpg"
+            }
+        });
+      }
+  
+      // 🔐 4. GENERATE JWT
+      const jwtToken = generateToken(user._id);
+  
+      // 📦 5. RESPONSE
+      return res.status(200).json({
+        message: "Google login successful",
+        token: jwtToken,
+        user: user
+      });
+  
+    } catch (error) {
+      console.error("GOOGLE AUTH ERROR:", error);
+  
+      return res.status(401).json({
+        message: "Invalid or expired Firebase token",
+      });
     }
   };
   
