@@ -21,6 +21,7 @@ export const signup = async (req, res) => {
           email: email,
           username: email.split("@")[0], // default username
           email_verified:email_verified ,
+          provider: "email",
           profileImage:{
             fileId:null ,
             fileName:null ,
@@ -137,6 +138,7 @@ export const googleLogin = async (req, res) => {
             username: email.split("@")[0], // default username
             email_verified:email_verified ,
             name: name,
+            provider: "google",
             profileImage:{
               fileId:null ,
               fileName:null ,
