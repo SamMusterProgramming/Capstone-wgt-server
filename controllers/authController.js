@@ -120,7 +120,7 @@ export const googleLogin = async (req, res) => {
         email_verified,
         name,
       } = decoded;
-  
+      console.log(uid)
       if (!email) {
         return res.status(400).json({
           message: "Email not found in Google account",
@@ -155,7 +155,7 @@ export const googleLogin = async (req, res) => {
       const jwtToken = generateToken(user._id);
       await user.save()
       // 📦 5. RESPONSE
-      return res.status(200).json({
+      return res.status                (200).json({
         message: "Google login successful",
         token: jwtToken,
         user: user
@@ -182,4 +182,4 @@ export const googleLogin = async (req, res) => {
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });
     }
-  };
+  };                        
