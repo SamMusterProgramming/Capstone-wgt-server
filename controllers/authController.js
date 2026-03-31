@@ -161,7 +161,7 @@ export const googleLogin = async (req, res) => {
       }
   
       // 🔐 4. GENERATE JWT
-      const jwtToken = generateToken(user._id);
+      const jwtToken = generateToken(user);
   
       // 📦 5. RESPONSE
       return res.status(200).json({
