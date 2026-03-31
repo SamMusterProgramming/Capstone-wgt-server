@@ -23,36 +23,34 @@ dotenv.config();
 const route = express.Router();
 
 
-route.post('/auth/google', async (req, res) => {
-  try {
-    const { idToken } = req.body;
+// route.post('/auth/google', async (req, res) => {
+//   try {
+//     const { idToken } = req.body;
     
-    if (!idToken) {
-      return res.status(400).json({ error: 'Missing token' });
-    }
-    // 🔥 Verify Firebase token
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+//     if (!idToken) {
+//       return res.status(400).json({ error: 'Missing token' });
+//     }
+//     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
-    const { uid, email, name , picture } = decodedToken;
+//     const { uid, email, name , picture } = decodedToken;
 
-    // 🔥 Create or update user in DB
-    const user = {
-      uid,
-      email,
-      name,
-      picture,
-    };
+//     const user = {
+//       uid,
+//       email,
+//       name,
+//       picture,
+//     };
 
-    return res.json({
-      message: 'User authenticated',
-      user,
-    });
+//     return res.json({
+//       message: 'User authenticated',
+//       user,
+//     });
 
-  } catch (error) {
-    console.error(error);
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-});
+//   } catch (error) {
+//     console.error(error);
+//     res.status(401).json({ error: 'Unauthorized' });
+//   }
+// });
 
 
 route.post("/auth/login", login);
