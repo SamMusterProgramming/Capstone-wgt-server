@@ -106,67 +106,75 @@ export const signup = async (req, res) => {
 export const googleLogin = async (req, res) => {
     try {
       const { token } = req.body;
-      console.log (req.body)
+  
       if (!token) {
         return res.status(400).json({
           message: "Firebase token is required",
         });
       }
+  
       // 🔥 1. VERIFY FIREBASE TOKEN
       const decoded = await admin.auth().verifyIdToken(token);
   
-      const {
-        uid,
-        email,
-        email_verified,
-        name,
-      } = decoded;
-      console.log(uid)
+      const { uid, email, email_verified, name } = decoded;
+  
       if (!email) {
         return res.status(400).json({
           message: "Email not found in Google account",
         });
       }
   
-      // 🔍 2. FIND USER
-      let user = await userModel.findOne({ uid : uid });
+      // 🔍 2. FIND USER BY EMAIL (IMPORTANT FIX)
+      let user = await userModel.findOne({ email });
   
       // 🆕 3. CREATE USER IF NOT EXISTS
       if (!user) {
         user = await userModel.create({
-            uid: uid,
-            email: email,
-            username: email.split("@")[0], // default username
-            email_verified:email_verified ,
-            name: name,
-            provider: "google",
-            profileImage:{
-              fileId:null ,
-              fileName:null ,
-              publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/avatar.png"
-            },
-            coverImage:{
-              fileId:null ,
-              fileName:null ,
-              publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/challengify.jpg"
-            }
+          uid,
+          email,
+          username: email.split("@")[0],
+          email_verified,
+          name,
+          provider: "google",
+          profileImage: {
+            fileId: null,
+            fileName: null,
+            publicUrl:
+              "https://cdn.challenmemey.com/file/challengify-Images/avatar/avatar.png",
+          },
+          coverImage: {
+            fileId: null,
+            fileName: null,
+            publicUrl:
+              "https://cdn.challenmemey.com/file/challengify-Images/avatar/challengify.jpg",
+          },
         });
+      } else {
+        // 🔗 LINK ACCOUNT (VERY IMPORTANT)
+        user.uid = uid;
+  
+        if (user.provider === "email") {
+          user.provider = "google"; // or "both"
+        }
+  
+        await user.save();
       }
+  
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user._id);
-      await user.save()
+  
       // 📦 5. RESPONSE
-      return res.status                (200).json({
+      return res.status(200).json({
         message: "Google login successful",
         token: jwtToken,
-        user: user
+        user,
       });
   
     } catch (error) {
       console.error("GOOGLE AUTH ERROR:", error);
   
       return res.status(401).json({
-        message: "Invalid or expired Firebase token",
+        message: error.message || "Invalid or expired Firebase token",
       });
     }
   };

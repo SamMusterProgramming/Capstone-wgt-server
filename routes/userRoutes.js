@@ -58,7 +58,7 @@ route.post('/auth/google', async (req, res) => {
 route.post("/auth/login", login);
 route.post("/auth/signup", signup);
 route.get("/auth/me", protect, getMe);
-route.get("/auth/google",  googleLogin);
+route.get("/auth/google", googleLogin);
 
 
 
