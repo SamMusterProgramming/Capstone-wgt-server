@@ -106,7 +106,7 @@ export const signup = async (req, res) => {
 export const googleLogin = async (req, res) => {
     try {
       const { token } = req.body;
-      console.log(token)
+      console.log (req.body)
       if (!token) {
         return res.status(400).json({
           message: "Firebase token is required",
