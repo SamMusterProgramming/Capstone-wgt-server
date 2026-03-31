@@ -51,7 +51,7 @@ function validateRequestNetwork(req,res,next) {
         console.log(error)
     }
 }
-console.log("PRIVATE KEY START:", process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30));
+// console.log("PRIVATE KEY START:", process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30));
 app.listen(process.env.PORT,()=> {
     console.log("running on port" + process.env.PORT)
 })

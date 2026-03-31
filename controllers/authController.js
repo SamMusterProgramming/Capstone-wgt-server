@@ -99,18 +99,19 @@ export const signup = async (req, res) => {
     }
   };
 
+
+
 //********************google login  */
 
 export const googleLogin = async (req, res) => {
     try {
       const { token } = req.body;
-  
+      console.log(token)
       if (!token) {
         return res.status(400).json({
           message: "Firebase token is required",
         });
       }
-  
       // 🔥 1. VERIFY FIREBASE TOKEN
       const decoded = await admin.auth().verifyIdToken(token);
   
