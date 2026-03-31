@@ -80,7 +80,7 @@ const userSchema = new mongoose.Schema({
 
 // userSchema.index({email:1});
 // userSchema.index({uid:1});   
-userSchema.index({email:1,password:1});
+userSchema.index({email:1});
 
 let userModel = mongoose.model("users",userSchema);
 
