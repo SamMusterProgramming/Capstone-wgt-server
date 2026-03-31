@@ -161,6 +161,29 @@ export const googleLogin = async (req, res) => {
   
         await user.save();
       }
+      
+      const findFollower = await followerModel.findOne({user_id:user._id})  
+      if(!findFollower)  await  new followerModel(
+              {
+                user_id:user._id,
+                email:user.email,
+                profile_img:user.profile_img,
+                name:user.name,
+                followers:[],
+                followings:[],
+              }
+            ).save()   
+      const findFriend = await friendModel.findOne({user_id:user._id})  
+      if(!findFriend)  await  new friendModel(
+        {
+          user_id:user._id,
+          email:user.email,
+          name:user.name,
+          profile_img:user.profile_img,
+          friend_request_sent:[],
+          friends:[]
+      }).save()   
+
   
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user);
