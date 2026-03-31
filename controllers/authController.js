@@ -125,7 +125,7 @@ export const googleLogin = async (req, res) => {
       }
   
       // 🔍 2. FIND USER BY EMAIL (IMPORTANT FIX)
-      let user = await userModel.findOne({ email });
+      let user = await userModel.findOne({ email:email });
   
       // 🆕 3. CREATE USER IF NOT EXISTS
       if (!user) {
