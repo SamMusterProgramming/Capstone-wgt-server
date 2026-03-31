@@ -16,7 +16,7 @@ connectDB()
 const app = express();
 app.use(express.urlencoded({ extended: true, limit: "200mb" }));
 
-app.use(express.json({ limit: "200mb" }));
+// app.use(express.json({ limit: "200mb" }));
 
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 

@@ -25,7 +25,7 @@ dotenv.config();
     return jwt.sign(
       {
         _id: user._id,
-        uid: user.uid,
+        // uid: user.uid,
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "7d" }

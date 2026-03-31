@@ -105,8 +105,10 @@ export const signup = async (req, res) => {
 
 export const googleLogin = async (req, res) => {
     try {
+
+        console.log("I am hereeeeeeererrrrre")
       const { token } = req.body;
-      console.log("I am hereeeeeeererrrrre")
+    
       if (!token) {
         return res.status(400).json({
           message: "Firebase token is required",
@@ -125,7 +127,7 @@ export const googleLogin = async (req, res) => {
       }
   
       // 🔍 2. FIND USER BY EMAIL (IMPORTANT FIX)
-      let user = await userModel.findOne({ email:email });
+      let user = await userModel.findOne({ email:email.toLowerCase() });
   
       // 🆕 3. CREATE USER IF NOT EXISTS
       if (!user) {
