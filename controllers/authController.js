@@ -37,7 +37,7 @@ export const signup = async (req, res) => {
           email: email,
           username: normalizedEmail.split("@")[0],
           email_verified:email_verified ,
-          provider: "email",
+          providers: ["email"],
           profileImage:{
             fileId:null ,   
             fileName:null ,
@@ -86,7 +86,7 @@ export const signup = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (user.provider !== "email") {
+      if (!user.providers.includes("email")){
         return res.status(403).json({
           message: "Please login using Google",
         });
@@ -134,7 +134,6 @@ export const signup = async (req, res) => {
 export const googleLogin = async (req, res) => {
     try {
 
-      console.log("I am hereeeeeeererrrrre")
       const { token } = req.body;
     
       if (!token) {
@@ -153,19 +152,21 @@ export const googleLogin = async (req, res) => {
           message: "Email not found in Google account",
         });
       }
+      const normalizedEmail = email.toLowerCase();
+
   
       // 🔍 2. FIND USER BY EMAIL (IMPORTANT FIX)
-      let user = await userModel.findOne({ email:email.toLowerCase() });
+      let user = await userModel.findOne({ email:normalizedEmail });
   
       // 🆕 3. CREATE USER IF NOT EXISTS
       if (!user) {
         user = await userModel.create({
           uid,
-          email,
-          username: email.split("@")[0],
+          email: normalizedEmail,
+          username: normalizedEmail.split("@")[0],
           email_verified,
           name,
-          provider: "google",
+          providers: ["google"],
           profileImage: {
             fileId: null,
             fileName: null,
@@ -181,38 +182,19 @@ export const googleLogin = async (req, res) => {
         });
       } else {
         // 🔗 LINK ACCOUNT (VERY IMPORTANT)
+        if (!user.providers.includes("google")) {
+          user.providers.push("google"); // merge provider
+        }
         user.uid = uid;
-  
-        if (user.provider === "email") {
-          user.provider = "google"; // or "both"
+        if (!user.email_verified && email_verified) {
+          user.email_verified = true; // mark verified if Google verified
         }
   
         await user.save();
       }
       
-      const findFollower = await followerModel.findOne({user_id:user._id})  
-      if(!findFollower)  await  new followerModel(
-              {
-                user_id:user._id,
-                email:user.email,
-                profile_img:user.profile_img,
-                name:user.name,
-                followers:[],
-                followings:[],
-              }
-            ).save()   
-      const findFriend = await friendModel.findOne({user_id:user._id})  
-      if(!findFriend)  await  new friendModel(
-        {
-          user_id:user._id,
-          email:user.email,
-          name:user.name,
-          profile_img:user.profile_img,
-          friend_request_sent:[],
-          friends:[]
-      }).save()   
+      await ensureUserRelations(user);
 
-  
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user);
   

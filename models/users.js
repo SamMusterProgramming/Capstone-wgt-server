@@ -42,9 +42,10 @@ const userSchema = new mongoose.Schema({
       email_verified:{
          type:Boolean
       },
-      provider:{
-        type:String
-      },
+      providers: {
+         type: [String], // e.g., ["email", "google"]
+         default: ["email"],
+       },
      username :{    
         type:String,
       //   required:true,
