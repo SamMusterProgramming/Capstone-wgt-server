@@ -4,6 +4,7 @@ import followerModel from "../models/followers.js";
 import friendModel from "../models/friends.js";
 import userModel from "../models/users.js";
 import admin from "../service/firebase.js";
+import { ensureUserRelations } from "../utilities/helper.js";
 
 // ---------------- SIGNUP ----------------
 export const signup = async (req, res) => {
@@ -13,17 +14,32 @@ export const signup = async (req, res) => {
       const decoded = await admin.auth().verifyIdToken(token);
       const { uid , email, email_verified } = decoded;
       // 🔥 check if user exists
-      let user = await userModel.findOne({ uid: uid });
+      const normalizedEmail = email.toLowerCase();
+
+      // if (!email_verified) {
+      //   return res.status(400).json({ 
+      //        message: "Email not verified",
+      //        color:"yellow"
+      //        });
+      // }
+      let user = await userModel.findOne({ email: normalizedEmail });
+
+      if (user) {
+        return res.status(409).json({
+          message: "User already exists. Please login instead.",
+          color:"red"
+        });
+      }
 
       if (!user) {
         user = await userModel.create({
           uid: uid,
           email: email,
-          username: email.split("@")[0], // default username
+          username: normalizedEmail.split("@")[0],
           email_verified:email_verified ,
           provider: "email",
           profileImage:{
-            fileId:null ,
+            fileId:null ,   
             fileName:null ,
             publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/avatar.png"
           },
@@ -32,20 +48,24 @@ export const signup = async (req, res) => {
             fileName:null ,
             publicUrl :"https://cdn.challenmemey.com/file/challengify-Images/avatar/challengify.jpg"
           }
-        });
-      }
-      console.log(user)
-      user.save()
-      if (!email_verified) {
-        return res.status(400).json({ message: "Email not verified" });
-      }
+        });   
+      }  
+        
+      return res.status(201).json({
+        message: "Signup successful. Please verify your email before logging in." ,
+         color:"lightgreen"
+      });
+      // user.save()
+      // if (!email_verified) {
+      //   return res.status(400).json({ message: "Email not verified" });
+      // }
       
-      const jwtToken = generateToken(user);
+      // const jwtToken = generateToken(user);
     
-      res.json({   
-        token: jwtToken,
-        user,
-      });    
+      // res.json({   
+      //   token: jwtToken,
+      //   user,
+      // });    
     
     } catch (err) {
       console.log(err);
@@ -59,35 +79,43 @@ export const signup = async (req, res) => {
       const { token } = req.body;
       const decoded = await admin.auth().verifyIdToken(token);
   
-      const { uid } = decoded;
-      console.log(uid)
-      const user = await userModel.findOne({ uid: uid });
+      const { uid, email } = decoded;
+      const user = await userModel.findOne({ email: email.toLowerCase() });
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+
+      if (user.provider !== "email") {
+        return res.status(403).json({
+          message: "Please login using Google",
+        });
+      }
       user.email_verified = true ;
-      const findFollower = await followerModel.findOne({user_id:user._id})  
-      if(!findFollower)  await  new followerModel(
-              {
-                user_id:user._id,
-                email:user.email,
-                profile_img:user.profile_img,
-                name:user.name,
-                followers:[],
-                followings:[],
-              }
-            ).save()   
-      const findFriend = await friendModel.findOne({user_id:user._id})  
-      if(!findFriend)  await  new friendModel(
-        {
-          user_id:user._id,
-          email:user.email,
-          name:user.name,
-          profile_img:user.profile_img,
-          friend_request_sent:[],
-          friends:[]
-      }).save()   
+      // const findFollower = await followerModel.findOne({user_id:user._id})  
+      // if(!findFollower)  await  new followerModel(
+      //         {
+      //           user_id:user._id,
+      //           email:user.email,
+      //           profile_img:user.profile_img,
+      //           name:user.name,
+      //           followers:[],
+      //           followings:[],
+      //         }
+      //       ).save()   
+      // const findFriend = await friendModel.findOne({user_id:user._id})  
+      // if(!findFriend)  await  new friendModel(
+      //   {
+      //     user_id:user._id,
+      //     email:user.email,
+      //     name:user.name,
+      //     profile_img:user.profile_img,
+      //     friend_request_sent:[],
+      //     friends:[]
+      // }).save()   
+      user.uid = uid;
       await user.save()
+      await ensureUserRelations(user);
       const jwtToken = generateToken(user);
       res.json({
         token: jwtToken,
