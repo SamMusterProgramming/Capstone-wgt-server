@@ -1057,65 +1057,15 @@ route.patch('/update/:id',protect,async(req,res)=>{
 
     const filesToDelete = [];
     const videoToDelete  = req.body.videoToDelete ;
-    
-    console.log(req.body.type)
-    // filesToDelete.push(
-    //     deleteFileFromB2_Private(
-    //       videoToDelete.fileName,
-    //       videoToDelete.fileId
-    //     )
-    //   );
-    // filesToDelete.push(
-    //     deleteFileFromB2_Public(
-    //       thumbnailToDelete.fileName,
-    //       thumbnailToDelete.fileId
-    //     )
-    //   );
-    // await Promise.all(filesToDelete);
-    // console.log(videoToDelete)
 
     if(req.body.type !== "eupdate"){
 
-    // const query =  req.body.type == "update" ? 
-    //   {  
-    //     $set: {
-    //       "contestants.$[item].name": req.body.name,
-    //       "contestants.$[item].profileImageUrl": req.body.publicUrl,
-    //       "contestants.$[item].country":req.body.country,
-    //       "contestants.$[item].video":{fileName :req.body.videoFileName,
-    //                                  fileId :req.body.videoFileId
-    //                             },
-    //       "contestants.$[item].thumbnail":{fileName : req.body.thumbnailFileName,
-    //                                       fileId : req.body.thumbnailFileId ,
-    //                                       publicUrl :thumbnailSignedUrl
-    //                                         } 
-    //   } 
-    //   } 
-    //   : 
-    //   { 
-    //     $set: { 
-    //       "queue.$[item].name": req.body.name,
-    //       "queue.$[item].profileImageUrl": req.body.publicUrl,
-    //       "queue.$[item].video":{fileName :req.body.videoFileName,
-    //                                  fileId :req.body.videoFileId
-    //                             },
-    //       "queue.$[item].thumbnail":{fileName :req.body.thumbnailFileName,
-    //                                       fileId: req.body.thumbnailFileName ,
-    //                                       publicUrl :thumbnailSignedUrl
-    //                                         } 
-    //     }
-    //   }
-    // const newTalent = await talentModel.findByIdAndUpdate(
-    //     _id ,
-    //     query,
-    //       {
-    //         arrayFilters: [{ "item.user_id": req.body.user_id }],
-    //         new: true 
-    //       }
-    // )
+   
 
     const newTalent = await talentModel.findById(_id)
-    const contestant = newTalent.contestants.find(c => c.user_id === req.body.user_id )
+    const contestant = req.body.type == "update" ? newTalent.contestants.find(c => c.user_id === req.body.user_id ):
+                       newTalent.queue.find(c => c.user_id === req.body.user_id )
+    console.log(contestant)
     const videoFileName =  req.body.videoFileName
     const videoFileId  = req.body.videoFileId
     const thumbnailFileName  = req.body.thumbnailFileName ;
@@ -1135,7 +1085,9 @@ route.patch('/update/:id',protect,async(req,res)=>{
       "https://cdn.challenmemey.com"
     );
 
-    contestant.performances.push({
+
+
+    contestant.performances.unshift({
       video: {  
             fileId:videoFileId ,
             fileName:videoFileName ,
@@ -1150,8 +1102,12 @@ route.patch('/update/:id',protect,async(req,res)=>{
       date: new Date()
    })
 
-   newTalent.markModified("contestants");
+   req.body.type == "update" && newTalent.markModified("contestants");
+   req.body.type == "qupdate" && newTalent.markModified("queue");
+
    await newTalent.save();
+
+
    if(req.body.type =="update"){
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
 
