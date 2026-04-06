@@ -1058,7 +1058,7 @@ route.patch('/update/:id',protect,async(req,res)=>{
     const filesToDelete = [];
     const videoToDelete  = req.body.videoToDelete ;
     
-    console.log(req.body.videoToDelete)
+    console.log(req.body.type)
     // filesToDelete.push(
     //     deleteFileFromB2_Private(
     //       videoToDelete.fileName,
@@ -1114,7 +1114,7 @@ route.patch('/update/:id',protect,async(req,res)=>{
     //       }
     // )
 
-    const newTalent = await talentModel.findByIdAndUpdate(_id)
+    const newTalent = await talentModel.findById(_id)
     const contestant = newTalent.contestants.find(c => c.user_id === req.body.user_id )
     const videoFileName =  req.body.videoFileName
     const videoFileId  = req.body.videoFileId
@@ -1127,11 +1127,9 @@ route.patch('/update/:id',protect,async(req,res)=>{
       "https://f005.backblazeb2.com",
       "https://cdn.challenmemey.com"
     );
-
     const signedUrl = await getSignedUrlFromB2(
         videoFileName
     );
-
     const cdnUrl = signedUrl.replace(
       "https://f005.backblazeb2.com",
       "https://cdn.challenmemey.com"
@@ -1143,7 +1141,6 @@ route.patch('/update/:id',protect,async(req,res)=>{
             fileName:videoFileName ,
             signedUrl :signedUrl ,
             cdnUrl: cdnUrl ,
-           
       },
       thumbnail: {
             fileId:thumbnailFileId,
@@ -1155,10 +1152,7 @@ route.patch('/update/:id',protect,async(req,res)=>{
 
    newTalent.markModified("contestants");
    await newTalent.save();
-
-
    if(req.body.type =="update"){
-
     const friend = await friendModel.findOne({receiver_id:req.body.user_id})
 
     if(friend)
