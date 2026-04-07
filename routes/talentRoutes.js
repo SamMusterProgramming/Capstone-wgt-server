@@ -259,15 +259,15 @@ route.post('/creates',protect,async(req,res)=>{
     let edIndex = talent.editions.findIndex( e => e.status === "open")
 
     let queuedUsers = []
-    if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
-          queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
-          talent.contestants.push(...queuedUsers)
-       }
+    // if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
+    //       queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+    //       talent.contestants.push(...queuedUsers)
+    //    }
     
-    if(talent.eliminations.length > 0){
-       let contest = talent.eliminations.splice(0,6)
-       talent.queue.push(...contest)  
-    }
+    // if(talent.eliminations.length > 0){
+    //    let contest = talent.eliminations.splice(0,6)
+    //    talent.queue.push(...contest)  
+    // }
 
     //************************* elimination ****************/
     // let edition = talent.editions.find(e => e.status == "open")
@@ -1217,20 +1217,22 @@ route.get('/rooms',protect, async(req,res)=>{
    })
 
 
-route.patch('/delete/:id',protect, async(req,res)=>{
+//************************* handle contestant participation and performances  */
+
+route.patch('/delete/contestant/stage/:id',protect, async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
-    const type = req.body.type
+
     console.log(post_id)
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
-    if(type == "resign"){
-        const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
-        talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
-        talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== post_id)
-        deletedUser && talentRoom.eliminations.push(deletedUser)
-        let   message = "you have been eliminated from  talent show"     
+    const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
+    talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
+    talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== post_id)
+    deletedUser && talentRoom.eliminations.push(deletedUser)
+        
+    let   message = "you have been eliminated from  talent show"     
         const notification = {
               receiver_id:user_id,
               type:"talent",
@@ -1267,71 +1269,98 @@ route.patch('/delete/:id',protect, async(req,res)=>{
                     }
                 }).save()
         }
-        
-    }
 
-    const filesToDelete = [];
-
-   
-
-    if(type == "queued"){
-        const deletedContestant = talentRoom.queue.find(c => c.user_id == user_id)
-        talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
-        talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
-        if (deletedContestant.video?.fileId) {
-          filesToDelete.push(
-            deleteFileFromB2_Private(
-              deletedContestant.video.fileName,
-              deletedContestant.video.fileId
-            )
-          );
-        }
-    
-        if (deletedContestant.thumbnail?.fileId) {
-          filesToDelete.push(
-            deleteFileFromB2_Public(
-              deletedContestant.thumbnail.fileName,
-              deletedContestant.thumbnail.fileId
-            )
-          );
-        }
-        await Promise.all(filesToDelete);
-        await talentPostDataModel.findOneAndDelete({post_id:post_id})
-    }
-    if(type == "eliminated"){
-      const deletedContestant = talentRoom.eliminations.find(c => c.user_id == user_id)
-      talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
-      talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
-      if (deletedContestant.video?.fileId) {
-        filesToDelete.push(
-          deleteFileFromB2_Private(
-            deletedContestant.video.fileName,
-            deletedContestant.video.fileId
-          )
-        );
-      }
-  
-      if (deletedContestant.thumbnail?.fileId) {
-        filesToDelete.push(
-          deleteFileFromB2_Public(
-            deletedContestant.thumbnail.fileName,
-            deletedContestant.thumbnail.fileId
-          )
-        );
-      }
-      await Promise.all(filesToDelete);
-      await talentPostDataModel.findOneAndDelete({post_id:post_id})
-  }
-  //   if(talent.round < 4 && (talent.queue.length < ( 4 - talent.round) * 6)) {
-  //     const waitingUsers = talent.waiting_list.splice(0, ( 4 - talent.round) * 6 -talent.queue.length)
-  //     talent.queue.push(waitingUsers)
-  //  }
+    talentRoom.markModified("contestants");
     await talentRoom.save()
     res.json(talentRoom).status(200)
    })
 
 
    
+   route.patch('/delete/contestant/queue/:id',protect, async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const deletedContestant = talentRoom.queue.find(c => c.user_id == user_id)
+    talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
+    talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+  
+    deletedContestant.performances.forEach(async(p) => {
+          const file = []
+          if (p.video?.fileId) {
+            file.push(
+              deleteFileFromB2_Private(
+                p.video.fileName,
+                p.video.fileId
+              )
+            );
+          }
+      
+          if (p.thumbnail?.fileId) {
+            file.push(
+              deleteFileFromB2_Public(
+                p.thumbnail.fileName,
+                p.thumbnail.fileId
+              )
+            );
+          }
+          await Promise.all(file);
+    })
+    await talentPostDataModel.findOneAndDelete({post_id:post_id})
+    talentRoom.markModified("queue");
+    await talentRoom.save()
+    res.json(talentRoom).status(200)
+
+   })
+
+
+
+   route.patch('/delete/contestant/Elimination/:id',protect, async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const deletedContestant = talentRoom.eliminations.find(c => c.user_id == user_id)
+    talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
+    talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+  
+    deletedContestant.performances.forEach(async(p) => {
+          const file = []
+          if (p.video?.fileId) {
+            file.push(
+              deleteFileFromB2_Private(
+                p.video.fileName,
+                p.video.fileId
+              )
+            );
+          }
+      
+          if (p.thumbnail?.fileId) {
+            file.push(
+              deleteFileFromB2_Public(
+                p.thumbnail.fileName,
+                p.thumbnail.fileId
+              )
+            );
+          }
+          await Promise.all(file);
+    })
+
+    await talentPostDataModel.findOneAndDelete({post_id:post_id})
+    talentRoom.markModified("eliminations");
+    await talentRoom.save()
+    res.json(talentRoom).status(200)
+
+   })
+
+
+
+
 
    route.patch('/delete/performance/stage/:id',protect, async(req,res)=>{
     const room_id = req.params.id;
@@ -1392,7 +1421,6 @@ route.patch('/delete/:id',protect, async(req,res)=>{
         )
       );  
     }
-
     if (performanceToDelete.thumbnail?.fileId) {
       filesToDelete.push(
         deleteFileFromB2_Public(
@@ -1406,6 +1434,21 @@ route.patch('/delete/:id',protect, async(req,res)=>{
     res.json(talentRoom).status(200)
    })
 
+
+   route.patch('/back/queue/:id',protect, async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const contestant = talentRoom.eliminations.find(c => c.user_id == user_id)
+    talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
+    talentRoom.queue.push(contestant)
+    talentRoom.markModified("eliminations");
+    talentRoom.markModified("queue");
+    await talentRoom.save()
+    res.json(talentRoom).status(200)
+   })
 
 
    route.patch('/elimination/:id',protect, async(req,res)=>{
