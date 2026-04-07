@@ -1057,10 +1057,8 @@ route.patch('/update/:id',protect,async(req,res)=>{
 
     const filesToDelete = [];
     const videoToDelete  = req.body.videoToDelete ;
-
+    console.log("i am here")
     if(req.body.type !== "eupdate"){
-
-   
 
     const newTalent = await talentModel.findById(_id)
     const contestant = req.body.type == "update" ? newTalent.contestants.find(c => c.user_id === req.body.user_id ):
@@ -1329,6 +1327,82 @@ route.patch('/delete/:id',protect, async(req,res)=>{
   //     talent.queue.push(waitingUsers)
   //  }
     await talentRoom.save()
+    res.json(talentRoom).status(200)
+   })
+
+
+   
+
+   route.patch('/delete/performance/stage/:id',protect, async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const performanceToDelete = req.body.performanceToDelete
+    console.log(performanceToDelete)
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const contestant = talentRoom.contestants.find(c => c.user_id == user_id)
+    contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
+    console.log(contestant.performances.length)
+    talentRoom.markModified("contestants");
+    await talentRoom.save()
+    let filesToDelete = []
+    if (performanceToDelete.video?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Private(
+          performanceToDelete.video.fileName,
+          performanceToDelete.video.fileId
+        )
+      );  
+    }
+
+    if (performanceToDelete.thumbnail?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Public(
+          performanceToDelete.thumbnail.fileName,
+          performanceToDelete.thumbnail.fileId
+        )
+      );     
+    }
+    await Promise.all(filesToDelete);
+ 
+    res.json(talentRoom).status(200)
+   })
+
+
+   route.patch('/delete/performance/queue/:id',protect, async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const performanceToDelete = req.body.performanceToDelete
+    console.log(performanceToDelete)
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const contestant = talentRoom.queue.find(c => c.user_id == user_id)
+    contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
+    console.log(contestant.performances.length)
+    talentRoom.markModified("queue");
+    await talentRoom.save()
+    let filesToDelete = []
+    if (performanceToDelete.video?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Private(
+          performanceToDelete.video.fileName,
+          performanceToDelete.video.fileId
+        )
+      );  
+    }
+
+    if (performanceToDelete.thumbnail?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Public(
+          performanceToDelete.thumbnail.fileName,
+          performanceToDelete.thumbnail.fileId
+        )
+      );     
+    }
+    await Promise.all(filesToDelete);
+ 
     res.json(talentRoom).status(200)
    })
 
