@@ -8,7 +8,6 @@ const favouriteSchema = new mongoose.Schema({
         required:true
      },
      favourites:[]
-   
    },
     { timestamps: true , versionKey: false }
  )

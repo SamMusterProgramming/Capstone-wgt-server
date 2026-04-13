@@ -470,26 +470,13 @@ route.post('/favourite/:id',protect,async(req,res)=> {
 
 
 
-route.post('/favourites/:id',protect,async(req,res)=> {
-  const ids = req.body
+route.get('/favourites/:id',protect,async(req,res)=> {
+  
+  const user_id = req.params.id;
+  let favourite = await favouriteModel.findOne( {user_id : user_id})
+  const ids = []
+  favourite.forEach (f => ids.push(f._id))
   const favourites = await talentModel.find({ _id: { $in: ids } });
-  // const talent = await talentModel.findById(
-  //     req.body.talentRoom_id 
-  //    )
-  // let favourite = await favouriteModel.findOne(
-  //     {user_id:user_id } 
-  // )
-  // if(!favourite)  {
-  //     const newFavourite = new favouriteModel({
-  //         user_id:user_id,
-  //         favourites:[{_id:req.body.talentRoom_id , dataType:"talent"}]
-  //     } 
-  //     )
-  //     await newFavourite.save()
-  //     return res.json(newFavourite)
-  // }
-  // favourite.favourites.push({_id:req.body.talentRoom_id , dataType:"talent"})
-  // await favourite.save()
   return res.json(favourites).status(200)
 })
 
@@ -499,7 +486,7 @@ route.patch('/favourite/:id',protect,async(req,res)=> {
   let favourite = await favouriteModel.findOne(
       {user_id : user_id}
   )
-  
+
   favourite.favourites = favourite.favourites.filter(f=> f._id !== req.body.talentRoom_id )
   await favourite.save()
   console.log(favourite)
