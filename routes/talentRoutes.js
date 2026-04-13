@@ -471,11 +471,10 @@ route.post('/favourite/:id',protect,async(req,res)=> {
 
 
 route.get('/favourites/:id',protect,async(req,res)=> {
-  
   const user_id = req.params.id;
   let favourite = await favouriteModel.findOne( {user_id : user_id})
   const ids = []
-  favourite.forEach (f => ids.push(f._id))
+  favourite?.favourites.forEach (f => ids.push(f._id))
   const favourites = await talentModel.find({ _id: { $in: ids } });
   return res.json(favourites).status(200)
 })
