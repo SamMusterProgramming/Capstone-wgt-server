@@ -468,29 +468,78 @@ route.post('/favourite/:id',protect,async(req,res)=> {
   return res.json(favourite).status(200)
 })
 
+// route.get('/favouriteStages/:id',protect,async(req,res)=> {
+//   const user_id = req.params.id;
+//   let favourite = await favouriteModel.findOne( {user_id : user_id})
+//   const sortedFavorites = favourite?.favourites.sort(
+//     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+//   );
+//   const ids = sortedFavorites.map(f => f._id.toString());
 
+// const talentRooms = await talentModel.find({
+//   _id: { $in: ids }
+// });
+
+
+// const map = new Map(
+//   talentRooms.map(room => [room._id.toString(), room])
+// );
+
+// const favourites = ids
+//   .map(id => map.get(id))
+//   .filter(Boolean);
+
+//   return res.json(favourites).status(200)
+// })
+
+route.get("/favouriteStages/:id", protect, async (req, res) => {
+  try {
+    const user_id = req.params.id;
+    const favourite = await favouriteModel.findOne({ user_id });
+    if (!favourite || !favourite.favourites?.length) {
+      return res.status(200).json([]);
+    }
+    const sortedFavorites = [...favourite.favourites].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    const ids = [...new Set(
+      sortedFavorites.map(f => f._id.toString())
+    )];
+    const talentRooms = await talentModel.find({
+      _id: { $in: ids }
+    }).lean();
+
+    const map = new Map(
+      talentRooms.map(room => [room._id.toString(), room])
+    );
+    const favourites = ids
+      .map(id => map.get(id))
+      .filter(Boolean);
+
+    return res.status(200).json(favourites);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 route.get('/favourites/:id',protect,async(req,res)=> {
   const user_id = req.params.id;
   let favourite = await favouriteModel.findOne( {user_id : user_id})
-  const ids = []
-  favourite?.favourites.forEach (f => ids.push(f._id))
-  const favourites = await talentModel.find({ _id: { $in: ids } });
-  return res.json(favourites).status(200)
+  return res.json(favourite).status(200)
 })
 
 
 route.patch('/favourite/:id',protect,async(req,res)=> {
   const user_id = req.params.id;
   let favourite = await favouriteModel.findOne(
-      {user_id : user_id}
+      {user_id : user_id} 
   )
-
   favourite.favourites = favourite.favourites.filter(f=> f._id !== req.body.talentRoom_id )
   await favourite.save()
-  console.log(favourite)
   return res.json(favourite).status(200)
 })
+
 
 //********************************************************
 
