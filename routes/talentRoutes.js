@@ -488,6 +488,31 @@ route.get('/stages',protect,async(req,res)=> {
   return res.json(stages).status(200)
 })   
 
+
+route.get("/stages/region/:region", async (req, res) => {
+  try {
+    const { region } = req.params;
+    // const normalizedRegion =
+    // region.slice(1).toLowerCase();
+    const normalizedCountry = region.length == 2 ? region.toUpperCase() : region;
+   
+    const stages = await talentModel.find({
+      region: normalizedCountry,
+    }).sort({ createdAt: -1 });
+    console.log(stages.length)
+    return res.status(200).json(stages);
+
+  } catch (error) {
+    console.error("Error fetching region stages:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching region stages",
+    });
+  }
+});
+
+
+
 route.post('/favourite/:id',protect,async(req,res)=> {
   const user_id = req.params.id;
   const talent = await talentModel.findById(
