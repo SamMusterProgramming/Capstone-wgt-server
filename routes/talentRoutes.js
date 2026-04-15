@@ -484,7 +484,7 @@ route.post('/creates',protect,async(req,res)=>{
 //********************************** user talents , participations  */
 
 route.get('/stages',protect,async(req,res)=> {
-  const stages = await talentModel.find({}).limit(30);  
+  const stages = await talentModel.find({}).limit(60);  
   return res.json(stages).status(200)
 })   
 
