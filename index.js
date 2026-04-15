@@ -28,19 +28,12 @@ app.use('/users',userRoute)
 app.use('/challenges',challengeRoute)
 app.use('/talents',talentRoute)
 app.use(validateRequestNetwork)
-
+app.set("trust proxy", true);
 
 app.get('/',(req,res)=>{
      res.send('welcome to our app')
 })    
     
-// // Backblaze client
-// const b2 = new B2({
-//     applicationKeyId: process.env.B2_KEY_ID,
-//     applicationKey: process.env.B2_APP_KEY,
-//   });
-  
-// await b2.authorize();
 
 
 

@@ -25,6 +25,7 @@ import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, 
 import userModel from '../models/users.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
 import { protect } from '../middleware/jwtProtect.js';
+import { getClientIp, getLocationFromIP } from '../ipGeolocation.js';
 
 const route = express.Router();
 
@@ -193,6 +194,55 @@ route.post("/video-url", protect, async (req, res) => {
 });
 
 
+route.post("/geoAccess/:room_id", protect, async (req, res) => {
+  try {
+    const { gpsCountryCode } = req.body;
+    const room_id = req.params.room_id;
+
+    // 1. Fetch the stage
+    const stage = await talentModel.findById(room_id);
+    if (!stage) {
+      return res.status(404).json({ message: "Stage not found" });
+    }
+    const allowedCountry = stage.region; // e.g., "US"
+    // 2. Get user IP location
+    const ip = getClientIp(req);
+    const ipLocation = await getLocationFromIP(ip);
+    const ipCountryCode = ipLocation?.countryCode;
+
+    // 3. Determine final country (GPS takes precedence)
+    const finalCountryCode = gpsCountryCode || ipCountryCode;
+
+    if (!finalCountryCode) {
+      return res
+        .status(400)
+        .json({ message: "Unable to determine user location" });
+    }
+
+    // 4. Validate access
+    if (
+      allowedCountry &&
+      allowedCountry.toUpperCase() !== finalCountryCode.toUpperCase()
+    ) {
+      return res.status(200).json({
+        message: `Access restricted to ${allowedCountry}`,
+        userCountry: finalCountryCode,
+        canAttend:false
+      });
+    }
+    return res.status(200).json({
+      message: "Access granted",
+      userCountry: finalCountryCode,
+      stageCountry: allowedCountry,
+      canAttend:true
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 
 route.post('/creates',protect,async(req,res)=>{
   console.log("iam here")
@@ -217,10 +267,10 @@ route.post('/creates',protect,async(req,res)=>{
           status:"open",
           winner: null,
           finalist:[],
-          semi_finalists: [],
+          semi_finalists: [],  
           quarter_finalists: [],
           createdAt : new Date(),
-          updatedAt : new Date()
+          updatedAt : new Date()  
     })
 
     // talent.contestants.forEach((c,index )=> {
@@ -259,10 +309,10 @@ route.post('/creates',protect,async(req,res)=>{
     let edIndex = talent.editions.findIndex( e => e.status === "open")
 
     let queuedUsers = []
-    // if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
-    //       queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
-    //       talent.contestants.push(...queuedUsers)
-    //    }
+    if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
+          queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
+          talent.contestants.push(...queuedUsers)
+       }
     
     // if(talent.eliminations.length > 0){
     //    let contest = talent.eliminations.splice(0,6)
@@ -434,7 +484,7 @@ route.post('/creates',protect,async(req,res)=>{
 //********************************** user talents , participations  */
 
 route.get('/stages',protect,async(req,res)=> {
-  const stages = await talentModel.find({});  
+  const stages = await talentModel.find({}) //.limit(40);  
   return res.json(stages).status(200)
 })   
 
@@ -573,6 +623,7 @@ route.get('/user/talent/:id',protect,async(req,res)=>{
         ]
        });
       userTalents = userTalents.filter(t => t.contestants.length !== 0)
+      console.log(userTalents)
       res.json(userTalents)
 })
 
