@@ -499,6 +499,33 @@ route.get("/stages/region/:region", async (req, res) => {
     const stages = await talentModel.find({
       region: normalizedCountry,
     }).sort({ createdAt: -1 });
+     
+
+    const stageNames= [
+      "Singing" ,
+      "Dancing",
+      "Fitness",
+      'Magic',
+      "Sport",
+      "Melody",
+      "Art",
+      "Comedy",
+    ];
+    
+    stageNames.forEach( async(name) =>{
+        if(!stages.find( s => s.name === name)){
+          console.log("about to create this stage name" + name)
+          const tal = new talentModel({
+          name:name,  
+          region : region,
+          desc : ""
+          })
+        await tal.save()
+      }
+    } )
+
+
+
     console.log(stages.length)
     return res.status(200).json(stages);
 
