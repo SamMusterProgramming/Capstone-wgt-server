@@ -249,7 +249,6 @@ route.post('/creates',protect,async(req,res)=>{
      const TalentName =  req.body.name
      const regionName =  req.body.region
      const talent = await talentModel.findOne({name:TalentName , region:regionName})
-
      if(! talent) {
         const tal = new talentModel({
             name:TalentName,  
@@ -259,7 +258,6 @@ route.post('/creates',protect,async(req,res)=>{
        await tal.save()
        return res.json(tal)
      }
-
     if(talent.editions.length == 0)
     talent.editions.push({
           _id:1,
@@ -481,7 +479,18 @@ route.post('/creates',protect,async(req,res)=>{
 })
 
 
+
+
 //********************************** user talents , participations  */
+
+route.post('/findStage',protect,async(req,res)=>{
+     const TalentName =  req.body.name
+     const regionName =  req.body.region
+     const stage = await talentModel.findOne({name:TalentName , region:regionName})
+      console.log(stage)
+     return res.json(stage).status(200)
+})
+
 
 route.get('/stages',protect,async(req,res)=> {
   const stages = await talentModel.find({}).limit(60);  
@@ -511,7 +520,7 @@ route.get("/stages/region/:region", async (req, res) => {
       "Art",
       "Comedy",
     ];
-    
+    // Instrumental
     stageNames.forEach( async(name) =>{
         if(!stages.find( s => s.name === name)){
           console.log("about to create this stage name" + name)
