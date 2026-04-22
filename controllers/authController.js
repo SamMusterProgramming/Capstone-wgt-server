@@ -15,13 +15,6 @@ export const signup = async (req, res) => {
       const { uid , email, email_verified } = decoded;
       // 🔥 check if user exists
       const normalizedEmail = email.toLowerCase();
-
-      // if (!email_verified) {
-      //   return res.status(400).json({ 
-      //        message: "Email not verified",
-      //        color:"yellow"
-      //        });
-      // }
       let user = await userModel.findOne({ email: normalizedEmail });
 
       if (user) {
@@ -55,18 +48,6 @@ export const signup = async (req, res) => {
         message: "Signup successful. Please verify your email before logging in." ,
          color:"lightgreen"
       });
-      // user.save()
-      // if (!email_verified) {
-      //   return res.status(400).json({ message: "Email not verified" });
-      // }
-      
-      // const jwtToken = generateToken(user);
-    
-      // res.json({   
-      //   token: jwtToken,
-      //   user,
-      // });    
-    
     } catch (err) {
       console.log(err);
       res.status(500).json({ message: "Signup failed" });
@@ -92,27 +73,6 @@ export const signup = async (req, res) => {
         });
       }
       user.email_verified = true ;
-      // const findFollower = await followerModel.findOne({user_id:user._id})  
-      // if(!findFollower)  await  new followerModel(
-      //         {
-      //           user_id:user._id,
-      //           email:user.email,
-      //           profile_img:user.profile_img,
-      //           name:user.name,
-      //           followers:[],
-      //           followings:[],
-      //         }
-      //       ).save()   
-      // const findFriend = await friendModel.findOne({user_id:user._id})  
-      // if(!findFriend)  await  new friendModel(
-      //   {
-      //     user_id:user._id,
-      //     email:user.email,
-      //     name:user.name,
-      //     profile_img:user.profile_img,
-      //     friend_request_sent:[],
-      //     friends:[]
-      // }).save()   
       user.uid = uid;
       await user.save()
       await ensureUserRelations(user);
@@ -128,8 +88,47 @@ export const signup = async (req, res) => {
   };
 
 
+  //**********************anynomousLogin */
 
-//********************google login  */
+  export const anonymouslogin = async (req, res) => {
+    try {
+     
+      const { token , email } = req.body;
+      const decoded = await admin.auth().verifyIdToken(token);
+      const { uid } = decoded;
+      console.log(decoded)
+      
+      const user = await userModel.findOne({ email: email });
+      console.log(user)
+      if (!user 
+        // || !user.providers.includes("anonymous")
+      ) {
+        return res.status(404).json({ message: "User not found" });
+      }  
+
+      // if (!user.providers.includes("email")){
+      //   return res.status(403).json({
+      //     message: "Please login using Google",
+      //   });
+      // }
+      user.providers = "anonymous";
+      user.email_verified = true ;
+      user.uid = uid;
+      console.log(user)
+      await user.save()
+      await ensureUserRelations(user);
+      const jwtToken =  generateToken(user);
+      res.json({
+        token: jwtToken,
+        user,
+      });
+  
+    } catch (err) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  };
+
+//******************** google login  */
 
 export const googleLogin = async (req, res) => {
     try {
@@ -213,8 +212,6 @@ export const googleLogin = async (req, res) => {
       });
     }
   };
-  
-
   
   // ---------------- ME ----------------
   export const getMe = async (req, res) => {

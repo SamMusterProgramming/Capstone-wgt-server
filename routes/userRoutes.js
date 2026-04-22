@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 import b2 from '../B2.js' 
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
-import { getMe, googleLogin, login, signup } from '../controllers/authController.js';
+import { anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
 // import admin from '../service/firebase.js';
 
@@ -57,6 +57,7 @@ route.post("/auth/login", login);
 route.post("/auth/signup", signup);
 route.get("/auth/me", protect, getMe);
 route.post("/auth/google", googleLogin);
+route.post("/auth/anonymous", anonymouslogin);
 
 
 
@@ -334,6 +335,7 @@ function validateMongoObjectId(req,res,next) {
       if(!user) return res.json({error:"cant find the user"}).status(404)
       res.status(200).json(user)
     })
+
     // update user 
     route.patch('/user/:id',protect,validateMongoObjectId, async(req,res)=>{ 
       console.log(req.body)
