@@ -39,6 +39,10 @@ const talentSchema = new mongoose.Schema({
  )
 talentSchema.index({region:1 , name:1});
 
+talentSchema.index({ "contestants.user_id": 1 });
+talentSchema.index({ "queue.user_id": 1 });
+talentSchema.index({ "eliminations.user_id": 1 });
+
 let talentModel = mongoose.model("talents",talentSchema);
 
 export default talentModel ;    
