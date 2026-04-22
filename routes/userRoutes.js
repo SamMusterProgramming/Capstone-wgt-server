@@ -198,7 +198,7 @@ route.post("/saveProfileImage", protect, async (req, res) => {
     );
     let findFriend = await friendModel.findOne({ user_id: userId });
     findFriend.profile_img = cdnUrl ; 
-    await friendModel.save()
+    await findFriend .save()
 
     return res.json(updatedUser);
 
@@ -240,7 +240,7 @@ route.post("/saveCoverImage",protect,  async (req, res) => {
 
     let findFriend = await friendModel.findOne({ user_id: userId });
     findFriend.cover_img = cdnUrl ; 
-    await friendModel.save()
+    await findFriend.save()
 
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
