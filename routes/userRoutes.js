@@ -238,7 +238,7 @@ route.post("/saveCoverImage",protect,  async (req, res) => {
       { new: true }
     );
 
-    const findFriend = await friendModel.findOne({ user_id: userId });
+    let findFriend = await friendModel.findOne({ user_id: userId });
     findFriend.cover_img = cdnUrl ; 
     await friendModel.save()
 
