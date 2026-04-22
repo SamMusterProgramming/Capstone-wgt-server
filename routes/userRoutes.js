@@ -16,6 +16,7 @@ import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUp
 import { verifyFirebaseToken } from '../middleware/auth.js';
 import { anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
+import talentModel from '../models/talent.js';
 // import admin from '../service/firebase.js';
 
 
@@ -173,11 +174,28 @@ route.post("/saveProfileImage", protect, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // 3️⃣ Delete old file (NON-BLOCKING)
     if (deleteFileId && deleteFileName) {
       deleteFileFromB2_Public(deleteFileName, deleteFileId)
         .catch(err => console.error("Delete error:", err));
     }
+
+    await talentModel.updateMany(
+      {},
+      {
+        $set: {
+          "contestants.$[c].profile_img": cdnUrl,
+          "queue.$[q].profile_img": cdnUrl,
+          "eliminations.$[e].profile_img": cdnUrl,
+        },
+      },
+      {
+        arrayFilters: [
+          { "c.user_id": userId },
+          { "q.user_id": userId },
+          { "e.user_id": userId },
+        ],
+      }
+    );
 
     return res.json(updatedUser);
 
@@ -186,6 +204,9 @@ route.post("/saveProfileImage", protect, async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 route.post("/saveCoverImage",protect,  async (req, res) => {
   try {

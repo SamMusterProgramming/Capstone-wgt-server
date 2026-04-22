@@ -20,6 +20,9 @@ const followerSchema = new mongoose.Schema({
      },
      profile_img:{
         type:String
+     },
+     cover_img:{
+      type:String
      }
     
    },

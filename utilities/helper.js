@@ -13,6 +13,7 @@ export const ensureUserRelations = async (user) => {
         email: user.email,
         name: user.name,
         profile_img: user.profileImage?.publicUrl,
+        cover_img: user.coverImage?.publicUrl,
         followers: [],
         followings: [],
       });
