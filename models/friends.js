@@ -10,6 +10,9 @@ const friendSchema = new mongoose.Schema({
      profile_img:{
         type:String
      },
+     cover_img:{
+      type:String
+   },
      friends:[],
      email:{
         type:String,
@@ -22,7 +25,7 @@ const friendSchema = new mongoose.Schema({
      friend_request_sent:[],
      createdAt: {
         type: Date,   
-        default: Date.now
+        default: Date.now   
       }
    },
    { versionKey: false }           

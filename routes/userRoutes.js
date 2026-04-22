@@ -452,7 +452,8 @@ route.post('/friends/request/:id',protect,validateMongoObjectId,async(req,res)=>
     user_id:req.body._id,
     name:req.body.name,
     email:req.body.email,
-    profile_img:req.body.profile_img
+    profile_img:req.body.profile_img,
+    cover_img:req.body.cover_img
   }
   const find_request= await friendModel.findOne
    ({
@@ -474,6 +475,7 @@ route.post('/friends/request/:id',protect,validateMongoObjectId,async(req,res)=>
       sender_id:user_id,
       name:friend.name,
       profile_img:friend.profile_img,
+      cover_img:friend.cover_img,
       email:friend.email
      },
      message:"sent you a friend request",
@@ -491,12 +493,15 @@ route.post('/friends/unfriend/:id',protect,validateMongoObjectId,async(req,res)=
     user_id:req.body._id,
     name:req.body.name,
     email:req.body.email,
-    profile_img:req.body.profile_img
-  }
+    profile_img:req.body.profile_img,
+    cover_img:req.body.cover_img
+   }
 
   const find_friend = await friendModel.findOne({
     user_id:user_id,
-    'friends.user_id': req.body._id})
+    'friends.user_id': req.body._id
+  })
+
   if(find_friend){
   const friend1 = await friendModel.findOneAndUpdate(
           {user_id:user_id},
@@ -505,18 +510,8 @@ route.post('/friends/unfriend/:id',protect,validateMongoObjectId,async(req,res)=
            },
            { new:true } 
           )
-        }
+  }
 
-  // const friend_2 = {
-  //     user_id:friend1.user_id,
-  //     name:friend1.name,
-  //     email:friend1.email,
-  //     profile_img:friend1.profile_img
-  // }
-  // const find_friendx = await friendModel.findOne({
-  //   user_id:req.body._id,
-  //  'friends.user_id': user_id})
-  // if(!find_friendx){
   const friend2 = await friendModel.findOneAndUpdate(
     {user_id:req.body._id},
     {
@@ -531,12 +526,13 @@ route.post('/friends/unfriend/:id',protect,validateMongoObjectId,async(req,res)=
 
 route.post('/friends/cancel/:id',protect,validateMongoObjectId,async(req,res)=>{
   const user_id = req.params.id;
-  const friend_request = {
-    user_id:req.body._id,
-    name:req.body.name,
-    email:req.body.email,
-    profile_img:req.body.profile_img
-  }
+  // const friend_request = {
+  //   user_id:req.body._id,
+  //   name:req.body.name,
+  //   email:req.body.email,
+  //   profile_img:req.body.profile_img,
+  //   cover_img:req.body.cover_img
+  // }
   
   await friendModel.findOneAndUpdate(
           {user_id:req.body._id},
@@ -575,11 +571,13 @@ route.post('/friends/accept/:id',protect,validateMongoObjectId,async(req,res)=>{
     user_id:req.body._id,
     name:req.body.name,
     email:req.body.email,
-    profile_img:req.body.profile_img
+    profile_img:req.body.profile_img,
+    cover_img:req.body.cover_img
   }
   const find_request = await friendModel.findOne({
     user_id:user_id,
-    'friend_request_sent.user_id':req.body._id})
+    'friend_request_sent.user_id':req.body._id
+  })
   if(!find_request) return  res.json("expired")
   const friend = await friendModel.findOneAndUpdate(
           {user_id:user_id},
@@ -589,11 +587,12 @@ route.post('/friends/accept/:id',protect,validateMongoObjectId,async(req,res)=>{
            },
            { new:true }   
           )
-  const sender ={
+  const sender = {
      user_id:friend.user_id,
      name:friend.name,
      email:friend.email,
-     profile_img:friend.profile_img
+     profile_img:friend.profile_img ,
+     cover_img:friend.cover_img
   }        
   const friend_sender = await friendModel.findOneAndUpdate(
             {user_id:req.body._id},
@@ -619,7 +618,8 @@ route.post('/friends/accept/:id',protect,validateMongoObjectId,async(req,res)=>{
      sender_id:req.body._id,
      name:req.body.name,  
      email:req.body.email,
-     profile_img:req.body.profile_img
+     profile_img:req.body.profile_img ,
+     cover_img:req.body.cover_img
     },
     message:"has accepted your friend request, start sharing",
     type:"friends",   
