@@ -100,12 +100,10 @@ export const signup = async (req, res) => {
       
       const user = await userModel.findOne({ email: email });
       console.log(user)
-      if (!user 
-        // || !user.providers.includes("anonymous")
+      if (!user || !user.providers.includes("anonymous")
       ) {
         return res.status(404).json({ message: "User not found" });
       }  
-
       // if (!user.providers.includes("email")){
       //   return res.status(403).json({
       //     message: "Please login using Google",

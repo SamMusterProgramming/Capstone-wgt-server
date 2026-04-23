@@ -208,9 +208,6 @@ route.post("/saveProfileImage", protect, async (req, res) => {
   }
 });
 
-
-
-
 route.post("/saveCoverImage",protect,  async (req, res) => {
   try {
     const { userId, fileId, fileName, deleteFileId, deleteFileName } = req.body;
@@ -315,7 +312,6 @@ route.route('/')
    })   
 
 async function validateUserRegistration(req,res,next) {
-
     if(!req.body.email || !req.body.password )
        return res.status(404).json({error:"invalid entry"})
     const query = {email:req.body.email}
