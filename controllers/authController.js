@@ -109,7 +109,6 @@ export const signup = async (req, res) => {
       //     message: "Please login using Google",
       //   });
       // }
-      user.providers = "anonymous";
       user.email_verified = true ;
       user.uid = uid;
       console.log(user)
