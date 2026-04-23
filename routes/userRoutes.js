@@ -381,25 +381,26 @@ function validateMongoObjectId(req,res,next) {
     
 
   // add following
-  route.post('/followings/add/:id',protect,validateMongoObjectId,async(req,res)=>{
+    route.post('/followings/add/:id',protect,validateMongoObjectId,async(req,res)=>{
       const user_id = req.params.id;
-      
       const following = {
         user_id:req.body.user_id,
         email:req.body.email,
         profile_img:req.body.profile_img,
         name:req.body.name
       }
-      const follow = await followerModel.findOneAndUpdate(
-              {user_id:user_id},
-              {
-                  // $push:
+      const user1 = await userModel.findById(user_id)
+      let follow = await followerModel.findOneAndUpdate(
+               {user_id:user_id},
+               {
                   $addToSet:{ followings : following },
                },
                { new:true } 
-              )
-
-      const follower = await followerModel.findOneAndUpdate(
+      )
+      follow.profile_img = user1.profileImage.publicUrl 
+      await follow.save()
+      const user2 = await userModel.findById(req.body.user_id)
+      let follower = await followerModel.findOneAndUpdate(
                 {user_id:req.body.user_id},
                 {
                     $push: { followers : {
@@ -410,11 +411,11 @@ function validateMongoObjectId(req,res,next) {
                     }}
                  },
                { new:true } 
-        )
-  
+      )    
+      follower.profile_img = user2.profileImage.publicUrl 
+      await follower.save() 
       res.json(follow).status(200)
-
-  })   
+    })   
 
     // unfollow
     route.patch('/unfollowing/:id',protect,validateMongoObjectId,async(req,res)=>{
