@@ -7,22 +7,44 @@ const friendSchema = new mongoose.Schema({
         type:String,
         required:true
      },
-     profile_img:{
-        type:String
-     },
-     cover_img:{
-      type:String
-   },
-     friends:[],
-     email:{
-        type:String,
-        default:"no email"
-     },
-     name:{
-      type:String,
-      default:"no email"
-     },
-     friend_request_sent:[],
+   //   profile_img:{
+   //      type:String
+   //   },
+   //   cover_img:{
+   //    type:String
+   //   },
+
+    
+
+   //   email:{
+   //      type:String,
+   //      default:"no email"
+   //   },
+   //   name:{
+   //    type:String,
+   //    default:"no email"
+   //   },
+
+     friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+     ],
+     friend_requests_sent: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+     ],
+
+     friend_requests_received: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      }
+     ]
+     ,
      createdAt: {
         type: Date,   
         default: Date.now   

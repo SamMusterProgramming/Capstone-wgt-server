@@ -1,4 +1,5 @@
 
+import mongoose from "mongoose";
 import { generateToken } from "../middleware/jwtProtect.js";
 import followerModel from "../models/followers.js";
 import friendModel from "../models/friends.js";
@@ -72,6 +73,39 @@ export const signup = async (req, res) => {
           message: "Please login using Google",
         });
       }
+
+
+        // const users = await friendModel.find();
+        // console.log(users.length)
+        // for (const doc of users) {
+        //   try {
+        //     if (!doc.friends || !Array.isArray(doc.friends)) continue;
+        
+        //     const ids = doc.friends
+        //       .filter(f => f && f.user_id) // safety
+        //       .map(f => {
+        //         console.log("friend:", f.user_id);
+        //         return new mongoose.Types.ObjectId(f.user_id);
+        //       });
+        
+        //     console.log("converted:", ids);
+        
+        //     await friendModel.updateOne(
+        //       { _id: doc._id }, // ✅ always use _id
+        //       { $set: { friends: ids } } // ✅ overwrite correctly
+        //     );
+        
+        //     console.log("updated:", doc._id);
+        
+        //   } catch (err) {
+        //     console.log("ERROR on doc:", doc._id, err.message);
+        //   }
+        // }
+        
+        // console.log("DONE");
+
+
+
       user.email_verified = true ;
       user.uid = uid;
       await user.save()
@@ -96,10 +130,7 @@ export const signup = async (req, res) => {
       const { token , email } = req.body;
       const decoded = await admin.auth().verifyIdToken(token);
       const { uid } = decoded;
-      console.log(decoded)
-      
       const user = await userModel.findOne({ email: email });
-      console.log(user)
       if (!user || !user.providers.includes("anonymous")
       ) {
         return res.status(404).json({ message: "User not found" });
@@ -111,7 +142,6 @@ export const signup = async (req, res) => {
       // }
       user.email_verified = true ;
       user.uid = uid;
-      console.log(user)
       await user.save()
       await ensureUserRelations(user);
       const jwtToken =  generateToken(user);
@@ -214,10 +244,13 @@ export const googleLogin = async (req, res) => {
   export const getMe = async (req, res) => {
     try {
       const user = await userModel.findById(req.user._id);
-      console.log(user)
       if(!user) return  res.json({user:false})
+
+
+
+
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });
     }
-  };                        
+  };                       

@@ -17,6 +17,7 @@ import { verifyFirebaseToken } from '../middleware/auth.js';
 import { anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
+import { cancelRequest, friendRequest, getFriendList } from '../controllers/friendController.js';
 // import admin from '../service/firebase.js';
 
 
@@ -60,6 +61,12 @@ route.get("/auth/me", protect, getMe);
 route.post("/auth/google", googleLogin);
 route.post("/auth/anonymous", anonymouslogin);
 
+
+//friends , requests ... 
+route.post("/friends/request/:id",protect,validateMongoObjectId,friendRequest);
+route.post("/friends/cancel/:id",protect,validateMongoObjectId,cancelRequest);
+route.get('/friends/list/:id',protect,validateMongoObjectId,getFriendList)
+// route.post('/friends/list/:id',protect,validateMongoObjectId,getFriendList)
 
 
 // route.get("/me", verifyFirebaseToken, async (req, res) => {
@@ -470,46 +477,44 @@ route.get('/followings/:id',protect,validateMongoObjectId,async(req,res)=>{
 
 //*********************** Friends request , adding */
 
-route.post('/friends/request/:id',protect,validateMongoObjectId,async(req,res)=>{
-  const user_id = req.params.id;
-  console.log(req.body)
-  const friend_request = {
-    user_id:req.body._id,
-    name:req.body.name,
-    email:req.body.email,
-    profile_img:req.body.profile_img,
-    cover_img:req.body.cover_img
-  }
-  const find_request= await friendModel.findOne
-   ({
-       user_id:req.body._id,
-      'friend_request_sent.user_id':user_id
-   })
-  if(find_request) return  res.json("exist")
-
-  const friend = await friendModel.findOneAndUpdate(
-          {user_id:user_id},
-          {
-              $push: { friend_request_sent :friend_request },
-           },  
-           { new:true } 
-          )
-  const notification = new notificationModel({
-     receiver_id:req.body._id,
-     content: {
-      sender_id:user_id,
-      name:friend.name,
-      profile_img:friend.profile_img,
-      cover_img:friend.cover_img,
-      email:friend.email
-     },
-     message:"sent you a friend request",
-     type:"friend request",
-     isRead:false,
-  })
-  await notification.save();
-  res.json(friend).status(200)
-})   
+// route.post('/friends/request/:id',protect,validateMongoObjectId,async(req,res)=>{
+//   const user_id = req.params.id;
+//   const friend_request = {
+//     user_id:req.body._id,
+//     name:req.body.name,
+//     email:req.body.email,
+//     profile_img:req.body.profile_img,
+//     cover_img:req.body.cover_img
+//   }
+//   const find_request= await friendModel.findOne
+//    ({
+//        user_id:req.body._id,
+//       'friend_request_sent.user_id':user_id
+//    })
+//   if(find_request) return  res.json("exist")
+//   const friend = await friendModel.findOneAndUpdate(
+//           {user_id:user_id},
+//           {
+//               $push: { friend_request_sent :friend_request },
+//            },  
+//            { new:true } 
+//           )
+//   const notification = new notificationModel({
+//      receiver_id:req.body._id,
+//      content: {
+//       sender_id:user_id,
+//       name:friend.name,
+//       profile_img:friend.profile_img,
+//       cover_img:friend.cover_img,
+//       email:friend.email
+//      },
+//      message:"sent you a friend request",
+//      type:"friend request",
+//      isRead:false,
+//   })
+//   await notification.save();
+//   res.json(friend).status(200)
+// })   
 
 
 route.post('/friends/unfriend/:id',protect,validateMongoObjectId,async(req,res)=>{
@@ -549,46 +554,40 @@ route.post('/friends/unfriend/:id',protect,validateMongoObjectId,async(req,res)=
 })   
 
 
-route.post('/friends/cancel/:id',protect,validateMongoObjectId,async(req,res)=>{
-  const user_id = req.params.id;
-  // const friend_request = {
-  //   user_id:req.body._id,
-  //   name:req.body.name,
-  //   email:req.body.email,
-  //   profile_img:req.body.profile_img,
-  //   cover_img:req.body.cover_img
-  // }
-  
-  await friendModel.findOneAndUpdate(
-          {user_id:req.body._id},
-          {
-              $pull: { friend_request_sent :{user_id:user_id} },
-           },
-           { new:true }   
-          )
-  const friend = await friendModel.findOneAndUpdate(
-            {user_id:user_id},
-            {
-                $pull: { friend_request_sent :{user_id:req.body._id} },
-             },
-             { new:true }   
-        )
+// route.post('/friends/cancel/:id',protect,validateMongoObjectId,async(req,res)=>{
+//   const user_id = req.params.id;
 
-  await notificationModel.findOneAndDelete({
-       receiver_id:req.body._id,
-       type:"friend request",
-      'content.sender_id': user_id} ,
-      { new:true }   
-    )
-  await notificationModel.findOneAndDelete({
-      receiver_id:user_id,
-      type:"friend request",
-     'content.sender_id': req.body._id} ,
-     { new:true }   
-   )
   
-  res.json(friend).status(200)
-})  
+//   await friendModel.findOneAndUpdate(
+//           {user_id:req.body._id},
+//           {
+//               $pull: { friend_request_sent :{user_id:user_id} },
+//            },
+//            { new:true }   
+//           )
+//   const friend = await friendModel.findOneAndUpdate(
+//             {user_id:user_id},
+//             {
+//                 $pull: { friend_request_sent :{user_id:req.body._id} },
+//              },
+//              { new:true }   
+//         )
+
+// await notificationModel.findOneAndDelete({
+//        receiver_id:req.body._id,
+//        type:"friend request",
+//       'content.sender_id': user_id} ,
+//       { new:true }   
+//     )
+// await notificationModel.findOneAndDelete({
+//       receiver_id:user_id,
+//       type:"friend request",
+//      'content.sender_id': req.body._id} ,
+//      { new:true }   
+//    )
+  
+//   res.json(friend).status(200)
+// })  
 
 route.post('/friends/accept/:id',protect,validateMongoObjectId,async(req,res)=>{
   const user_id = req.params.id;
@@ -655,12 +654,14 @@ route.post('/friends/accept/:id',protect,validateMongoObjectId,async(req,res)=>{
 })  
 
 
-route.get('/friends/list/:id',validateMongoObjectId,async(req,res)=>{
-  const user_id = req.params.id;
-  const friendlist = await friendModel.findOne({user_id:user_id})
-  res.json(friendlist).status(200)
+// route.get('/friends/list/:id',protect,validateMongoObjectId,async(req,res)=>{
+//   const user_id = req.params.id;
+//   const friendlist = await friendModel.findOne({user_id:user_id})
+//   console.log(friendlist)
+//   // friendlist.friends = friends
+//   res.json(friendlist).status(200)
 
-})   
+// })   
 
 
 //*********************** notifications */

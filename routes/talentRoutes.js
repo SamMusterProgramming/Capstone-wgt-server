@@ -245,7 +245,6 @@ route.post("/geoAccess/:room_id", protect, async (req, res) => {
 
 
 route.post('/creates',protect,async(req,res)=>{
-  console.log("iam here")
      const TalentName =  req.body.name
      const regionName =  req.body.region
      const talent = await talentModel.findOne({name:TalentName , region:regionName})
@@ -325,7 +324,6 @@ route.post('/creates',protect,async(req,res)=>{
         const roundDate = new Date(edition.updatedAt)
         const now = new Date();
         const differenceInMilliseconds = (now - roundDate)/(1000*60000)
-        console.log(differenceInMilliseconds)
 
         if(differenceInMilliseconds >= 100) {
                
@@ -487,7 +485,6 @@ route.post('/findStage',protect,async(req,res)=>{
      const TalentName =  req.body.name
      const regionName =  req.body.region
      const stage = await talentModel.findOne({name:TalentName , region:regionName})
-      console.log(stage)
      return res.json(stage).status(200)
 })
 
@@ -509,7 +506,6 @@ route.get("/stages/region/:region", async (req, res) => {
       region: normalizedCountry,
     }).sort({ createdAt: -1 });
      
-
     const stageNames= [
       "Singing" ,
       "Dancing",
@@ -523,7 +519,6 @@ route.get("/stages/region/:region", async (req, res) => {
     // Instrumental
     stageNames.forEach( async(name) =>{
         if(!stages.find( s => s.name === name)){
-          console.log("about to create this stage name" + name)
           const tal = new talentModel({
           name:name,  
           region : region,
@@ -533,9 +528,6 @@ route.get("/stages/region/:region", async (req, res) => {
       }
     } )
 
-
-
-    console.log(stages.length)
     return res.status(200).json(stages);
 
   } catch (error) {
@@ -655,7 +647,6 @@ route.patch('/favourite/:id',protect,async(req,res)=> {
 //********************************************************
 
 route.get('/top/:id',protect,async(req,res)=>{
-  console.log(req.params.id)
       const user_id = req.params.id
       let userTalents = await talentModel.find();
       // userTalents = userTalents.filter( t => !(t.contestants.some(c=> c.user_id === user_id)
@@ -664,13 +655,11 @@ route.get('/top/:id',protect,async(req,res)=>{
       userTalents.sort((a, b) => {
            return b.editions.length  - a.editions.length
       })
-      console.log(userTalents.length)
       res.json(userTalents)
 })
 
 
 route.get('/user/talent/:id',protect,async(req,res)=>{
-  console.log(req.params.id)
       const user_id = req.params.id
       let userTalents = await talentModel.find({
         $or: [
@@ -684,12 +673,11 @@ route.get('/user/talent/:id',protect,async(req,res)=>{
         ]
        });
       userTalents = userTalents.filter(t => t.contestants.length !== 0)
-      console.log(userTalents)
       res.json(userTalents)
 })
 
 route.get('/user/performance/:id',protect,async(req,res)=>{
-  console.log(req.params.id)
+  
       const user_id = req.params.id
       const userTalents = await talentModel.find({});
       let performances = []
@@ -733,8 +721,8 @@ route.get('/general/:id', protect, async(req,res)=>{
       const friends = await friendModel.findOne({
                      user_id : user_id
                  })
-      let friendIDS = []
-      friends && friends.friends.forEach(f => friendIDS.push(f.user_id))
+      // let friendIDS = []
+      // friends && friends.friends.forEach(f => friendIDS.push(f.user_id))
       const talents = await talentModel.find({
                   // 'contestants.user_id': { $in: friendIDS }
                  })
