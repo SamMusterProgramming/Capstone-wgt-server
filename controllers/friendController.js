@@ -271,8 +271,9 @@ export const friendRequest =
   
     export const getFriendList = async(req,res)=>{
         const user_id = req.params.id;
-        // const friendlist = await friendModel.findOne({user_id:user_id})
         console.log(user_id)
+        // const friendlist = await friendModel.findOne({user_id:user_id})
+      
         const result = await friendModel.aggregate([
             {
               $match: { user_id: user_id }
@@ -334,7 +335,6 @@ export const friendRequest =
             }
           ]);
       
-        console.log(result[0])
         // friendlist.friends = friends
         res.json(result[0]).status(200)
       }
