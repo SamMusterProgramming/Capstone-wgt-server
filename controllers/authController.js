@@ -7,6 +7,7 @@ import userModel from "../models/users.js";
 import admin from "../service/firebase.js";
 import { ensureUserRelations } from "../utilities/helper.js";
 
+
 // ---------------- SIGNUP ----------------
 export const signup = async (req, res) => {
     try {
@@ -246,9 +247,7 @@ export const googleLogin = async (req, res) => {
       const user = await userModel.findById(req.user._id);
       if(!user) return  res.json({user:false})
 
-
-
-
+    
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });

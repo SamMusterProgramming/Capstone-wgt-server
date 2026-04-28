@@ -273,7 +273,46 @@ export const friendRequest =
       }
     }
 
-
+   
+    export const unfriendRequest =  async (req, res) => {
+        try {
+          const userA = new mongoose.Types.ObjectId(req.params.id);   // current user
+          const userB = new mongoose.Types.ObjectId(req.body._id);    // friend to remove
+    
+          // Optional: check if they are actually friends
+          const exists = await friendModel.findOne({
+            user_id: userA,
+            friends: userB
+          });
+    
+          if (!exists) {
+            return res.status(400).json({ message: "Users are not friends" });
+          }
+    
+          // Remove each other from friends list
+          await friendModel.updateOne(
+            { user_id: userA },
+            {
+              $pull: { friends: userB }
+            }
+          );
+    
+          const updatedUserB = await friendModel.updateOne(
+            { user_id: userB },
+            {
+              $pull: { friends: userA }
+            }
+          );
+    
+          const fList = await generateFriends(req.body._id)
+          return res.status(200).json(fList);
+    
+        } catch (err) {
+          console.log(err);
+          return res.status(500).json({ message: "Server error" });
+        }
+      }
+    
 
   
     export const getFriendList = async(req,res)=>{

@@ -17,7 +17,8 @@ import { verifyFirebaseToken } from '../middleware/auth.js';
 import { anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
-import { acceptRequest, cancelRequest, friendRequest, getFriendList } from '../controllers/friendController.js';
+import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
+import { followingRequest, getFollowersList, unfollowingRequest } from '../controllers/followController.js';
 // import admin from '../service/firebase.js';
 
 
@@ -25,36 +26,7 @@ dotenv.config();
 const route = express.Router();
 
 
-// route.post('/auth/google', async (req, res) => {
-//   try {
-//     const { idToken } = req.body;
-    
-//     if (!idToken) {
-//       return res.status(400).json({ error: 'Missing token' });
-//     }
-//     const decodedToken = await admin.auth().verifyIdToken(idToken);
-
-//     const { uid, email, name , picture } = decodedToken;
-
-//     const user = {
-//       uid,
-//       email,
-//       name,
-//       picture,
-//     };
-
-//     return res.json({
-//       message: 'User authenticated',
-//       user,
-//     });
-
-//   } catch (error) {
-//     console.error(error);
-//     res.status(401).json({ error: 'Unauthorized' });
-//   }
-// });
-
-
+// auth user, login , sign up 
 route.post("/auth/login", login);
 route.post("/auth/signup", signup);
 route.get("/auth/me", protect, getMe);
@@ -66,26 +38,15 @@ route.post("/auth/anonymous", anonymouslogin);
 route.post("/friends/request/:id",protect,validateMongoObjectId,friendRequest);
 route.post("/friends/cancel/:id",protect,validateMongoObjectId,cancelRequest);
 route.post('/friends/accept/:id',protect,validateMongoObjectId,acceptRequest);
+route.post('/friends/unfriend/:id',protect,validateMongoObjectId , unfriendRequest)
 route.get('/friends/list/:id',protect,validateMongoObjectId,getFriendList)
 
+// follows, requests 
+route.post("/followings/add/:id",protect,validateMongoObjectId,followingRequest)
+route.patch('/unfollowing/:id',protect,validateMongoObjectId,unfollowingRequest)
+route.get('/follow/data/:id',protect,validateMongoObjectId,getFollowersList)
 
-// route.get("/me", verifyFirebaseToken, async (req, res) => {
-//   try {
-//     console.log(req.user)
-//     const { uid } = req.user;
 
-//     const user = await userModel.findOne({ uid });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     res.json(user);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
 
 
 route.post("/getUploadVideoUrl", async (req, res) => {
@@ -383,87 +344,6 @@ function validateMongoObjectId(req,res,next) {
     
     
 
-  // add following
-    route.post('/followings/add/:id',protect,validateMongoObjectId,async(req,res)=>{
-      const user_id = req.params.id;
-      const following = {
-        user_id:req.body.user_id,
-        email:req.body.email,
-        profile_img:req.body.profile_img,
-        name:req.body.name
-      }
-      const user1 = await userModel.findById(user_id)
-      let follow = await followerModel.findOneAndUpdate(
-               {user_id:user_id},
-               {
-                  $addToSet:{ followings : following },
-               },
-               { new:true } 
-      )
-      follow.profile_img = user1.profileImage.publicUrl 
-      await follow.save()
-      const user2 = await userModel.findById(req.body.user_id)
-      let follower = await followerModel.findOneAndUpdate(
-                {user_id:req.body.user_id},
-                {
-                    $push: { followers : {
-                      user_id:user_id,
-                      email:follow.email,
-                      profile_img:follow.profile_img,
-                      name: follow.name
-                    }}
-                 },
-               { new:true } 
-      )    
-      follower.profile_img = user2.profileImage.publicUrl 
-      await follower.save() 
-      res.json(follow).status(200)
-    })   
-
-    // unfollow
-    route.patch('/unfollowing/:id',protect,validateMongoObjectId,async(req,res)=>{
-      //  if (req.params.id == req.body.following_id) return res.json("can't follow your self")
-      const user_id = req.params.id;
-      console.log(req.body)
-      const following = {
-        user_id:req.body.user_id,
-        email:req.body.email,
-        profile_img:req.body.profile_img,
-        name:req.body.name
-      }
-      const follow = await followerModel.findOneAndUpdate(
-              {user_id:user_id},
-              {
-                  $pull: { followings : following },
-               },
-               { new:true } 
-           )
-
-      const follower = await followerModel.findOneAndUpdate(
-                {user_id:req.body.user_id},
-                {
-                    $pull: { followers : {
-                      user_id:user_id,
-                      // email:follow.email,
-                      // profileimg:follow.profile_img,
-                      // name:follow.name
-                    }},
-
-                 },
-                 { new:true } 
-        )
-  
-      res.json(follow).status(200)
-
-  })   
-
-// get follow Data
-route.get('/follow/data/:id',protect,validateMongoObjectId,async(req,res)=>{
-    const user_id = req.params.id
-    let follow = await followerModel.findOne({user_id:user_id})
-    return res.json(follow).status(200)
-})
-
 // followings
 route.get('/followings/:id',protect,validateMongoObjectId,async(req,res)=>{
   const user_id = req.params.id
@@ -473,195 +353,6 @@ route.get('/followings/:id',protect,validateMongoObjectId,async(req,res)=>{
   return res.json(followings)
 })
 
-
-
-//*********************** Friends request , adding */
-
-// route.post('/friends/request/:id',protect,validateMongoObjectId,async(req,res)=>{
-//   const user_id = req.params.id;
-//   const friend_request = {
-//     user_id:req.body._id,
-//     name:req.body.name,
-//     email:req.body.email,
-//     profile_img:req.body.profile_img,
-//     cover_img:req.body.cover_img
-//   }
-//   const find_request= await friendModel.findOne
-//    ({
-//        user_id:req.body._id,
-//       'friend_request_sent.user_id':user_id
-//    })
-//   if(find_request) return  res.json("exist")
-//   const friend = await friendModel.findOneAndUpdate(
-//           {user_id:user_id},
-//           {
-//               $push: { friend_request_sent :friend_request },
-//            },  
-//            { new:true } 
-//           )
-//   const notification = new notificationModel({
-//      receiver_id:req.body._id,
-//      content: {
-//       sender_id:user_id,
-//       name:friend.name,
-//       profile_img:friend.profile_img,
-//       cover_img:friend.cover_img,
-//       email:friend.email
-//      },
-//      message:"sent you a friend request",
-//      type:"friend request",
-//      isRead:false,
-//   })
-//   await notification.save();
-//   res.json(friend).status(200)
-// })   
-
-
-route.post('/friends/unfriend/:id',protect,validateMongoObjectId,async(req,res)=>{
-  const user_id = req.params.id;
-  const friend_1 = {
-    user_id:req.body._id,
-    name:req.body.name,
-    email:req.body.email,
-    profile_img:req.body.profile_img,
-    cover_img:req.body.cover_img
-   }
-
-  const find_friend = await friendModel.findOne({
-    user_id:user_id,
-    'friends.user_id': req.body._id
-  })
-
-  if(find_friend){
-  const friend1 = await friendModel.findOneAndUpdate(
-          {user_id:user_id},
-          {
-              $pull: { friends :{user_id:req.body._id} },
-           },
-           { new:true } 
-          )
-  }
-
-  const friend2 = await friendModel.findOneAndUpdate(
-    {user_id:req.body._id},
-    {
-        $pull: { friends :{user_id:user_id} },
-     },
-     { new:true } 
-    )
-  // }
-  res.json(friend2).status(200)
-})   
-
-
-// route.post('/friends/cancel/:id',protect,validateMongoObjectId,async(req,res)=>{
-//   const user_id = req.params.id;
-
-  
-//   await friendModel.findOneAndUpdate(
-//           {user_id:req.body._id},
-//           {
-//               $pull: { friend_request_sent :{user_id:user_id} },
-//            },
-//            { new:true }   
-//           )
-//   const friend = await friendModel.findOneAndUpdate(
-//             {user_id:user_id},
-//             {
-//                 $pull: { friend_request_sent :{user_id:req.body._id} },
-//              },
-//              { new:true }   
-//         )
-
-// await notificationModel.findOneAndDelete({
-//        receiver_id:req.body._id,
-//        type:"friend request",
-//       'content.sender_id': user_id} ,
-//       { new:true }   
-//     )
-// await notificationModel.findOneAndDelete({
-//       receiver_id:user_id,
-//       type:"friend request",
-//      'content.sender_id': req.body._id} ,
-//      { new:true }   
-//    )
-  
-//   res.json(friend).status(200)
-// })  
-
-// route.post('/friends/accept/:id',protect,validateMongoObjectId,async(req,res)=>{
-//   const user_id = req.params.id;
-//   const friend_request = {
-//     user_id:req.body._id,
-//     name:req.body.name,
-//     email:req.body.email,
-//     profile_img:req.body.profile_img,
-//     cover_img:req.body.cover_img
-//   }
-//   const find_request = await friendModel.findOne({
-//     user_id:user_id,
-//     'friend_request_sent.user_id':req.body._id
-//   })
-//   if(!find_request) return  res.json("expired")
-//   const friend = await friendModel.findOneAndUpdate(
-//           {user_id:user_id},
-//           {
-//               $pull: { friend_request_sent :{user_id:req.body._id}},
-//               $push: {friends : friend_request},
-//            },
-//            { new:true }   
-//           )
-//   const sender = {
-//      user_id:friend.user_id,
-//      name:friend.name,
-//      email:friend.email,
-//      profile_img:friend.profile_img ,
-//      cover_img:friend.cover_img
-//   }        
-//   const friend_sender = await friendModel.findOneAndUpdate(
-//             {user_id:req.body._id},
-//             {
-//                 $push: {friends : sender},
-//              },
-//              { new:true }     
-//             )
-         
-//   let notification = await notificationModel.findOne({
-//        receiver_id:req.body._id,
-//        type:"friend request",
-//       'content.sender_id': user_id}
-//     )
-//   notification.type = "friends"    
-//   notification.message = "is now a friend, start sharing"
-//   notification.isRead = true
-//   await notification.save()
-
-//   const newNotification = new notificationModel({
-//      receiver_id:user_id,
-//      content: {
-//      sender_id:req.body._id,
-//      name:req.body.name,  
-//      email:req.body.email,
-//      profile_img:req.body.profile_img ,
-//      cover_img:req.body.cover_img
-//     },
-//     message:"has accepted your friend request, start sharing",
-//     type:"friends",   
-//     isRead:true,
-//   })
-//   await newNotification.save()
-//   res.json(friend_sender).status(200)
-// })  
-
-
-// route.get('/friends/list/:id',protect,validateMongoObjectId,async(req,res)=>{
-//   const user_id = req.params.id;
-//   const friendlist = await friendModel.findOne({user_id:user_id})
-//   console.log(friendlist)
-//   // friendlist.friends = friends
-//   res.json(friendlist).status(200)
-
-// })   
 
 
 //*********************** notifications */
