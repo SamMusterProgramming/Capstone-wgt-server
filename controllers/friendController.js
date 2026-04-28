@@ -113,7 +113,7 @@ export const friendRequest =
       // 4. Get sender info for notification (fresh from users collection)
       const sender = await userModel
         .findById(senderId)
-        .select("name profile_img cover_img email");
+       
 
       console.log(sender)
 
@@ -123,9 +123,8 @@ export const friendRequest =
         content: {
           sender_id: senderId,
           name: sender.name,
-          profile_img: sender.profile_img,
-          cover_img: sender.cover_img,
-          email: sender.email
+          profile_img: sender.profileImage.publicUrl,
+          cover_img: sender.coverImage.publicUrl,
         },
         message: "sent you a friend request",
         type: "friend request",
