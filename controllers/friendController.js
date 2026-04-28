@@ -142,6 +142,8 @@ export const friendRequest =
     }
     }
 
+
+
     export const acceptRequest = 
     async (req, res) => {
         try {
@@ -180,9 +182,9 @@ export const friendRequest =
           // 4. Update existing notification (request → friends)
           await notificationModel.updateOne(
             {
-              receiver_id: senderId,
+              receiver_id:receiverId, 
               type: "friend request",
-              "content.sender_id": receiverId
+              "content.sender_id": senderId,
             },
             {
               $set: {
@@ -192,16 +194,22 @@ export const friendRequest =
               }
             }
           );
+
+          const receiver  = await userModel
+        .findById(receiverId)
     
           // 5. Create notification for receiver
           await notificationModel.create({
-            receiver_id: receiverId,
+            receiver_id: senderId,
             content: {
-              sender_id: senderId
+              sender_id: receiverId,
+              name: receiver.name,
+              profile_img: receiver.profileImage.publicUrl,
+              cover_img: receiver.coverImage.publicUrl,
             },
             message: "has accepted your friend request",
             type: "friends",
-            isRead: true
+            isRead: false
           });
           const fList = await generateFriends(req.body._id)
           return res.status(200).json(fList);
