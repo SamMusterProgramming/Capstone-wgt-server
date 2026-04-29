@@ -26,14 +26,13 @@ import userModel from '../models/users.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
 import { protect } from '../middleware/jwtProtect.js';
 import { getClientIp, getLocationFromIP } from '../ipGeolocation.js';
+import { addFavouriteStage, createTalentStage, getAllStages, getFavouriteStages, getHotStages, getStagesByRegion, getUserContestantInStage } from '../controllers/talentController.js';
 
 const route = express.Router();
 
 
 
 route.patch('/migrate/:roomId', protect, async (req, res) => {
-  console.log("🔥 MIGRATE ROUTE HIT 🔥");
-
   const roomId  = req.params.roomId;
   const  contestantId = req.body.contestantId
   const fileId = req.body.fileId 
@@ -53,37 +52,8 @@ route.patch('/migrate/:roomId', protect, async (req, res) => {
       return res.status(404).json({ error: "Contestant not found" });
     }
 
-     // Generate signed URLs here
-    //  const auth = await b2.authorize();
-    //  const downloadUrl = auth.data.downloadUrl;
-     
- 
-    //  const generateSignedUrl = async (fileName) => {
-    //    const signedAuth = await b2.getDownloadAuthorization({
-    //      bucketId: process.env.B2_BUCKET_ID,
-    //      fileNamePrefix: fileName,
-    //      validDurationInSeconds: validForSeconds,
-    //    });
-    //    return `${downloadUrl}/file/${process.env.B2_BUCKET_NAME}/${fileName}?Authorization=${signedAuth.data.authorizationToken}`;
-    //  };
- 
-    // let videoSignedUrl = null;
-    // let thumbnailSignedUrl = null;
-
-    // if (video && video.fileName) {
-    //   videoSignedUrl = await generateSignedUrl(video.fileName);
-    // }
-
-    // if (thumbnail && thumbnail.fileName) {
       const thumbnailSignedUrl = await getPublicUrlFromB2(fileName);
-    // }
 
-    // Update contestant with video & thumbnail signed URLs
-  
-    // const user = await userModel.findById(contestantId)
-    // let newcontestant  = talentRoom.contestants[contestantIndex]
-    // newcontestant.profileImageUrl =  user.profileImage.publicUrl
-    // talentRoom.contestants[contestantIndex] = newcontestant
 
     let contestant = talentRoom.contestants[contestantIndex];
     contestant.thumbnail = {
@@ -94,23 +64,6 @@ route.patch('/migrate/:roomId', protect, async (req, res) => {
     talentRoom.markModified('contestants');
     await talentRoom.save();
     
-    // const user = await userModel.findByIdAndUpdate(
-    //   contestantId,
-    //   {
-    //     $set: {
-    //       profileImage: {
-    //         fileName,
-    //         fileId,
-    //         publicUrl: signedUrl
-    //       }
-    //     }
-    //   },
-    //   { new: true }
-    // );
-    // if (!user) {
-    //   return res.status(404).json({ error: "User not found" });
-    // }
-
     res.json({ success: true, contestant: talentRoom.contestants[contestantIndex] });
   } catch (err) {
     console.error("Failed to update contestant:", err);
@@ -199,7 +152,6 @@ route.post("/geoAccess/:room_id", protect, async (req, res) => {
     const { gpsCountryCode } = req.body;
     const room_id = req.params.room_id;
 
-    // 1. Fetch the stage
     const stage = await talentModel.findById(room_id);
     if (!stage) {
       return res.status(404).json({ message: "Stage not found" });
@@ -218,8 +170,6 @@ route.post("/geoAccess/:room_id", protect, async (req, res) => {
         .status(400)
         .json({ message: "Unable to determine user location" });
     }
-
-    // 4. Validate access
     if (
       allowedCountry &&
       allowedCountry.toUpperCase() !== finalCountryCode.toUpperCase()
@@ -244,237 +194,19 @@ route.post("/geoAccess/:room_id", protect, async (req, res) => {
 
 
 
-route.post('/creates',protect,async(req,res)=>{
-     const TalentName =  req.body.name
-     const regionName =  req.body.region
-     const talent = await talentModel.findOne({name:TalentName , region:regionName})
-     if(! talent) {
-        const tal = new talentModel({
-            name:TalentName,  
-            region : regionName,
-            desc : req.body.desc
-        })
-       await tal.save()
-       return res.json(tal)
-     }
-    if(talent.editions.length == 0)
-    talent.editions.push({
-          _id:1,
-          round:1,
-          status:"open",
-          winner: null,
-          finalist:[],
-          semi_finalists: [],  
-          quarter_finalists: [],
-          createdAt : new Date(),
-          updatedAt : new Date()  
-    })
 
-    // talent.contestants.forEach((c,index )=> {
-    //    const obj = {
-    //      video : c.video ,
-    //      thumbnail : c.thumbnail , 
-    //      date: new Date()
-    //    }
-    //    console.log(obj)
-    //    const performances =[obj]
-    //    talent.contestants[index].performances = performances
-    // })
-    // talent.markModified("contestants");
-    // await talent.save()
- 
-    if(talent.voters == undefined) talent.voters = []
-    
-    talent.contestants.sort((a, b) => {
-      if(a.votes !== b.votes){
-         return b.votes - a.votes
-      }else {
-         return b.likes - a.likes
-      }
-      
-      })
+// create talent stage , process edition , elimination 
+route.post('/creates',protect,createTalentStage)
 
-    talent.contestants.forEach((c ,index) =>{
-           talent.contestants[index] = {...c,rank:index + 1};
-    })
-    
+//get stages , stages of user 
+route.get("/stages/region/:region", getStagesByRegion);
+route.get('/stages',protect,getAllStages)  
+route.get('/user/talent/:id',protect , getUserContestantInStage)
+route.get('/hotStages/:id', protect, getHotStages)
 
-    // let fix = talent.contestants.splice(-3)
-    // talent.eliminations.push(fix)
-
-    let edition = talent.editions.find(e => e.status == "open")
-    let edIndex = talent.editions.findIndex( e => e.status === "open")
-
-    let queuedUsers = []
-    if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
-          queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
-          talent.contestants.push(...queuedUsers)
-       }
-    
-    // if(talent.eliminations.length > 0){
-    //    let contest = talent.eliminations.splice(0,6)
-    //    talent.queue.push(...contest)  
-    // }
-
-    //************************* elimination ****************/
-    // let edition = talent.editions.find(e => e.status == "open")
-    // let edIndex = talent.editions.findIndex( e => e.status === "open")
-    if(edition && ((edition.round < 3 && talent.contestants.length >= 22 && talent.queue.length >= 6)||
-     (edition.round >= 3 ))) {
-        const roundDate = new Date(edition.updatedAt)
-        const now = new Date();
-        const differenceInMilliseconds = (now - roundDate)/(1000*60000)
-
-        if(differenceInMilliseconds >= 100) {
-               
-          let eliminatedContestants=[]
-          let queuedContestants =[]  
-    
-          if(edition.round < 3 ){
-          eliminatedContestants = talent.contestants.splice(-6)
-          talent.eliminations.push(...eliminatedContestants)
-          queuedContestants = talent.queue.splice(0,6)
-          talent.contestants.push(...queuedContestants)
-          }
-
-          if(edition.round == 3 ){
-            eliminatedContestants = talent.contestants.splice(-6)
-            talent.eliminations.push(...eliminatedContestants)
-          }
-
-          if(edition.round == 4 ){
-            eliminatedContestants = talent.contestants.splice(-8)
-            talent.eliminations.push(...eliminatedContestants)
-           
-          }
-      
-          if(edition.round == 5 ){
-            eliminatedContestants = talent.contestants.splice(-4)
-            // talent.eliminations.push(...eliminatedContestants)
-            edition.quarter_finalists= eliminatedContestants
-            talent.editions[edIndex] = edition
-
-          }
-      
-          if(edition.round == 6 ){
-            eliminatedContestants = talent.contestants.splice(-2)
-            // talent.eliminations.push(...eliminatedContestants)
-            edition.semi_finalists = eliminatedContestants
-            talent.editions[edIndex] = edition
-          }
-
-          if(edition.round == 7 ){
-            eliminatedContestants = talent.contestants.splice(-1)
-            // talent.eliminations.push(...eliminatedContestants)
-            edition.finalist = eliminatedContestants
-            talent.editions[edIndex] = edition
-          }
-      
-          if(edition.round !== 7 ) {
-            // edIndex = talent.editions.findIndex( e => e.status === "open")
-            edition.round = edition.round + 1 
-            edition.updatedAt = new Date()
-            talent.editions[edIndex] = edition
-          } else {
-            edition.round = 7
-            edition.updatedAt = new Date()
-            edition.status = "closed"
-            edition.winner = talent.contestants[0]
-            talent.editions[edIndex] = edition
-
-            talent.queue.unshift(...edition.quarter_finalists)
-            talent.queue.unshift(...edition.semi_finalists)
-            talent.queue.unshift(...edition.finalist)
-
-            let queuedUsers = talent.queue.splice(0,21)
-            talent.contestants.push(...queuedUsers)
-
-            const newEdition = {
-               _id:edition._id + 1 ,
-               round : 1 ,
-               status : "open",
-               winner : null,
-               finalist:[],
-               semi_finalists: [],
-               quarter_finalists: [],
-               createdAt : new Date(),
-               updatedAt : new Date()
-            }
-            talent.editions.push(newEdition)
-          }
-      
-          eliminatedContestants.forEach(async(el)=> {
-             
-                let   message = "you have been eliminated from  talent show"     
-                const notification = {
-                    receiver_id:el.user_id,   
-                    type:"talent",   
-                    isRead:false,
-                    message:message , 
-                    content: {  
-                        sender_id:el.user_id,
-                        talentRoom_id:talent._id,
-                        talentName:talent.name,
-                        name:el.name,
-                        profile_img:el.profile_img,
-                        region:talent.region,   
-                    }              
-                }   
-                await notificationModel(notification).save()
-                
-          } )
-      
-          queuedContestants.forEach(async(el)=> {
-            let   message = "you have been posted in a Talent Show , you can start tracking progress"     
-            const notification = {
-                receiver_id:el.user_id,
-                type:"talent",
-                isRead:false,
-                message:message , 
-                content: {  
-                    sender_id:el.user_id,
-                    talentRoom_id:talent._id,
-                    talentName:talent.name,
-                    name:el.name,
-                    profile_img:el.profile_img,
-                    region:talent.region,   
-                }
-            }
-            await notificationModel(notification).save()
-            const friend = await friendModel.findOne({user_id:el.user_id})
-          
-            if(friend)
-                  friend.friends.forEach(async(friend) =>{
-                    let   message = "has participated in a talent show"     
-                    const notification = {
-                        receiver_id:friend.user_id,
-                        type:"talent",
-                        isRead:false,
-                        message:message , 
-                        content: {  
-                            sender_id:el.user_id,
-                            talentRoom_id:TalentName._id,
-                            talentName:talent.name,
-                            region:talent.region, 
-                            profile_img:el.profile_img,
-                            name:el.name,
-                            email:el.email,  
-                        }
-                      
-                    }
-                    await notificationModel(notification).save()
-                    
-            })
-      
-      
-          })
-
-
-        }
-    }
-     await talent.save()
-     res.json(talent)   
-})
+//favouriteStages
+route.get("/favouriteStages/:id", protect,getFavouriteStages);
+route.post('/favourite/:id',protect ,addFavouriteStage)
 
 
 
@@ -489,142 +221,12 @@ route.post('/findStage',protect,async(req,res)=>{
 })
 
 
-route.get('/stages',protect,async(req,res)=> {
-  const stages = await talentModel.find({}).limit(60);  
-  return res.json(stages).status(200)
-})   
-
-
-route.get("/stages/region/:region", async (req, res) => {
-  try {
-    const { region } = req.params;
-    // const normalizedRegion =
-    // region.slice(1).toLowerCase();
-    const normalizedCountry = region.length == 2 ? region.toUpperCase() : region;
-   
-    const stages = await talentModel.find({
-      region: normalizedCountry,
-    }).sort({ createdAt: -1 });
-     
-    const stageNames= [
-      "Singing" ,
-      "Dancing",
-      "Fitness",
-      'Magic',
-      "Sport",
-      "Melody",
-      "Art",
-      "Comedy",
-    ];
-    // Instrumental
-    stageNames.forEach( async(name) =>{
-        if(!stages.find( s => s.name === name)){
-          const tal = new talentModel({
-          name:name,  
-          region : region,
-          desc : ""
-          })
-        await tal.save()
-      }
-    } )
-
-    return res.status(200).json(stages);
-
-  } catch (error) {
-    console.error("Error fetching region stages:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error while fetching region stages",
-    });
-  }
-});
 
 
 
-route.post('/favourite/:id',protect,async(req,res)=> {
-  const user_id = req.params.id;
-  const talent = await talentModel.findById(
-      req.body.talentRoom_id 
-     )
-  let favourite = await favouriteModel.findOne(
-      {user_id:user_id } 
-  )
-  if(!favourite)  {
-      const newFavourite = new favouriteModel({
-          user_id:user_id,
-          favourites:[{
-                     _id:req.body.talentRoom_id , 
-                     dataType:"talent",
-                     createdAt : new Date()
-                     }]
-      } 
-      )
-      await newFavourite.save()
-      return res.json(newFavourite)
-  }
-  favourite.favourites.push({
-                              _id:req.body.talentRoom_id ,
-                               dataType:"talent",
-                               createdAt : new Date()
-                              })
-  await favourite.save()
-  return res.json(favourite).status(200)
-})
-
-// route.get('/favouriteStages/:id',protect,async(req,res)=> {
-//   const user_id = req.params.id;
-//   let favourite = await favouriteModel.findOne( {user_id : user_id})
-//   const sortedFavorites = favourite?.favourites.sort(
-//     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-//   );
-//   const ids = sortedFavorites.map(f => f._id.toString());
-
-// const talentRooms = await talentModel.find({
-//   _id: { $in: ids }
-// });
 
 
-// const map = new Map(
-//   talentRooms.map(room => [room._id.toString(), room])
-// );
 
-// const favourites = ids
-//   .map(id => map.get(id))
-//   .filter(Boolean);
-
-//   return res.json(favourites).status(200)
-// })
-
-route.get("/favouriteStages/:id", protect, async (req, res) => {
-  try {
-    const user_id = req.params.id;
-    const favourite = await favouriteModel.findOne({ user_id });
-    if (!favourite || !favourite.favourites?.length) {
-      return res.status(200).json([]);
-    }
-    const sortedFavorites = [...favourite.favourites].sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-    );
-    const ids = [...new Set(
-      sortedFavorites.map(f => f._id.toString())
-    )];
-    const talentRooms = await talentModel.find({
-      _id: { $in: ids }
-    }).lean();
-
-    const map = new Map(
-      talentRooms.map(room => [room._id.toString(), room])
-    );
-    const favourites = ids
-      .map(id => map.get(id))
-      .filter(Boolean);
-
-    return res.status(200).json(favourites);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
 
 route.get('/favourites/:id',protect,async(req,res)=> {
   const user_id = req.params.id;
@@ -636,7 +238,7 @@ route.get('/favourites/:id',protect,async(req,res)=> {
 route.patch('/favourite/:id',protect,async(req,res)=> {
   const user_id = req.params.id;
   let favourite = await favouriteModel.findOne(
-      {user_id : user_id} 
+      {user_id : user_id}    
   )
   favourite.favourites = favourite.favourites.filter(f=> f._id !== req.body.talentRoom_id )
   await favourite.save()
@@ -659,22 +261,8 @@ route.get('/top/:id',protect,async(req,res)=>{
 })
 
 
-route.get('/user/talent/:id',protect,async(req,res)=>{
-      const user_id = req.params.id
-      let userTalents = await talentModel.find({
-        $or: [
-          {  'contestants.user_id':  user_id
-            }, 
-          {  'queue.user_id': user_id
-            
-            }, 
-          {  'eliminations.user_id': user_id             
-            }
-        ]
-       });
-      userTalents = userTalents.filter(t => t.contestants.length !== 0)
-      res.json(userTalents)
-})
+
+
 
 route.get('/user/performance/:id',protect,async(req,res)=>{
   
@@ -716,19 +304,7 @@ route.get('/user/performance/:id',protect,async(req,res)=>{
       res.json(performances)
 })
 
-route.get('/general/:id', protect, async(req,res)=>{
-      const user_id = req.params.id
-      const friends = await friendModel.findOne({
-                     user_id : user_id
-                 })
-      // let friendIDS = []
-      // friends && friends.friends.forEach(f => friendIDS.push(f.user_id))
-      const talents = await talentModel.find({
-                  // 'contestants.user_id': { $in: friendIDS }
-                 })
-                
-      res.json(talents)
-})
+
 
 route.get('/user/:id',protect,async(req,res)=>{
       const user_id = req.params.id
