@@ -2,7 +2,7 @@ import friendModel from "../models/friends.js"
 import notificationModel from "../models/notifications.js"
 import talentModel from "../models/talent.js"
 import userModel from "../models/users.js"
-import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPublicUrl } from "../utilities/blackBlazeb2.js"
+import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from "../utilities/blackBlazeb2.js"
 
 
 export const getUserById = async(req,res)=>{ // get single user by _id
@@ -34,6 +34,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
 
   export const getUploadVideoUrl = async (req, res) => {
     try {
+        console.log(req.body)
       const { userId ,name , type } = req.body;
       // type = "profile" | "cover" | "post"
       let fileName =  ""
@@ -48,7 +49,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         uploadUrl: uploadUrlResponse.data.uploadUrl,
         authorizationToken: uploadUrlResponse.data.authorizationToken,
         fileName:fileName,
-      });
+      });   
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -57,7 +58,6 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
   export const getUploadImageUrl = async (req, res) => {
     try {
       const { userId ,name , type } = req.body;
-      console.log(userId + name)
       // type = "profile" | "cover" | "post"
       let fileName =  ""
       if(type == "profile" || type == "cover") 

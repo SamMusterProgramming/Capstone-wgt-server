@@ -3,6 +3,8 @@ import talentModel from "../models/talent.js"
 import notificationModel from "../models/notifications.js";
 import favouriteModel from "../models/favourites.js";
 import friendModel from "../models/friends.js";
+import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js";
+import talentPostDataModel from "../models/talentPostData.js";
 
 
 export const generateTalentStage = async (name, region) => {
@@ -95,81 +97,101 @@ export const generateTalentStage = async (name, region) => {
             }
           },
   
-          // -------- QUEUE --------
-          queue: {
-            $map: {
-              input: "$queue",
-              as: "q",
-              in: {
-                $let: {
-                  vars: {
-                    matchedUser: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: "$queueUsers",
-                            as: "user",
-                            cond: {
-                              $eq: ["$$user._id", "$$q.user_id"]
+         // -------- QUEUE --------
+            queue: {
+                $map: {
+                input: "$queue",
+                as: "q",
+                in: {
+                    $let: {
+                    vars: {
+                        matchedUser: {
+                        $arrayElemAt: [
+                            {
+                            $filter: {
+                                input: "$queueUsers",
+                                as: "user",
+                                cond: {
+                                $eq: ["$$user._id", "$$q.user_id"]
+                                }
                             }
-                          }
-                        },
-                        0
-                      ]
+                            },
+                            0
+                        ]
+                        }
+                    },
+            
+                    in: {
+                        _id: "$$q._id",
+                        user_id: "$$q.user_id",
+            
+                        performances: "$$q.performances",
+            
+                        votes: "$$q.votes",
+                        likes: "$$q.likes",
+                        rank: "$$q.rank",
+            
+                        createdAt: "$$q.createdAt",
+            
+                        name: "$$matchedUser.name",
+                        profileImage: "$$matchedUser.profileImage",
+                        coverImage: "$$matchedUser.coverImage",
+                        country: "$$matchedUser.country",
+                        city: "$$matchedUser.city",
+                        state: "$$matchedUser.state"
                     }
-                  },
-  
-                  in: {
-                    user_id: "$$q.user_id",
-                    name: "$$matchedUser.name",
-                    profileImage: "$$matchedUser.profileImage",
-                    coverImage: "$$matchedUser.coverImage",
-                    country: "$$matchedUser.country",
-                    city: "$$matchedUser.city",
-                    state: "$$matchedUser.state"
-                  }
+                    }
                 }
-              }
-            }
-          },
+                }
+            },
   
           // -------- ELIMINATIONS --------
-          eliminations: {
-            $map: {
-              input: "$eliminations",
-              as: "e",
-              in: {
-                $let: {
-                  vars: {
-                    matchedUser: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: "$eliminationUsers",
-                            as: "user",
-                            cond: {
-                              $eq: ["$$user._id", "$$e.user_id"]
+            eliminations: {
+                $map: {
+                input: "$eliminations",
+                as: "e",
+                in: {
+                    $let: {
+                    vars: {
+                        matchedUser: {
+                        $arrayElemAt: [
+                            {
+                            $filter: {
+                                input: "$eliminationUsers",
+                                as: "user",
+                                cond: {
+                                $eq: ["$$user._id", "$$e.user_id"]
+                                }
                             }
-                          }
-                        },
-                        0
-                      ]
+                            },
+                            0
+                        ]
+                        }
+                    },
+            
+                    in: {
+                        _id: "$$e._id",
+                        user_id: "$$e.user_id",
+            
+                        performances: "$$e.performances",
+            
+                        votes: "$$e.votes",
+                        likes: "$$e.likes",
+                        rank: "$$e.rank",
+            
+                        createdAt: "$$e.createdAt",
+            
+                        name: "$$matchedUser.name",
+                        profileImage: "$$matchedUser.profileImage",
+                        coverImage: "$$matchedUser.coverImage",
+                        country: "$$matchedUser.country",
+                        city: "$$matchedUser.city",
+                        state: "$$matchedUser.state"
                     }
-                  },
-  
-                  in: {
-                    user_id: "$$e.user_id",
-                    name: "$$matchedUser.name",
-                    profileImage: "$$matchedUser.profileImage",
-                    coverImage: "$$matchedUser.coverImage",
-                    country: "$$matchedUser.country",
-                    city: "$$matchedUser.city",
-                    state: "$$matchedUser.state"
-                  }
+                    }
                 }
-              }
-            }
-          }
+                }
+            },
   
         }
       },
@@ -186,14 +208,33 @@ export const generateTalentStage = async (name, region) => {
       }
   
     ]);
-  
     return result[0];
   };
+
 
 
 export const createTalentStage =  async(req,res)=>{
     const TalentName =  req.body.name
     const regionName =  req.body.region
+    const t = await talentModel.findOne({ name: TalentName, region: regionName });
+    if (!t.editions) {
+        t.editions = [];
+      }
+      
+      if (t.editions.length === 0) {
+        t.editions.push({
+          _id: 1,
+          round: 1,
+          status: "open",
+          winner: null,
+          finalist: [],
+          semi_finalists: [],
+          quarter_finalists: [],
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
+    await t.save()
     const talent = await generateTalentStage(TalentName, regionName)
     talent.contestants?.sort((a, b) => {
      if(a.votes !== b.votes){
@@ -530,3 +571,760 @@ export const getStagesByRegion = async (req, res) => {
     await favourite.save()
     return res.json(favourite).status(200)
   }
+
+  // user performances
+
+  export const joinStageOrQueueFirstPerformance =  async (req, res) => {
+
+    try {
+  
+      const stage_id = req.params.id;
+  
+      const {
+        user_id,
+        room_id,
+        type,
+  
+        videoFileName,
+        videoFileId,
+  
+        thumbnailFileName,
+        thumbnailFileId,
+  
+        profile_img,
+        name,
+        email,
+      } = req.body;
+  
+      // =========================
+      // VALIDATION
+      // =========================
+  
+      if (!mongoose.Types.ObjectId.isValid(user_id)) {
+        return res.status(400).json({
+          error: "Invalid user_id"
+        });
+      }
+  
+      if (!mongoose.Types.ObjectId.isValid(stage_id)) {
+        return res.status(400).json({
+          error: "Invalid stage_id"
+        });
+      }
+  
+      // =========================
+      // GENERATE URLS
+      // =========================
+  
+      const thumbnailSignedUrl =
+        await getPublicUrlFromB2(thumbnailFileName);
+  
+      const thumbNailCdnUrl =
+        thumbnailSignedUrl.replace(
+          "https://f005.backblazeb2.com",
+          "https://cdn.challenmemey.com"
+        );
+  
+      const signedUrl =
+        await getSignedUrlFromB2(videoFileName);
+  
+      const cdnUrl =
+        signedUrl.replace(
+          "https://f005.backblazeb2.com",
+          "https://cdn.challenmemey.com"
+        );
+  
+      // =========================
+      // FIND STAGE
+      // =========================
+  
+      const talent =
+        await talentModel.findById(stage_id);
+  
+      if (!talent) {
+        return res.status(404).json({
+          error: "Talent stage expired"
+        });
+      }
+  
+      // =========================
+      // PERFORMANCE OBJECT
+      // =========================
+  
+      const performance = {
+        video: {
+          fileId: videoFileId,
+          fileName: videoFileName,
+          signedUrl,
+          cdnUrl,
+        },
+  
+        thumbnail: {
+          fileId: thumbnailFileId,
+          fileName: thumbnailFileName,
+          publicUrl: thumbNailCdnUrl,
+        },
+  
+        date: new Date(),
+      };
+  
+      // =========================
+      // FIND EXISTING CONTESTANT
+      // =========================
+  
+      const existingContestant =
+        talent.contestants.find(
+          c =>
+            c.user_id?.toString() ===
+            user_id
+        );
+  
+      const existingQueuedContestant =
+        talent.queue.find(
+          c =>
+            c.user_id?.toString() ===
+            user_id
+        );
+  
+      // =========================
+      // NEW CONTESTANT
+      // =========================
+      const contestant = {
+        _id: new mongoose.Types.ObjectId(),
+        user_id:
+          new mongoose.Types.ObjectId(user_id),
+        votes: 0,
+        likes: 0,
+        rank: 0,
+        createdAt: new Date(),
+        performances: [performance],
+      };
+
+      if (type === "new") {
+        // avoid duplicates
+        if (
+          existingContestant ||
+          existingQueuedContestant
+        ) {
+          return res.status(400).json({
+            error: "Contestant already exists"
+          });
+        }
+  
+        // stage has room
+        if (talent.contestants.length < 22) {
+          talent.contestants.push(contestant);
+          // ranking
+          talent.contestants.sort((a, b) => {
+            if (a.votes !== b.votes) {
+              return b.votes - a.votes;
+            }
+            return b.likes - a.likes;
+          });
+          talent.contestants.forEach((c, index) => {
+            c.rank = index + 1;
+          });
+        } else {
+          // push to queue
+          talent.queue.push(contestant);
+        }
+      
+      }
+
+      else {
+
+        talent.queue.push(contestant);
+      }
+      await talent.save();
+
+      const newPostData =
+      new talentPostDataModel({
+        post_id: contestant._id,
+        owner_id:user_id,
+        room_id:room_id,
+        likes: [],
+        votes: [],
+        flags: [],
+        comments: [],
+      });
+      await newPostData.save();
+
+      if (type === "new") {
+        const friend =
+          await friendModel.findOne({
+            user_id:
+              new mongoose.Types.ObjectId(user_id)
+          });
+        // notify friends
+        if (friend?.friends?.length) {
+          for (const friendId of friend.friends) {
+            const notification = {
+              receiver_id: friendId,
+              type: "talent",
+              stage: talent.name,
+              isRead: false,
+              message:
+                "has participated in a talent show",
+              content: {
+                sender_id: user_id,
+                talentRoom_id: stage_id,
+                talentName: talent.name,
+                region: talent.region,
+                profile_img,
+                name,
+                email,
+              }
+            };
+            await new notificationModel(
+              notification
+            ).save();
+          }
+        }
+        // notify contestants
+        for (const c of talent.contestants) {
+          if (
+            c.user_id?.toString() !==
+            user_id.toString()
+          ) {
+            const isFriend =
+              friend?.friends?.find(
+                f =>
+                  f.toString() ===
+                  c.user_id?.toString()
+              );
+            if (!isFriend) {
+              const notification = {
+                receiver_id:
+                  c.user_id.toString(),
+                type: "talent",
+                isRead: false,
+                message:
+                  "has participated in the Talent Contest you are posted in",
+                content: {
+                  sender_id: user_id,
+                  talentRoom_id: stage_id,
+                  talentName: talent.name,
+                  region: talent.region,
+                  profile_img,
+                  name,
+                  email,
+                }
+              };
+  
+              await new notificationModel(
+                notification
+              ).save();
+            }
+          }
+        }
+      }
+      // =========================
+      // RETURN STRUCTURED STAGE
+      // =========================
+      const structuredTalent =
+        await generateTalentStage(
+          talent.name,
+          talent.region
+        );
+      return res.status(200).json(
+        structuredTalent
+      );
+    } catch (err) {
+      console.error(
+        "Upload error:",
+        err
+      );
+  
+      return res.status(500).json({
+        error:
+          "Failed to upload contestant"
+      });
+    }
+  }
+
+
+
+
+  export const resignContestantFromStage =  async (req, res) => {
+    try {
+      const room_id = req.params.id;
+      const { user_id, post_id } = req.body;
+      // =========================
+      // VALIDATION
+      // =========================
+      if (!mongoose.Types.ObjectId.isValid(room_id)) {
+        return res.status(400).json({
+          error: "Invalid room id"
+        });
+      }
+      if (!mongoose.Types.ObjectId.isValid(user_id)) {
+        return res.status(400).json({
+          error: "Invalid user id"
+        });
+      }
+      // =========================
+      // FIND TALENT ROOM
+      // =========================
+      const talentRoom =
+        await talentModel.findById(room_id);
+
+      if (!talentRoom) {
+        return res.status(404).json({
+          error: "Talent room expired"
+        });
+      }
+      // =========================
+      // FIND CONTESTANT
+      // =========================
+      const contestantIndex =
+        talentRoom.contestants.findIndex(
+          c =>
+            c.user_id?.toString() ===
+            user_id.toString()
+        );
+      if (contestantIndex === -1) {
+        return res.status(404).json({
+          error: "Contestant not found"
+        });
+      }
+      const deletedContestant =
+        talentRoom.contestants[
+          contestantIndex
+        ];
+      // =========================
+      // REMOVE CONTESTANT
+      // =========================
+      talentRoom.contestants.splice(
+        contestantIndex,
+        1
+      );
+      // =========================
+      // REMOVE VOTES
+      // =========================
+      if (post_id) {
+        talentRoom.voters =
+          talentRoom.voters.filter(
+            v =>
+              v.post_id?.toString() !==
+              post_id.toString()
+          );
+      }
+      // =========================
+      // MOVE TO ELIMINATIONS
+      // =========================
+      talentRoom.eliminations.push(
+        deletedContestant
+      );
+      // =========================
+      // RECALCULATE RANKS
+      // =========================
+      talentRoom.contestants.sort(
+        (a, b) => {
+
+          if (a.votes !== b.votes) {
+            return b.votes - a.votes;
+          }
+
+          return b.likes - a.likes;
+        }
+      );
+      talentRoom.contestants.forEach(
+        (c, index) => {
+          c.rank = index + 1;
+        }
+      );
+      // =========================
+      // NOTIFY RESIGNED USER
+      // =========================
+      await new notificationModel({
+        receiver_id: user_id,
+        type: "talent",
+        isRead: false,
+        message:
+          "you have been eliminated from talent show",
+        content: {
+          sender_id: user_id,
+          talentRoom_id: room_id,
+          talentName: talentRoom.name,
+          name: "Admin",
+          profile_img: "admin",
+          region: talentRoom.region,
+        }
+      }).save();
+      // =========================
+      // MOVE QUEUED USER
+      // =========================
+      let queuedContestant = null;
+      if (
+        talentRoom.contestants.length < 22 &&
+        talentRoom.queue.length > 0
+      ) {
+        queuedContestant =
+          talentRoom.queue.shift();
+        talentRoom.contestants.push(
+          queuedContestant
+        );
+        // rerank again
+        talentRoom.contestants.sort(
+          (a, b) => {
+            if (a.votes !== b.votes) {
+              return b.votes - a.votes;
+            }
+            return b.likes - a.likes;
+          }
+        );
+        talentRoom.contestants.forEach(
+          (c, index) => {
+            c.rank = index + 1;
+          }
+        );
+        // notification
+        await new notificationModel({
+          receiver_id:
+            queuedContestant.user_id.toString(),
+          type: "talent",
+          isRead: false,
+          message:
+            "your participation has been posted in the talent contest",
+          content: {
+            sender_id:
+              queuedContestant.user_id.toString(),
+            talentRoom_id: room_id,
+            talentName:
+              talentRoom.name,
+            region:
+              talentRoom.region,
+          }
+
+        }).save();
+      }
+      // =========================
+      // SAVE
+      // =========================
+      talentRoom.markModified(
+        "contestants"
+      );
+      talentRoom.markModified(
+        "eliminations"
+      );
+      talentRoom.markModified(
+        "queue"
+      );
+      await talentRoom.save();
+
+      // =========================
+      // RETURN STRUCTURED DATA
+      // =========================
+      const structuredTalent =
+      await generateTalentStage(
+          talentRoom.name,
+          talentRoom.region
+        );
+      return res
+        .status(200)
+        .json(structuredTalent);
+
+    } catch (err) {
+      console.error(
+        "Delete contestant error:",
+        err
+      );
+      return res.status(500).json({
+        error:
+          "Failed to remove contestant"
+      });
+    }
+  }
+
+  export const deleteContestantFromQueue = async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const deletedContestant = talentRoom.queue.find(c => c.user_id.toString() == user_id)
+    talentRoom.queue = talentRoom.queue.filter(u => u.user_id.toString() !== user_id)
+    talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+    deletedContestant.performances.forEach(async(p) => {
+          const file = []
+          if (p.video?.fileId) {
+            file.push(
+              deleteFileFromB2_Private(
+                p.video.fileName,
+                p.video.fileId
+              )
+            );
+          }
+      
+          if (p.thumbnail?.fileId) {
+            file.push(
+              deleteFileFromB2_Public(
+                p.thumbnail.fileName,
+                p.thumbnail.fileId
+              )
+            );
+          }
+          await Promise.all(file);
+    })
+    await talentPostDataModel.findOneAndDelete({post_id:post_id})
+    talentRoom.markModified("queue");
+    await talentRoom.save()
+    const structuredTalent =
+        await generateTalentStage(
+          talentRoom.name,
+          talentRoom.region
+        );
+    return res
+        .status(200)
+        .json(structuredTalent);
+
+   } 
+
+   export const deleteContestantFromEliminations =   async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const deletedContestant = talentRoom.eliminations.find(c => c.user_id.toString() == user_id)
+    talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id.toString() !== user_id)
+    talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
+    deletedContestant.performances.forEach(async(p) => {
+          const file = []
+          if (p.video?.fileId) {
+            file.push(
+              deleteFileFromB2_Private(
+                p.video.fileName,
+                p.video.fileId
+              )
+            );
+          }
+      
+          if (p.thumbnail?.fileId) {
+            file.push(
+              deleteFileFromB2_Public(
+                p.thumbnail.fileName,
+                p.thumbnail.fileId
+              )
+            );
+          }
+          await Promise.all(file);
+    })
+    await talentPostDataModel.findOneAndDelete({post_id:post_id})
+    talentRoom.markModified("eliminations");
+    await talentRoom.save()
+    const structuredTalent =
+    await generateTalentStage(
+      talentRoom.name,
+      talentRoom.region
+    );
+    return res
+    .status(200)
+    .json(structuredTalent);
+   }
+
+
+  export const addUserPerformance = async(req,res)=>{
+    const _id = req.params.id
+    const talent = await talentModel.findById(_id)
+    if(req.body.type !== "eupdate"){
+    const contestant = req.body.type == "update" ? talent.contestants.find(c => c.user_id.toString() === req.body.user_id ):
+                                                   talent.queue.find(c => c.user_id.toString() === req.body.user_id )
+    const videoFileName =  req.body.videoFileName
+    const videoFileId  = req.body.videoFileId
+    const thumbnailFileName  = req.body.thumbnailFileName ;
+    const thumbnailFileId  = req.body.thumbnailFileId ;
+    const thumbnailSignedUrl = await getPublicUrlFromB2(thumbnailFileName)
+    const thumbNailCdnUrl = thumbnailSignedUrl.replace(
+      "https://f005.backblazeb2.com",
+      "https://cdn.challenmemey.com"
+    );
+    const signedUrl = await getSignedUrlFromB2(
+        videoFileName
+    );
+    const cdnUrl = signedUrl.replace(
+      "https://f005.backblazeb2.com",
+      "https://cdn.challenmemey.com"
+    );
+    contestant.performances.unshift({
+      video: {  
+            fileId:videoFileId ,
+            fileName:videoFileName ,
+            signedUrl :signedUrl ,
+            cdnUrl: cdnUrl ,
+      },
+      thumbnail: {
+            fileId:thumbnailFileId,
+            fileName:thumbnailFileName,
+            publicUrl:thumbNailCdnUrl,
+      },
+      date: new Date()
+   })
+  //  req.body.type == "update" && talent.markModified("contestants");
+  //  req.body.type == "qupdate" && talent.markModified("queue");
+   if(req.body.type =="update"){
+    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+    if(friend)
+      friend.friends.forEach(async(friend) =>{
+        let   message = "has updated his participation in a talent show"     
+        const notification = {
+            receiver_id:friend.user_id,
+            type:"talent",
+            isRead:false,
+            message:message, 
+            content: {  
+                sender_id:req.body.user_id,
+                talentRoom_id:_id,
+                talentName:talent.name,
+                region:talent.region, 
+                profile_img:req.body.profile_img,
+                name:req.body.name,
+                email:req.body.email,  
+            }
+          
+        }
+
+        await notificationModel(notification).save()
+     })
+     talent.contestants.forEach(async(c)=>{
+      if(req.body.user_id !== c.user_id && !friend?.friends.find(f => f.user_idtoString() == c.user_id)){
+        let   message = "has updated his post in the Talent Contest you are posted in"     
+        const notification = {
+          receiver_id:c.user_id,
+          type:"talent",
+          isRead:false,
+          message:message , 
+          content: {  
+              sender_id:req.body.user_id,
+              talentRoom_id:_id,
+              talentName:talent.name,
+              region:talent.region, 
+              profile_img:req.body.profile_img,
+              name:req.body.name,
+              email:req.body.email,  
+          }
+      }
+      await notificationModel(notification).save()
+    }
+    })
+    }
+    if(!talent) return res.json({error:"expired"}).status(404)
+  }else {
+       const talent = await talentModel.findById(_id)
+       if(!talent) return res.json({error:"expired"}).status(404)
+       const index = talent.eliminations.findIndex( e => e.user_id.toString() == req.body.user_id)
+       if(index !== -1) {
+       const eliminatedContestant = talent.eliminations.splice(index,1)
+       let contestant = eliminatedContestant[0]
+       contestant.video_url = req.body.video_url
+       contestant.thumbNail_URL = req.body.thumbNail
+       talent.queue.push(contestant)
+  } 
+}
+await talent.save()
+const  structuredTalent = await generateTalentStage(talent.name, talent.region)
+res.json(structuredTalent)
+
+}
+
+
+export const deleteUserPerformanceStage = async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const performanceToDelete = req.body.performanceToDelete
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const contestant = talentRoom.contestants.find(c => c.user_id.toString() == user_id)
+    contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
+    talentRoom.markModified("contestants");
+    await talentRoom.save()
+    let filesToDelete = []
+    if (performanceToDelete.video?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Private(
+          performanceToDelete.video.fileName,
+          performanceToDelete.video.fileId
+        )
+      );  
+    }
+    if (performanceToDelete.thumbnail?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Public(
+          performanceToDelete.thumbnail.fileName,
+          performanceToDelete.thumbnail.fileId
+        )
+      );     
+    }
+    await Promise.all(filesToDelete);
+    const structuredTalent =
+    await generateTalentStage(
+        talentRoom.name,
+        talentRoom.region
+      );
+    return res
+      .status(200)
+      .json(structuredTalent);
+   }
+
+   export const deleteUserPerformanceQueue = async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const performanceToDelete = req.body.performanceToDelete
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const contestant = talentRoom.queue.find(c => c.user_id.toString() == user_id)
+    contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
+    talentRoom.markModified("queue");
+    await talentRoom.save()
+    let filesToDelete = []
+    if (performanceToDelete.video?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Private(
+          performanceToDelete.video.fileName,
+          performanceToDelete.video.fileId
+        )
+      );  
+    }
+    if (performanceToDelete.thumbnail?.fileId) {
+      filesToDelete.push(
+        deleteFileFromB2_Public(
+          performanceToDelete.thumbnail.fileName,
+          performanceToDelete.thumbnail.fileId
+        )
+      );     
+    }
+    await Promise.all(filesToDelete);
+    const structuredTalent =
+    await generateTalentStage(
+        talentRoom.name,
+        talentRoom.region
+      );
+    return res
+      .status(200)
+      .json(structuredTalent);
+   }
+
+   export const getEliminatedUserBackToQueue = async(req,res)=>{
+    const room_id = req.params.id;
+    const user_id = req.body.user_id;
+    const post_id = req.body.post_id;
+    const talentRoom = await talentModel.findById(room_id)
+    if(!talentRoom) return res.json("expired")
+    const contestant = talentRoom.eliminations.find(c => c.user_id.toString() == user_id)
+    talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id.toString() !== user_id)
+    talentRoom.queue.push(contestant)
+    talentRoom.markModified("eliminations");
+    talentRoom.markModified("queue");
+    await talentRoom.save()
+    const structuredTalent =
+    await generateTalentStage(
+        talentRoom.name,
+        talentRoom.region
+      );
+    return res
+      .status(200)
+      .json(structuredTalent);
+   }

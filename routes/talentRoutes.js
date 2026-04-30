@@ -26,7 +26,13 @@ import userModel from '../models/users.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
 import { protect } from '../middleware/jwtProtect.js';
 import { getClientIp, getLocationFromIP } from '../ipGeolocation.js';
-import { addFavouriteStage, createTalentStage, getAllStages, getFavouriteStages, getHotStages, getStagesByRegion, getUserContestantInStage } from '../controllers/talentController.js';
+import {
+   addFavouriteStage, addUserPerformance, createTalentStage, deleteContestantFromEliminations, deleteContestantFromQueue, 
+   deleteUserPerformanceQueue, 
+   deleteUserPerformanceStage, 
+   generateTalentStage, getAllStages, getEliminatedUserBackToQueue, getFavouriteStages, getHotStages, getStagesByRegion, getUserContestantInStage, 
+   joinStageOrQueueFirstPerformance, resignContestantFromStage 
+  } from '../controllers/talentController.js';
 
 const route = express.Router();
 
@@ -208,6 +214,15 @@ route.get('/hotStages/:id', protect, getHotStages)
 route.get("/favouriteStages/:id", protect,getFavouriteStages);
 route.post('/favourite/:id',protect ,addFavouriteStage)
 
+// user performances , add , update , delete , resign 
+route.post('/uploads/:id', protect, joinStageOrQueueFirstPerformance);
+route.patch('/back/queue/:id',protect, getEliminatedUserBackToQueue)
+route.patch('/update/:id',protect,addUserPerformance)
+route.patch('/delete/performance/stage/:id',protect,deleteUserPerformanceStage)
+route.patch('/delete/performance/queue/:id',protect,deleteUserPerformanceQueue)
+route.patch('/delete/contestant/stage/:id',protect,resignContestantFromStage)
+route.patch('/delete/contestant/queue/:id',protect, deleteContestantFromQueue)
+route.patch('/delete/contestant/Elimination/:id',protect,deleteContestantFromEliminations)
 
 
 
@@ -219,13 +234,6 @@ route.post('/findStage',protect,async(req,res)=>{
      const stage = await talentModel.findOne({name:TalentName , region:regionName})
      return res.json(stage).status(200)
 })
-
-
-
-
-
-
-
 
 
 route.get('/favourites/:id',protect,async(req,res)=> {
@@ -586,308 +594,162 @@ route.patch('/posts/comment/:id',protect,async(req,res)=> {
 
 //***************************** upload contestants and more */
 
-route.post('/uploads/:id',protect,async(req,res)=>{
-  try {
-    const newObjectId = new mongoose.Types.ObjectId();
-    const _id = req.params.id
+// route.post('/uploads/:id',protect,async(req,res)=>{
+//   try {
+//     const newObjectId = new mongoose.Types.ObjectId();
+//     const _id = req.params.id
 
-    const videoFileName = req.body.videoFileName
-    const videoFileId = req.body.videoFileId
+//     const videoFileName = req.body.videoFileName
+//     const videoFileId = req.body.videoFileId
 
-    const thumbnailFileName = req.body.thumbnailFileName
-    const thumbnailFileId = req.body.thumbnailFileId
-    const thumbnailSignedUrl = await getPublicUrlFromB2(thumbnailFileName)
+//     const thumbnailFileName = req.body.thumbnailFileName
+//     const thumbnailFileId = req.body.thumbnailFileId
+//     const thumbnailSignedUrl = await getPublicUrlFromB2(thumbnailFileName)
 
-    const thumbNailCdnUrl = thumbnailSignedUrl.replace(
-      "https://f005.backblazeb2.com",
-      "https://cdn.challenmemey.com"
-    );
+//     const thumbNailCdnUrl = thumbnailSignedUrl.replace(
+//       "https://f005.backblazeb2.com",
+//       "https://cdn.challenmemey.com"
+//     );
 
-    const signedUrl = await getSignedUrlFromB2(
-        videoFileName
-    );
+//     const signedUrl = await getSignedUrlFromB2(
+//         videoFileName
+//     );
 
-    const cdnUrl = signedUrl.replace(
-      "https://f005.backblazeb2.com",
-      "https://cdn.challenmemey.com"
-    );
+//     const cdnUrl = signedUrl.replace(
+//       "https://f005.backblazeb2.com",
+//       "https://cdn.challenmemey.com"
+//     );
 
-    console.log(cdnUrl)
 
-    const contestant = {
-             _id: newObjectId,    
-             user_id:req.body.user_id ,
-             profile_img:req.body.publicUrl,
-             name:req.body.name,
-             email:req.body.email,
-             country:req.body.country,
-             city:req.body.city,
-             votes:0,
-             likes:0,
-             talentRoom_id: req.body.room_id,
-             createdAt: new Date(),
-             performances:[{
-                video: {  
-                      fileId:videoFileId ,
-                      fileName:videoFileName ,
-                      signedUrl :signedUrl ,
-                      cdnUrl: cdnUrl ,
-                     
-                },
-                thumbnail: {
-                      fileId:thumbnailFileId,
-                      fileName:thumbnailFileName,
-                      publicUrl:thumbNailCdnUrl,
-                },
-                date: new Date()
-             }],
-            //  video: {
-            //   fileId:videoFileId,
-            //   fileName:videoFileName,
-            //   signedUrl :signedUrl ,
-            //   cdnURL: cdnUrl ,
-            //   date: new Date() 
-            //  },
-            //  thumbnail: {
-            //   fileId:thumbnailFileId,
-            //   fileName:thumbnailFileName,
-            //   publicUrl:thumbNailCDNURL,
-            // },
-      }  
+
+//       const contestant = {
+//         _id: new mongoose.Types.ObjectId(),
+//         // source of truth
+//         user_id: new mongoose.Types.ObjectId(req.body.user_id),
+//         votes: 0,
+//         likes: 0,
+//         rank: 0,
+//         createdAt: new Date(),
+      
+//         performances: [
+//           {
+//             video: {
+//               fileId: videoFileId,
+//               fileName: videoFileName,
+//               signedUrl: signedUrl,
+//               cdnUrl: cdnUrl,
+//             },
+      
+//             thumbnail: {
+//               fileId: thumbnailFileId,
+//               fileName: thumbnailFileName,
+//               publicUrl: thumbNailCdnUrl,
+//             },
+      
+//             date: new Date(),
+//           },
+//         ],
+//       };
+      
     
 
-    const newTalent = await talentModel.findById(_id)
-    
-    if(req.body.type =="new") {
-            if(newTalent.contestants.length <22){
-              newTalent.contestants.push(contestant)
-            }else{
-              // if(newTalent.queue.length < (4 - newTalent.round) * 6)
-               newTalent.queue.push(contestant)
-              // else newTalent.waiting_list.push(contestant)
-            }
-            newTalent.contestants.sort((a, b) => {
-              if(a.votes !== b.votes){
-                 return b.votes - a.votes
-              }else {
-                 return b.likes - a.likes
-              }
+//     const newTalent = await talentModel.findById(_id)
+//     if(!newTalent) return res.json({error:"expired"}).status(404)
+//     if(req.body.type =="new") {
+//             if(newTalent.contestants.length <22){
+//               newTalent.contestants.push(contestant)
+//             }else{
+//                newTalent.queue.push(contestant)
+//             }
+//             newTalent.contestants.sort((a, b) => {
+//               if(a.votes !== b.votes){
+//                  return b.votes - a.votes
+//               }else {
+//                  return b.likes - a.likes
+//               }
               
-              })
+//               })
         
-            newTalent.contestants.forEach((c ,index) =>{
-                newTalent.contestants[index] = {...c,rank:index + 1};
-            })
-    }else{
-            newTalent.queue.push(contestant)
-    }
+//               newTalent.contestants.forEach((c, index) => {
+//                 c.rank = index + 1;
+//               });
+//     }else{
+//             newTalent.queue.push(contestant)
+//     }
 
-    await newTalent.save()
+//     const newPostData = new talentPostDataModel(
+//          {
+//           post_id : newObjectId,
+//           owner_id : req.body.user_id,
+//           room_id : req.body.room_id,
+//           likes:[],
+//           votes:[],
+//           flags:[],
+//           comments:[]
+//          })
+//     await newPostData.save()
+
+//     const friend = await friendModel.findOne({user_id:req.body.user_id})
     
-
-    const newPostData = new talentPostDataModel(
-         {
-          post_id : newObjectId,
-          owner_id : req.body.user_id,
-          room_id:req.body.room_id,
-          likes:[],
-          votes:[],
-          flags:[],
-          comments:[]
-         })
-    await newPostData.save()
-
-    const friend = await friendModel.findOne({user_id:req.body.user_id})
-    
-    if(req.body.type == "new"){
-        if(friend)
-          friend.friends.forEach(async(friend) =>{
+//     if(req.body.type == "new"){
+//         if(friend)
+//           friend.friends.forEach(async(friend) =>{
           
-            let   message = "has participated in a talent show"     
-            const notification = {
-                receiver_id:friend.user_id ,
-                type:"talent",
-                stage: newTalent.name ,
-                isRead:false,
-                message:message , 
-                content: {  
-                    sender_id:req.body.user_id,
-                    talentRoom_id:_id,
-                    talentName:newTalent.name,
-                    region:newTalent.region, 
-                    profile_img:req.body.profile_img,
-                    name:req.body.name,
-                    email:req.body.email,  
-                }
+//             let   message = "has participated in a talent show"     
+//             const notification = {
+//                 receiver_id:friend.user_id ,
+//                 type:"talent",
+//                 stage: newTalent.name ,
+//                 isRead:false,
+//                 message:message , 
+//                 content: {  
+//                     sender_id:req.body.user_id,
+//                     talentRoom_id:_id,
+//                     talentName:newTalent.name,
+//                     region:newTalent.region, 
+//                     profile_img:req.body.profile_img,
+//                     name:req.body.name,
+//                     email:req.body.email,  
+//                 }
               
-            }
-            await notificationModel(notification).save()
+//             }
+//             await notificationModel(notification).save()
             
-        })
-        newTalent.contestants.forEach(async(c)=>{
-          if (
-            req.body.user_id !== c.user_id &&
-            (!friend || !friend.friends.find(f => f.user_id == c.user_id))
-          ) {
-                let   message = "has participated in  the Talent Contest you are posted in"     
-                const notification = {
-                  receiver_id:c.user_id,
-                  type:"talent",
-                  isRead:false,
-                  message:message , 
-                  content: {  
-                      sender_id:req.body.user_id,
-                      talentRoom_id:_id,
-                      talentName:newTalent.name,
-                      region:newTalent.region, 
-                      profile_img:req.body.profile_img,
-                      name:req.body.name,
-                      email:req.body.email,  
-                  }
-                
-              }
-
-              await notificationModel(notification).save()
-            }
-        })
-   }
-
-    if(!newTalent) return res.json({error:"expired"}).status(404)
-    res.json(newTalent)
-  } catch (err) {
-    console.error("Upload error:", err);
-    res.status(500).json({ error: "Failed to upload contestant" });
-  }
-})
+//         })
+//         newTalent.contestants.forEach(async(c)=>{
+//         if (req.body.user_id !== c.user_id.toString() &&
+//             (!friend || !friend.friends.find(f => f.user_id == c.user_id.toString())) ) {
+//                 let message = "has participated in  the Talent Contest you are posted in"     
+//                 const notification = {
+//                   receiver_id : c.user_id.toString(),
+//                   type:"talent",
+//                   isRead:false,
+//                   message:message , 
+//                   content: {  
+//                       sender_id:req.body.user_id,
+//                       talentRoom_id:_id,
+//                       talentName:newTalent.name,
+//                       region:newTalent.region, 
+//                       profile_img:req.body.profile_img,
+//                       name:req.body.name,
+//                       email:req.body.email,  
+//                   }
+//               }
+//               await notificationModel(notification).save()
+//             }
+//         })
+//     }
+//     await newTalent.save()
+//     const  structuredTalent = await generateTalentStage(newTalent.name, newTalent.region)
+//     res.json(structuredTalent)
+//   } catch (err) {
+//     console.error("Upload error:", err);
+//     res.status(500).json({ error: "Failed to upload contestant" });
+//   }
+// })
 
 
 
-route.patch('/update/:id',protect,async(req,res)=>{
-
-    const _id = req.params.id
-
-    const filesToDelete = [];
-    const videoToDelete  = req.body.videoToDelete ;
-    console.log("i am here")
-    if(req.body.type !== "eupdate"){
-
-    const newTalent = await talentModel.findById(_id)
-    const contestant = req.body.type == "update" ? newTalent.contestants.find(c => c.user_id === req.body.user_id ):
-                       newTalent.queue.find(c => c.user_id === req.body.user_id )
-    console.log(contestant)
-    const videoFileName =  req.body.videoFileName
-    const videoFileId  = req.body.videoFileId
-    const thumbnailFileName  = req.body.thumbnailFileName ;
-    const thumbnailFileId  = req.body.thumbnailFileId ;
-
-    const thumbnailSignedUrl = await getPublicUrlFromB2(thumbnailFileName)
-    
-    const thumbNailCdnUrl = thumbnailSignedUrl.replace(
-      "https://f005.backblazeb2.com",
-      "https://cdn.challenmemey.com"
-    );
-    const signedUrl = await getSignedUrlFromB2(
-        videoFileName
-    );
-    const cdnUrl = signedUrl.replace(
-      "https://f005.backblazeb2.com",
-      "https://cdn.challenmemey.com"
-    );
-
-
-
-    contestant.performances.unshift({
-      video: {  
-            fileId:videoFileId ,
-            fileName:videoFileName ,
-            signedUrl :signedUrl ,
-            cdnUrl: cdnUrl ,
-      },
-      thumbnail: {
-            fileId:thumbnailFileId,
-            fileName:thumbnailFileName,
-            publicUrl:thumbNailCdnUrl,
-      },
-      date: new Date()
-   })
-
-   req.body.type == "update" && newTalent.markModified("contestants");
-   req.body.type == "qupdate" && newTalent.markModified("queue");
-
-   await newTalent.save();
-
-
-   if(req.body.type =="update"){
-    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
-
-    if(friend)
-      friend.friends.forEach(async(friend) =>{
-        let   message = "has updated his participation in a talent show"     
-        const notification = {
-            receiver_id:friend.user_id,
-            type:"talent",
-            isRead:false,
-            message:message, 
-            content: {  
-                sender_id:req.body.user_id,
-                talentRoom_id:_id,
-                talentName:newTalent.name,
-                region:newTalent.region, 
-                profile_img:req.body.profile_img,
-                name:req.body.name,
-                email:req.body.email,  
-            }
-          
-        }
-
-        await notificationModel(notification).save()
-     })
-    
-     newTalent.contestants.forEach(async(c)=>{
-      if(req.body.user_id !== c.user_id && !friend?.friends.find(f => f.user_id == c.user_id)){
-        let   message = "has updated his post in the Talent Contest you are posted in"     
-        const notification = {
-          receiver_id:c.user_id,
-          type:"talent",
-          isRead:false,
-          message:message , 
-          content: {  
-              sender_id:req.body.user_id,
-              talentRoom_id:_id,
-              talentName:newTalent.name,
-              region:newTalent.region, 
-              profile_img:req.body.profile_img,
-              name:req.body.name,
-              email:req.body.email,  
-          }
-        
-      }
-
-      await notificationModel(notification).save()
-    }
-    })
-     
-    }
-
-    if(!newTalent) return res.json({error:"expired"}).status(404)
-    res.json(newTalent)
-
-  }else {
-       const talent = await talentModel.findById(_id)
-       if(!talent) return res.json({error:"expired"}).status(404)
-       const index = talent.eliminations.findIndex( e => e.user_id == req.body.user_id)
-       if(index !== -1) {
-       const eliminatedContestant = talent.eliminations.splice(index,1)
-       let contestant = eliminatedContestant[0]
-       contestant.video_url = req.body.video_url
-       contestant.thumbNail_URL = req.body.thumbNail
-       talent.queue.push(contestant)
-       await talent.save()
-        }
-       res.json(talent)
-  } 
-  
-})
 
 
 route.patch('/queue/:id',protect,async(req,res)=>{
@@ -930,236 +792,20 @@ route.get('/rooms',protect, async(req,res)=>{
 
 //************************* handle contestant participation and performances  */
 
-route.patch('/delete/contestant/stage/:id',protect, async(req,res)=>{
-    const room_id = req.params.id;
-    const user_id = req.body.user_id;
-    const post_id = req.body.post_id;
-
-    console.log(post_id)
-    const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("expired")
-    const deletedUser = talentRoom.contestants.find(c => c.user_id == user_id)
-    talentRoom.contestants = talentRoom.contestants.filter(contestant => contestant.user_id !== user_id)
-    talentRoom.voters =  talentRoom.voters.filter(v=>v.post_id !== post_id)
-    deletedUser && talentRoom.eliminations.push(deletedUser)
-        
-    let   message = "you have been eliminated from  talent show"     
-        const notification = {
-              receiver_id:user_id,
-              type:"talent",
-              isRead:false,
-              message:message , 
-              content: {  
-                   sender_id:user_id,
-                   talentRoom_id:room_id,
-                   talentName:talentRoom.name,
-                   name:"Admin",
-                   profile_img:"admin",
-                   region:talentRoom.region,   
-                 } 
-          }
-        await notificationModel(notification).save()
-        let userQueue = null ; 
-        if(talentRoom.contestants.length < 22 &&  talentRoom.queue.length > 0)
-               userQueue = talentRoom.queue.shift()
-        if(userQueue) {
-         talentRoom.contestants.push(userQueue)
-         let   message = "your partiicipation has been posted in the talent contest"     
-         await notificationModel({
-                  receiver_id:userQueue.user_id,
-                  type:"talent",
-                  isRead:false,
-                  message:message , 
-                  content: {  
-                      sender_id:userQueue.user_id,
-                      talentRoom_id:room_id,
-                      talentName:talentRoom.name,
-                      name:userQueue.name,
-                      profile_img:userQueue.profile_img,
-                      region:talentRoom.region,   
-                    }
-                }).save()
-        }
-
-    talentRoom.markModified("contestants");
-    await talentRoom.save()
-    res.json(talentRoom).status(200)
-   })
-
-
-   
-   route.patch('/delete/contestant/queue/:id',protect, async(req,res)=>{
-    const room_id = req.params.id;
-    const user_id = req.body.user_id;
-    const post_id = req.body.post_id;
-
-    const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("expired")
-    const deletedContestant = talentRoom.queue.find(c => c.user_id == user_id)
-    talentRoom.queue = talentRoom.queue.filter(u => u.user_id !== user_id)
-    talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
-  
-    deletedContestant.performances.forEach(async(p) => {
-          const file = []
-          if (p.video?.fileId) {
-            file.push(
-              deleteFileFromB2_Private(
-                p.video.fileName,
-                p.video.fileId
-              )
-            );
-          }
-      
-          if (p.thumbnail?.fileId) {
-            file.push(
-              deleteFileFromB2_Public(
-                p.thumbnail.fileName,
-                p.thumbnail.fileId
-              )
-            );
-          }
-          await Promise.all(file);
-    })
-    await talentPostDataModel.findOneAndDelete({post_id:post_id})
-    talentRoom.markModified("queue");
-    await talentRoom.save()
-    res.json(talentRoom).status(200)
-
-   })
-
-
-
-   route.patch('/delete/contestant/Elimination/:id',protect, async(req,res)=>{
-    const room_id = req.params.id;
-    const user_id = req.body.user_id;
-    const post_id = req.body.post_id;
-
-    const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("expired")
-    const deletedContestant = talentRoom.eliminations.find(c => c.user_id == user_id)
-    talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
-    talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
-  
-    deletedContestant.performances.forEach(async(p) => {
-          const file = []
-          if (p.video?.fileId) {
-            file.push(
-              deleteFileFromB2_Private(
-                p.video.fileName,
-                p.video.fileId
-              )
-            );
-          }
-      
-          if (p.thumbnail?.fileId) {
-            file.push(
-              deleteFileFromB2_Public(
-                p.thumbnail.fileName,
-                p.thumbnail.fileId
-              )
-            );
-          }
-          await Promise.all(file);
-    })
-
-    await talentPostDataModel.findOneAndDelete({post_id:post_id})
-    talentRoom.markModified("eliminations");
-    await talentRoom.save()
-    res.json(talentRoom).status(200)
-
-   })
 
 
 
 
 
-   route.patch('/delete/performance/stage/:id',protect, async(req,res)=>{
-    const room_id = req.params.id;
-    const user_id = req.body.user_id;
-    const post_id = req.body.post_id;
-    const performanceToDelete = req.body.performanceToDelete
-    console.log(performanceToDelete)
-    const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("expired")
-    const contestant = talentRoom.contestants.find(c => c.user_id == user_id)
-    contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
-    console.log(contestant.performances.length)
-    talentRoom.markModified("contestants");
-    await talentRoom.save()
-    let filesToDelete = []
-    if (performanceToDelete.video?.fileId) {
-      filesToDelete.push(
-        deleteFileFromB2_Private(
-          performanceToDelete.video.fileName,
-          performanceToDelete.video.fileId
-        )
-      );  
-    }
 
-    if (performanceToDelete.thumbnail?.fileId) {
-      filesToDelete.push(
-        deleteFileFromB2_Public(
-          performanceToDelete.thumbnail.fileName,
-          performanceToDelete.thumbnail.fileId
-        )
-      );     
-    }
-    await Promise.all(filesToDelete);
+
+
+
+
+
+
  
-    res.json(talentRoom).status(200)
-   })
 
-
-   route.patch('/delete/performance/queue/:id',protect, async(req,res)=>{
-    const room_id = req.params.id;
-    const user_id = req.body.user_id;
-    const post_id = req.body.post_id;
-    const performanceToDelete = req.body.performanceToDelete
-    console.log(performanceToDelete)
-    const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("expired")
-    const contestant = talentRoom.queue.find(c => c.user_id == user_id)
-    contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
-    console.log(contestant.performances.length)
-    talentRoom.markModified("queue");
-    await talentRoom.save()
-    let filesToDelete = []
-    if (performanceToDelete.video?.fileId) {
-      filesToDelete.push(
-        deleteFileFromB2_Private(
-          performanceToDelete.video.fileName,
-          performanceToDelete.video.fileId
-        )
-      );  
-    }
-    if (performanceToDelete.thumbnail?.fileId) {
-      filesToDelete.push(
-        deleteFileFromB2_Public(
-          performanceToDelete.thumbnail.fileName,
-          performanceToDelete.thumbnail.fileId
-        )
-      );     
-    }
-    await Promise.all(filesToDelete);
- 
-    res.json(talentRoom).status(200)
-   })
-
-
-   route.patch('/back/queue/:id',protect, async(req,res)=>{
-    const room_id = req.params.id;
-    const user_id = req.body.user_id;
-    const post_id = req.body.post_id;
-    const talentRoom = await talentModel.findById(room_id)
-    if(!talentRoom) return res.json("expired")
-    const contestant = talentRoom.eliminations.find(c => c.user_id == user_id)
-    talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id !== user_id)
-    talentRoom.queue.push(contestant)
-    talentRoom.markModified("eliminations");
-    talentRoom.markModified("queue");
-    await talentRoom.save()
-    res.json(talentRoom).status(200)
-   })
 
 
    route.patch('/elimination/:id',protect, async(req,res)=>{
