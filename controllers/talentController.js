@@ -217,7 +217,7 @@ export const createTalentStage =  async(req,res)=>{
     const TalentName =  req.body.name
     const regionName =  req.body.region
     const t = await talentModel.findOne({ name: TalentName, region: regionName });
-    if (!t.editions) {
+      if (!t.editions) {
         t.editions = [];
       }
       
@@ -452,7 +452,27 @@ export const getStagesByRegion = async (req, res) => {
             desc : ""
             })
           await tal.save()
-        }
+        }else {
+            let t = await talentModel.findOne({name:name , region:normalizedCountry})
+            if (!t.editions) {
+                t.editions = [];
+              }
+              
+            if (t.editions.length === 0) {
+                t.editions.push({
+                  _id: 1,
+                  round: 1,
+                  status: "open",
+                  winner: null,
+                  finalist: [],
+                  semi_finalists: [],
+                  quarter_finalists: [],
+                  createdAt: new Date(),
+                  updatedAt: new Date()
+                });
+              }
+            await t.save()
+           }
       } )
   
       return res.status(200).json(stages);
@@ -1127,10 +1147,11 @@ export const getStagesByRegion = async (req, res) => {
 
   export const addUserPerformance = async(req,res)=>{
     const _id = req.params.id
+    console.log("I am here updating")
     const talent = await talentModel.findById(_id)
     if(req.body.type !== "eupdate"){
-    const contestant = req.body.type == "update" ? talent.contestants.find(c => c.user_id.toString() === req.body.user_id ):
-                                                   talent.queue.find(c => c.user_id.toString() === req.body.user_id )
+    const contestant = req.body.type === "update" ? talent.contestants.find(c => c.user_id.toString() === req.body.user_id.toString() ):
+                                                    talent.queue.find(c => c.user_id.toString() === req.body.user_id )
     const videoFileName =  req.body.videoFileName
     const videoFileId  = req.body.videoFileId
     const thumbnailFileName  = req.body.thumbnailFileName ;
@@ -1146,12 +1167,12 @@ export const getStagesByRegion = async (req, res) => {
     const cdnUrl = signedUrl.replace(
       "https://f005.backblazeb2.com",
       "https://cdn.challenmemey.com"
-    );
+    );   
     contestant.performances.unshift({
       video: {  
             fileId:videoFileId ,
-            fileName:videoFileName ,
-            signedUrl :signedUrl ,
+            fileName:videoFileName ,  
+            signedUrl :signedUrl ,  
             cdnUrl: cdnUrl ,
       },
       thumbnail: {
