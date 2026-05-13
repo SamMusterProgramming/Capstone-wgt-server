@@ -131,7 +131,7 @@ export const signup = async (req, res) => {
       const { token , email } = req.body;
       const decoded = await admin.auth().verifyIdToken(token);
       const { uid } = decoded;
-      const user = await userModel.findOne({ email: email });
+      const user = await userModel.findOne({ email:email.toLowerCase() });
       if (!user || !user.providers.includes("anonymous")
       ) {
         return res.status(404).json({ message: "User not found" });
