@@ -8,16 +8,13 @@ import talentPostDataModel from "../models/talentPostData.js";
 
 
 export const generateTalentStage = async (name, region) => {
-
     const result = await talentModel.aggregate([
-  
       {
         $match: {
           name,
           region
         }
       },
-  
       // =======================
       // LOOKUP ALL USERS ONCE
       // =======================
@@ -124,15 +121,11 @@ export const generateTalentStage = async (name, region) => {
                     in: {
                         _id: "$$q._id",
                         user_id: "$$q.user_id",
-            
                         performances: "$$q.performances",
-            
                         votes: "$$q.votes",
                         likes: "$$q.likes",
                         rank: "$$q.rank",
-            
                         createdAt: "$$q.createdAt",
-            
                         name: "$$matchedUser.name",
                         profileImage: "$$matchedUser.profileImage",
                         coverImage: "$$matchedUser.coverImage",
@@ -172,15 +165,11 @@ export const generateTalentStage = async (name, region) => {
                     in: {
                         _id: "$$e._id",
                         user_id: "$$e.user_id",
-            
                         performances: "$$e.performances",
-            
                         votes: "$$e.votes",
                         likes: "$$e.likes",
                         rank: "$$e.rank",
-            
                         createdAt: "$$e.createdAt",
-            
                         name: "$$matchedUser.name",
                         profileImage: "$$matchedUser.profileImage",
                         coverImage: "$$matchedUser.coverImage",
@@ -217,11 +206,17 @@ export const createTalentStage =  async(req,res)=>{
     const TalentName =  req.body.name
     const regionName =  req.body.region
     const t = await talentModel.findOne({ name: TalentName, region: regionName });
-      if (!t.editions) {
+    let edition = t.editions.find(e => e.status == "open")
+    let edIndex = t.editions.findIndex( e => e.status === "open")
+    let queuedUsers = []
+    if(edition.round < 4 && t.contestants.length < 22 &&  t.queue.length > 0){
+          queuedUsers = t.queue.splice(0,22-t.contestants.length)
+          t.contestants.push(...queuedUsers)
+       }
+    if (!t.editions) {
         t.editions = [];
       }
-      
-      if (t.editions.length === 0) {
+    if (t.editions.length === 0) {
         t.editions.push({
           _id: 1,
           round: 1,
@@ -246,18 +241,12 @@ export const createTalentStage =  async(req,res)=>{
      talent.contestants.forEach((c, index) => {
         c.rank = index + 1;
      });
+     console.log(talent)
    
    // let fix = talent.contestants.splice(-3)
    // talent.eliminations.push(fix)
 
-   let edition = talent.editions.find(e => e.status == "open")
-   let edIndex = talent.editions.findIndex( e => e.status === "open")
 
-   let queuedUsers = []
-   if(edition.round < 4 && talent.contestants.length < 22 &&  talent.queue.length > 0){
-         queuedUsers = talent.queue.splice(0,22-talent.contestants.length)
-         talent.contestants.push(...queuedUsers)
-      }
    
    // if(talent.eliminations.length > 0){
    //    let contest = talent.eliminations.splice(0,6)
