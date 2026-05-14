@@ -19,7 +19,7 @@ import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
 import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
 import { followingRequest, getFollowersList, unfollowingRequest } from '../controllers/followController.js';
-import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveProfileImage, updateNotificationById, updateUserInfoById } from '../controllers/userController.js';
+import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, updateNotificationById, updateUserInfoById } from '../controllers/userController.js';
 // import admin from '../service/firebase.js';
 
 
@@ -40,7 +40,7 @@ route.route('/user/:id')
      .delete(protect,validateMongoObjectId,deleteUserById)
      .patch(protect,validateMongoObjectId,updateUserInfoById)  
 route.post("/saveProfileImage",protect,saveProfileImage)
-route.post("/saveCoverImage",protect, saveProfileImage);
+route.post("/saveCoverImage",protect, saveCoverImage);
 route.post("/getUploadVideoUrl",protect, getUploadVideoUrl);
 route.post("/getUploadImageUrl", protect , getUploadImageUrl);
 

@@ -241,8 +241,6 @@ export const createTalentStage =  async(req,res)=>{
      talent.contestants.forEach((c, index) => {
         c.rank = index + 1;
      });
-     console.log(talent)
-   
    // let fix = talent.contestants.splice(-3)
    // talent.eliminations.push(fix)
 

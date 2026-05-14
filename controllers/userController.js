@@ -35,15 +35,15 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
   export const getUploadVideoUrl = async (req, res) => {
     try {
         console.log(req.body)
-      const { userId ,name , type } = req.body;
+      const { userId ,email, type } = req.body;
       // type = "profile" | "cover" | "post"
       let fileName =  ""
       if(type == "profile" || type == "cover") 
-           fileName =`users/${name.replace(/\s+/g, "")}_${userId}/${type}/${type}_${Date.now()}.jpg` 
+           fileName =`users/${email.replace(/\s+/g, "")}_${userId}/${type}/${type}_${Date.now()}.jpg` 
       if (type == "talent" || type == "challenge" )
-          fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}_contests/submission_${Date.now()}.mp4`
+          fileName = `users/${email.replace(/\s+/g, "")}_${userId}/${type}_contests/submission_${Date.now()}.mp4`
       if (type == "thumbnail")  
-            fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}/thumbnail_${Date.now()}.jpg`;
+            fileName = `users/${emailreplace(/\s+/g, "")}_${userId}/${type}/thumbnail_${Date.now()}.jpg`;
       const uploadUrlResponse = await getUploadPrivateUrl()
       res.json({
         uploadUrl: uploadUrlResponse.data.uploadUrl,
@@ -57,15 +57,15 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
 
   export const getUploadImageUrl = async (req, res) => {
     try {
-      const { userId ,name , type } = req.body;
+      const { userId ,email , type } = req.body;
       // type = "profile" | "cover" | "post"
       let fileName =  ""
       if(type == "profile" || type == "cover") 
-           fileName =`users/${name.replace(/\s+/g, "")}_${userId}/${type}/${type}_${Date.now()}.jpg` 
+           fileName =`users/${email.replace(/\s+/g, "")}_${userId}/${type}/${type}_${Date.now()}.jpg` 
       // if (type == "talent" || type == "challenge" )
       //     fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}_contests/submission_${Date.now()}.mp4`
       if (type == "thumbnail")  
-            fileName = `users/${name.replace(/\s+/g, "")}_${userId}/${type}/thumbnail_${Date.now()}.jpg`;
+            fileName = `users/${email.replace(/\s+/g, "")}_${userId}/${type}/thumbnail_${Date.now()}.jpg`;
       const uploadUrlResponse = await getUploadPublicUrl ()
       res.json({
         uploadUrl: uploadUrlResponse.data.uploadUrl,
