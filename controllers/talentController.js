@@ -5,9 +5,15 @@ import favouriteModel from "../models/favourites.js";
 import friendModel from "../models/friends.js";
 import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js";
 import talentPostDataModel from "../models/talentPostData.js";
-
+import redis from "../config/redis.js";
 
 export const generateTalentStage = async (name, region) => {
+    const cacheKey = `stage:${name}:${region}`;
+    const cachedStage = await redis.get(cacheKey);
+    if (cachedStage) {
+      console.log("✅ CACHE HIT");
+      return JSON.parse(cachedStage);
+   }
     const result = await talentModel.aggregate([
       {
         $match: {
@@ -197,7 +203,15 @@ export const generateTalentStage = async (name, region) => {
       }
   
     ]);
+    await redis.set(
+      cacheKey,
+      JSON.stringify(result[0]),
+      {
+         EX: 120
+      }
+   );
     return result[0];
+
   };
 
 

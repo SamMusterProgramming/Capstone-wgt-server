@@ -8,6 +8,8 @@ import userRoute from './routes/userRoutes.js';
 import challengeRoute from './routes/challengeRoutes.js';
 import talentRoute from './routes/talentRoutes.js';
 import B2 from 'backblaze-b2';
+import "./config/redis.js";
+import redis from './config/redis.js';
 
 dotenv.config();
 
@@ -35,7 +37,13 @@ app.get('/',(req,res)=>{
 })    
     
 
-
+app.get("/redis-test", async (req, res) => {
+    await redis.set("hello", "challengify");
+    const value = await redis.get("hello");
+    res.json({
+       redis: value
+    });
+ });
 
 function validateRequestNetwork(req,res,next) {
     try {  
