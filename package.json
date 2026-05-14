@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@upstash/redis": "^1.38.0",
     "axios": "^1.7.9",
     "backblaze-b2": "^1.7.1",
     "cors": "^2.8.5",
@@ -23,7 +24,6 @@
     "mongodb": "^6.11.0",
     "mongoose": "^8.9.1",
     "multer": "^1.4.5-lts.1",
-    "redis": "^5.12.1",
     "uuid": "^11.0.3",
     "validator": "^13.12.0"
   },

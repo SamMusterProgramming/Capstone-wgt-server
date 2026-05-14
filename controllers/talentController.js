@@ -12,7 +12,7 @@ export const generateTalentStage = async (name, region) => {
     const cachedStage = await redis.get(cacheKey);
     if (cachedStage) {
       console.log("✅ CACHE HIT");
-      return JSON.parse(cachedStage);
+      return cachedStage;
    }
     const result = await talentModel.aggregate([
       {
@@ -205,7 +205,7 @@ export const generateTalentStage = async (name, region) => {
     ]);
     await redis.set(
       cacheKey,
-      JSON.stringify(result[0]),
+      result[0],
       {
          EX: 120
       }

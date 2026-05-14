@@ -203,7 +203,7 @@ route.post("/geoAccess/:room_id", protect, async (req, res) => {
 
 // create talent stage , process edition , elimination 
 route.post('/creates',protect,createTalentStage)
-
+  
 //get stages , stages of user 
 route.get("/stages/region/:region", getStagesByRegion);
 route.get('/stages',protect,getAllStages)  
