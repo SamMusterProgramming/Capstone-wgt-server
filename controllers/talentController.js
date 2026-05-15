@@ -89,7 +89,6 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
                     likes: "$$contestant.likes",
                     rank: "$$contestant.rank",
                     createdAt: "$$contestant.createdAt",
-  
                     name: "$$matchedUser.name",
                     profileImage: "$$matchedUser.profileImage",
                     coverImage: "$$matchedUser.coverImage",
@@ -212,6 +211,7 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
          EX: 120
       }
    );
+   console.log(result[0])
     return result[0];
 
   };
@@ -246,7 +246,7 @@ export const createTalentStage =  async(req,res)=>{
         });
       }
     await t.save()
-    const talent = await generateTalentStage(TalentName, regionName)
+    const talent = await generateTalentStage(TalentName, regionName , queuedUsers.length > 0 )
     talent.contestants?.sort((a, b) => {
      if(a.votes !== b.votes){
         return b.votes - a.votes
@@ -915,17 +915,7 @@ export const getStagesByRegion = async (req, res) => {
         contestantIndex,
         1
       );
-      // =========================
-      // REMOVE VOTES
-      // =========================
-      if (post_id) {
-        talentRoom.voters =
-          talentRoom.voters.filter(
-            v =>
-              v.post_id?.toString() !==
-              post_id.toString()
-          );
-      }
+      
       // =========================
       // MOVE TO ELIMINATIONS
       // =========================
@@ -977,7 +967,7 @@ export const getStagesByRegion = async (req, res) => {
         talentRoom.queue.length > 0
       ) {
         queuedContestant =
-          talentRoom.queue.shift();
+        talentRoom.queue.shift();
         talentRoom.contestants.push(
           queuedContestant
         );
@@ -1062,7 +1052,7 @@ export const getStagesByRegion = async (req, res) => {
     const deletedContestant = talentRoom.queue.find(c => c.user_id.toString() == user_id)
     talentRoom.queue = talentRoom.queue.filter(u => u.user_id.toString() !== user_id)
     talentRoom.voters =  talentRoom.voters.filter(v => v.post_id !== post_id)
-    deletedContestant.performances.forEach(async(p) => {
+    deletedContestant?.performances.forEach(async(p) => {
           const file = []
           if (p.video?.fileId) {
             file.push(
@@ -1320,12 +1310,11 @@ export const deleteUserPerformanceStage = async(req,res)=>{
       );     
     }
     await Promise.all(filesToDelete);
-    const structuredTalent =
-    await generateTalentStage(
-        talentRoom.name,
-        talentRoom.region,
-        true
-      );
+    const structuredTalent = await generateTalentStage(
+                                                        talentRoom.name,
+                                                        talentRoom.region,
+                                                        true
+                                                      );
     return res
       .status(200)
       .json(structuredTalent);

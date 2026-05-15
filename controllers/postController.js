@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 import talentModel from "../models/talent.js"
 import talentPostDataModel from "../models/talentPostData.js"
+import { generateTalentStage } from "./talentController.js"
 
 
 
@@ -69,10 +70,17 @@ export const votePost = async(req,res)=>{
     const talentPost = await talentPostDataModel.findOne(
       {post_id:post_id}
       )
-    if(!talentPost || !talent.contestants.find(c => c._id == post_id)) { 
+    if(!talentPost || (!talent.contestants.find(c => c._id == post_id)
+        && !talent.queue.find(c => c._id == post_id))
+    ) { 
         return res.json("expired")
     }
-    const post_owner_name = talent.contestants.find(c => c._id == post_id).name
+    const stage = await generateTalentStage(
+        talent.name,
+        talent.region, 
+        )
+    const post_owner_name =  stage.contestants.find(c => c._id == post_id).name || 
+                             stage.queue.find(c => c._id == post_id).name 
     const voter = talent.voters.find(  v => 
                                     v.voter_id == voter_id
                                  )
@@ -154,10 +162,15 @@ export const votePost = async(req,res)=>{
            return b.votes - a.votes   
         }else {
            return b.likes - a.likes
-        }
-           
+        }   
     })
     await talentRoom.save()
+    const structuredTalent =
+    await generateTalentStage(
+      talent.name,
+      talent.region, 
+      true
+    );
     return res.json(talentPost)
 }
 
