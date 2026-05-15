@@ -33,173 +33,9 @@ import {
    generateTalentStage, getAllStages, getEliminatedUserBackToQueue, getFavouriteStages, getHotStages, getStagesByRegion, getUserContestantInStage, 
    joinStageOrQueueFirstPerformance, resignContestantFromStage 
   } from '../controllers/talentController.js';
+import { addComment, deleteComment, flagPost, getPostById, LikePost, votePost } from '../controllers/postController.js';
 
 const route = express.Router();
-
-
-
-route.patch('/migrate/:roomId', protect, async (req, res) => {
-  const roomId  = req.params.roomId;
-  const  contestantId = req.body.contestantId
-  const fileId = req.body.fileId 
-  const fileName = req.body.fileName
-  try {
-    const talentRoom = await talentModel.findById(roomId);
-    // const signedUrl = await getPublicUrlFromB2(fileName)
-    if (!talentRoom) {
-      return res.status(404).json({ error: "Talent room not found" });
-     }
-    const contestantIndex = talentRoom.contestants.findIndex(
-      (c) => c.user_id === contestantId
-    );
-
-
-    if (contestantIndex === -1) {
-      return res.status(404).json({ error: "Contestant not found" });
-    }
-
-      const thumbnailSignedUrl = await getPublicUrlFromB2(fileName);
-
-
-    let contestant = talentRoom.contestants[contestantIndex];
-    contestant.thumbnail = {
-      fileName,
-      fileId,
-      publicUrl: thumbnailSignedUrl
-    };
-    talentRoom.markModified('contestants');
-    await talentRoom.save();
-    
-    res.json({ success: true, contestant: talentRoom.contestants[contestantIndex] });
-  } catch (err) {
-    console.error("Failed to update contestant:", err);
-    res.status(500).json({ error: "Failed to update contestant" });
-  }
-});
-
-route.patch('/migrateProfile/:roomId', protect, async (req, res) => {
-    const room_id = req.params.roomId
-    const userId = req.body.contestantId
-    // const signedUrl = await getPublicUrlFromB2(fileName)
-    const user = await userModel.findById(userId);
-    
-    const query = 
-    {  
-      $set: {
-        "contestants.$[item].profile_img": user.profileImage.publicUrl,
-    } 
-    } 
-  
-    const newTalent = await talentModel.findByIdAndUpdate(
-      room_id ,
-      query,
-        {
-          arrayFilters: [{ "item.user_id": userId }],
-          new: true 
-        }
-    )
-
-    await newTalent.save()
-    res.json(newTalent);
-})
-
-
-route.post("/video-url", protect, async (req, res) => {
-  const { roomId, contestantId } = req.body;
-
-  try {
-    const talentRoom = await talentModel.findById(roomId);
-
-    if (!talentRoom) {
-      return res.status(404).json({ error: "Talent room not found" });
-    }
-
-    const contestant = talentRoom.contestants.find(
-      (c) => c._id.toString() === contestantId
-    );
-
-    if (!contestant || !contestant.video) {
-      return res.status(404).json({ error: "Video not found" });
-    }
-
-    
-    const signedUrl = await getSignedUrlFromB2(
-      contestant.video.fileName
-    );     
-   
-    const cdnUrl = signedUrl.replace(
-      "https://f005.backblazeb2.com",
-      "https://cdn.challenmemey.com"
-    );
-
-    const thumbNailCdnUrl = contestant.thumbnail.publicUrl.replace(
-      "https://f005.backblazeb2.com",
-      "https://cdn.challenmemey.com"
-    );
-
-    contestant.performances[0].video.signedUrl = signedUrl;
-    contestant.performances[0].video.cdnUrl = cdnUrl;
-    contestant.performances[0].thumbnail.publicUrl = thumbNailCdnUrl;
-
-    talentRoom.markModified("contestants");
-    await talentRoom.save();
-    
-    return res.json( {cdnUrl} );       
-
-  } catch (err) {
-    console.error("Error generating signed URL:", err);
-    res.status(500).json({ error: "Failed to generate signed URL" });
-  }
-});
-
-
-route.post("/geoAccess/:room_id", protect, async (req, res) => {
-  try {
-    const { gpsCountryCode } = req.body;
-    const room_id = req.params.room_id;
-
-    const stage = await talentModel.findById(room_id);
-    if (!stage) {
-      return res.status(404).json({ message: "Stage not found" });
-    }
-    const allowedCountry = stage.region; // e.g., "US"
-    // 2. Get user IP location
-    const ip = getClientIp(req);
-    const ipLocation = await getLocationFromIP(ip);
-    const ipCountryCode = ipLocation?.countryCode;
-
-    // 3. Determine final country (GPS takes precedence)
-    const finalCountryCode = gpsCountryCode || ipCountryCode;
-
-    if (!finalCountryCode) {
-      return res
-        .status(400)
-        .json({ message: "Unable to determine user location" });
-    }
-    if (
-      allowedCountry &&
-      allowedCountry.toUpperCase() !== finalCountryCode.toUpperCase()
-    ) {
-      return res.status(200).json({
-        message: `Access restricted to ${allowedCountry}`,
-        userCountry: finalCountryCode,
-        canAttend:false
-      });
-    }
-    return res.status(200).json({
-      message: "Access granted",
-      userCountry: finalCountryCode,
-      stageCountry: allowedCountry,
-      canAttend:true
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-
 
 // create talent stage , process edition , elimination 
 route.post('/creates',protect,createTalentStage)
@@ -223,6 +59,17 @@ route.patch('/delete/performance/queue/:id',protect,deleteUserPerformanceQueue)
 route.patch('/delete/contestant/stage/:id',protect,resignContestantFromStage)
 route.patch('/delete/contestant/queue/:id',protect, deleteContestantFromQueue)
 route.patch('/delete/contestant/Elimination/:id',protect,deleteContestantFromEliminations)
+
+//conestant post , like , vote 
+route.get('/post/:id',protect,getPostById)
+route.post('/likes/:id',protect,LikePost)
+route.post('/votes/:id',protect,votePost)
+route.post('/flags/:id',protect,flagPost)
+
+// comments , add , delete , update , replies
+route.post('/post/comment/:id',protect,addComment)
+route.patch('/post/comment/:id',protect,deleteComment)
+
 
 
 
@@ -269,11 +116,7 @@ route.get('/top/:id',protect,async(req,res)=>{
 })
 
 
-
-
-
 route.get('/user/performance/:id',protect,async(req,res)=>{
-  
       const user_id = req.params.id
       const userTalents = await talentModel.find({});
       let performances = []
@@ -324,273 +167,22 @@ route.get('/user/:id',protect,async(req,res)=>{
 
 //******************************** post likes, votes, comments */
 
-route.get('/post/:id',protect,async(req,res)=>{
-    const post_id =  req.params.id
-    const talentPost = await talentPostDataModel.findOne(
-        {post_id:post_id}
-        )
-     if(!talentPost) 
-      {
-        return res.json("expired")   
-      }
-    return res.json(talentPost)
-})
-
-route.post('/likes/:id',protect,async(req,res)=>{
-    
-    const post_id =  req.params.id
-    const owner_id = req.body.owner_id
-    const like = {
-       liker_id : req.body.liker_id
-    }
-    const talentPost = await talentPostDataModel.findOne(
-        {post_id:post_id}
-        )
-    if(! talentPost) {
-        return res.json("expired")
-    }
-    
-    let updateQuery;
-
-    const userLiked = talentPost.likes.find(like => like.liker_id == req.body.liker_id);
-    if (userLiked) {
-        updateQuery = { $pull: { likes: like } };
-      } else {
-        updateQuery = { $addToSet: { likes: like } }; // $addToSet ensures unique entries
-      }
-    const updatedPost = await talentPostDataModel.findOneAndUpdate(
-        {post_id:post_id},
-         updateQuery,
-        { new: true } 
-      );
-      const talent = await talentModel.findByIdAndUpdate(
-        req.body.room_id,
-        {
-            $set: {
-              "contestants.$[item].votes":updatedPost.votes.length,
-              "contestants.$[item].likes":updatedPost.likes.length,
-            }
-          },
-          {
-            arrayFilters: [{ "item.user_id": owner_id }],
-            new: true 
-          }
-    )
-    return res.json(updatedPost)
-})
-
-route.post('/flags/:id',protect,async(req,res)=>{
-    const post_id =  req.params.id
-    const owner_id = req.body.owner_id
-    const flag = {
-       flagger_id : req.body.flagger_id
-    }
-
-    const talentPost = await talentPostDataModel.findOne(
-        {post_id:post_id}
-        )
-    if(! talentPost) { 
-        return res.json("expired")
-    }
-    
-    let updateQuery;
-
-    const userFlagged = talentPost.flags.find(flag => flag.flagger_id == req.body.flagger_id);
-    if (userFlagged) {
-        updateQuery = { $pull: { flags: flag } };
-      } else {
-        updateQuery = { $addToSet: { flags: flag } }; // $addToSet ensures unique entries
-      }
-    const updatedPost = await talentPostDataModel.findOneAndUpdate(
-        {post_id:post_id},
-         updateQuery,
-        { new: true } 
-      );
-    const talent = await talentModel.findById(talentPost.room_id)
-    if(updatedPost.flags.length >= 7)  {
-         if(updatedPost.likes.length < updatedPost.flags.length * 10 )
-         {
-            talent.contestants = talent.contestants.filter(contestant => contestant.user_id !== owner_id)
-            talent.eliminations.push({user_id:owner_id})
-            let userQueue = null  ;
-            if(talent.queue.length > 0) 
-                userQueue = talent.queue.shift()
-            userQueue && talent.contestants.push(userQueue)
-            await talent.save()
-            // await talentPostDataModel.findOneAndDelete({post_id:post_id})
-         }
-    }
-    return res.json(updatedPost)
-})
 
 
-route.post('/votes/:id',protect,async(req,res)=>{
-    
-    const post_id =  req.params.id
-    const owner_id = req.body.owner_id
-    const voter_id = req.body.voter_id
 
-    const vote = {
-       voter_id : req.body.voter_id
-    }
 
-    const talent = await talentModel.findById(req.body.room_id)
-    const talentPost = await talentPostDataModel.findOne(
-      {post_id:post_id}
-      )
 
-    if(!talentPost || !talent.contestants.find(c => c._id == post_id)) { 
-        return res.json("expired")
-    }
 
-    const post_owner_name = talent.contestants.find(c => c._id == post_id).name
-
-    const voter = talent.voters.find(  v => 
-                                    v.voter_id == voter_id
-                                 )
-    // let votedTalentPost = null
-    // if(voter) votedTalentPost = await talentPostDataModel.findOne(
-    //                {post_id:voter.post_id}
-    //              )
-    if(!voter){
-        talent.voters.push({
-                  voter_id : req.body.voter_id,
-                  post_id : post_id,
-                  name : post_owner_name,
-                  createdAt: new Date()
-        })
-        talentPost.votes.push(vote)
-        await talent.save()
-        await talentPost.save()
-    }else{   
-        talent.voters = talent.voters.filter(v => v.voter_id !== voter_id)
-        if(voter.post_id !== post_id){
-            talent.voters.push({
-            voter_id : voter_id,
-            post_id : post_id,
-            name : post_owner_name,
-            createdAt:new Date()
-               })
-            talentPost.votes.push(vote)   
-            await talentPostDataModel.findOneAndUpdate(
-                  {post_id:voter.post_id},
-                  { $pull: { votes: vote } },
-                  { new: true } 
-                );
-             let contestant = null
-             let contestantPost = talent.contestants.find(c => c._id == voter.post_id) 
-             if(contestantPost){
-              let index = talent.contestants.findIndex(c => c._id == voter.post_id) 
-              let contestant = talent.contestants[index]
-              contestant.votes --;
-              talent.contestants[index]=contestant   
-             }else{
-              contestantPost = talent.queue.find(c => c._id == voter.post_id) 
-                  if(contestantPost){
-                    let index = talent.queue.findIndex(c => c._id == voter.post_id) 
-                    let contestant = talent.queue[index]
-                    contestant.votes --;
-                    talent.queue[index]=contestant   
-                  }else{
-                    contestantPost = talent.eliminations.find(c => c._id == voter.post_id) 
-                    if(contestantPost){
-                      let index = talent.eliminations.findIndex(c => c._id == voter.post_id) 
-                      let contestant = talent.eliminations[index]
-                      contestant.votes --;
-                      talent.eliminations[index]=contestant   
-                    }
-                  }
-             }
-            
-        }else{
-            talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
-            }
-        }
-
-    await talent.save()
-    await talentPost.save()
-    
-    
-    const talentRoom = await talentModel.findByIdAndUpdate(
-        req.body.room_id,
-        {
-            $set: {
-              "contestants.$[item].votes":talentPost.votes.length,
-              "contestants.$[item].likes":talentPost.likes.length,
-            }
-          },
-          {
-            arrayFilters: [{ "item.user_id": owner_id }],
-            new: true 
-          }
-    )
-
-    talentRoom.contestants.sort((a, b) => {
-        if(a.votes !== b.votes){
-           return b.votes - a.votes   
-        }else {
-           return b.likes - a.likes
-        }
-           
-    } )
-    await talentRoom.save()
-    
-    return res.json(talentPost)
-})
 
 // **************************** Comments ***************************
 
-route.get('/post/comments/:id',protect,async(req,res)=> {
+route.get('/post/comment/:id',protect,async(req,res)=> {
     const post_id = req.params.id
     let postData = await talentPostDataModel.findOne({post_id:post_id})
-    // if(!postData) 
-    //   {
-    //     return res.json("empty")   
-    //   }
     return res.json(postData).status(200)
  })
 
- route.post('/posts/:id',protect,async(req,res)=> {
-  console.log(req.params.id)
-    const post_id = req.params.id.toString()
-    const commentData={
-          _id :new mongoose.Types.ObjectId(),
-          commenter_id : req.body.commenter_id,
-          profile_img:req.body.profile_img,
-          name:req.body.name,
-          comment:req.body.comment
-        }
-    let postData = await talentPostDataModel.findOne({post_id:post_id})
-    // if(!postComment) {
-    //      const data = {
-    //        post_id : req.body.post_id,
-    //        user_id : req.body.user_id,
-    //        content:[commentData]
-    //      }   
-    //      let newCommentData = new commentModel(data)
-    //      await newCommentData.save()
-    //      return res.json(newCommentData)   
-    //    }
 
-    postData.comments.push(commentData)
-    await postData.save()
-    res.json(postData).status(200)
-    }     
- )
-
-
-route.patch('/posts/comment/:id',protect,async(req,res)=> {
-  console.log(req.body.comment_id)
-  const post_id = req.params.id;
-  const comment_id = req.body.comment_id
-  let post = await talentPostDataModel.findOne(
-    {post_id : post_id}
-  )
-  console.log(post.comments)
-  post.comments = post.comments.filter(el => el._id.toString() !== comment_id.toString())
-  await post.save()
-  return res.json(post).status(200)
-})
 
 //***************************** upload contestants and more */
 
@@ -757,26 +349,12 @@ route.get('/rooms',protect, async(req,res)=>{
               await notificationModel(notification).save()
               
       })
-
-
     })
-
-   
     await talentRoom.save()
     res.json(talentRoom).status(201)   
    })
 
 
-// function  protect(req,res,next){
-//     const token = req.headers.authorization?.split(' ')[1]; // Assuming token is sent in Authorization header
-//     if (!token) return res.status(401).send({ message: 'No token provided' });
-//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-//       if (err) return res.status(403).send({ message: 'Failed to authenticate token' });
-//       req.user = decoded; // Store decoded user information in the request object
-//       next();
-//   });
-  
-// }
 
 
 

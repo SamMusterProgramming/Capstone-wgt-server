@@ -7,13 +7,15 @@ import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, 
 import talentPostDataModel from "../models/talentPostData.js";
 import redis from "../config/redis.js";
 
-export const generateTalentStage = async (name, region) => {
+export const generateTalentStage = async (name, region , isUpdated = false) => {
     const cacheKey = `stage:${name}:${region}`;
-    const cachedStage = await redis.get(cacheKey);
-    if (cachedStage) {
-      console.log("✅ CACHE HIT");
-      return cachedStage;
-   }
+    if(!isUpdated){
+        const cachedStage = await redis.get(cacheKey);
+        if (cachedStage) {
+          console.log("✅ CACHE HIT");
+          return cachedStage;
+      }
+    }
     const result = await talentModel.aggregate([
       {
         $match: {
@@ -516,7 +518,6 @@ export const getStagesByRegion = async (req, res) => {
 
   export const getHotStages = async(req,res)=>{
     const user_id = req.params.id
-  
     // let friendIDS = []
     // friends && friends.friends.forEach(f => friendIDS.push(f.user_id))
     const talents = await talentModel.find({
@@ -596,11 +597,8 @@ export const getStagesByRegion = async (req, res) => {
   // user performances
 
   export const joinStageOrQueueFirstPerformance =  async (req, res) => {
-
     try {
-  
       const stage_id = req.params.id;
-  
       const {
         user_id,
         room_id,
@@ -845,7 +843,8 @@ export const getStagesByRegion = async (req, res) => {
       const structuredTalent =
         await generateTalentStage(
           talent.name,
-          talent.region
+          talent.region, 
+          true
         );
       return res.status(200).json(
         structuredTalent
@@ -862,9 +861,6 @@ export const getStagesByRegion = async (req, res) => {
       });
     }
   }
-
-
-
 
   export const resignContestantFromStage =  async (req, res) => {
     try {
@@ -1032,14 +1028,14 @@ export const getStagesByRegion = async (req, res) => {
         "queue"
       );
       await talentRoom.save();
-
       // =========================
       // RETURN STRUCTURED DATA
       // =========================
       const structuredTalent =
       await generateTalentStage(
           talentRoom.name,
-          talentRoom.region
+          talentRoom.region,
+          true
         );
       return res
         .status(200)
@@ -1061,7 +1057,6 @@ export const getStagesByRegion = async (req, res) => {
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
-
     const talentRoom = await talentModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const deletedContestant = talentRoom.queue.find(c => c.user_id.toString() == user_id)
@@ -1094,7 +1089,8 @@ export const getStagesByRegion = async (req, res) => {
     const structuredTalent =
         await generateTalentStage(
           talentRoom.name,
-          talentRoom.region
+          talentRoom.region,
+          true
         );
     return res
         .status(200)
@@ -1121,7 +1117,6 @@ export const getStagesByRegion = async (req, res) => {
               )
             );
           }
-      
           if (p.thumbnail?.fileId) {
             file.push(
               deleteFileFromB2_Public(
@@ -1138,14 +1133,15 @@ export const getStagesByRegion = async (req, res) => {
     const structuredTalent =
     await generateTalentStage(
       talentRoom.name,
-      talentRoom.region
+      talentRoom.region,
+      true
     );
     return res
     .status(200)
     .json(structuredTalent);
    }
 
-
+  
   export const addUserPerformance = async(req,res)=>{
     const _id = req.params.id
     console.log("I am here updating")
@@ -1245,7 +1241,11 @@ export const getStagesByRegion = async (req, res) => {
   } 
 }
 await talent.save()
-const  structuredTalent = await generateTalentStage(talent.name, talent.region)
+const  structuredTalent = await generateTalentStage(
+                                                   talent.name, 
+                                                   talent.region ,
+                                                   true
+                                                  )
 res.json(structuredTalent)
 
 }
@@ -1283,7 +1283,8 @@ export const deleteUserPerformanceStage = async(req,res)=>{
     const structuredTalent =
     await generateTalentStage(
         talentRoom.name,
-        talentRoom.region
+        talentRoom.region,
+        true
       );
     return res
       .status(200)
@@ -1322,7 +1323,8 @@ export const deleteUserPerformanceStage = async(req,res)=>{
     const structuredTalent =
     await generateTalentStage(
         talentRoom.name,
-        talentRoom.region
+        talentRoom.region,
+        true
       );
     return res
       .status(200)
@@ -1344,7 +1346,8 @@ export const deleteUserPerformanceStage = async(req,res)=>{
     const structuredTalent =
     await generateTalentStage(
         talentRoom.name,
-        talentRoom.region
+        talentRoom.region,
+        true
       );
     return res
       .status(200)
