@@ -211,7 +211,6 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
          EX: 120
       }
    );
-   console.log(result[0])
     return result[0];
 
   };
@@ -1002,7 +1001,6 @@ export const getStagesByRegion = async (req, res) => {
             region:
               talentRoom.region,
           }
-
         }).save();
       }
       // =========================

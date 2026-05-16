@@ -70,9 +70,13 @@ export const votePost = async(req,res)=>{
     const talentPost = await talentPostDataModel.findOne(
       {post_id:post_id}
       )
-    if(!talentPost || (!talent.contestants.find(c => c._id == post_id)
-        && !talent.queue.find(c => c._id == post_id))
+    if(!talentPost || (!talent.contestants.find(c => c._id.toString() === post_id))
     ) { 
+        await generateTalentStage(
+            talent.name, 
+            talent.region, 
+            true
+        );
         return res.json("expired")
     }
     const stage = await generateTalentStage(
