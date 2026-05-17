@@ -6,6 +6,8 @@ import friendModel from "../models/friends.js";
 import userModel from "../models/users.js";
 import admin from "../service/firebase.js";
 import { ensureUserRelations } from "../utilities/helper.js";
+import { Resend } from "resend";
+import { resend } from "../config/resend.js";
 
 
 // ---------------- SIGNUP ----------------
@@ -18,14 +20,12 @@ export const signup = async (req, res) => {
       // 🔥 check if user exists
       const normalizedEmail = email.toLowerCase();
       let user = await userModel.findOne({ email: normalizedEmail });
-
       if (user) {
         return res.status(409).json({
           message: "User already exists. Please login instead.",
           color:"red"
         });
       }
-
       if (!user) {
         user = await userModel.create({
           uid: uid,
@@ -45,7 +45,31 @@ export const signup = async (req, res) => {
           }
         });   
       }  
+
+      const verificationLink =
+        await admin
+          .auth()
+          .generateEmailVerificationLink(email);
         
+      
+          await resend.emails.send({
+            from:
+              "Challengify <verify@challenmemey.com>",
+    
+            to: email,
+    
+            subject:
+              "Verify your Challengify account",
+    
+            html: `
+              <h2>Welcome to Challengify</h2>
+    
+              <a href="${verificationLink}">
+                Verify Email
+              </a>
+            `,
+          });
+
       return res.status(201).json({
         message: "Signup successful. Please verify your email before logging in." ,
          color:"lightgreen"
