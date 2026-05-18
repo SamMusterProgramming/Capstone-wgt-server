@@ -45,7 +45,6 @@ export const signup = async (req, res) => {
           }
         });   
       }  
-
       const verificationLink =
         await admin
           .auth()
@@ -98,39 +97,6 @@ export const signup = async (req, res) => {
           message: "Please login using Google",
         });
       }
-
-
-        // const users = await friendModel.find();
-        // console.log(users.length)
-        // for (const doc of users) {
-        //   try {
-        //     if (!doc.friends || !Array.isArray(doc.friends)) continue;
-        
-        //     const ids = doc.friends
-        //       .filter(f => f && f.user_id) // safety
-        //       .map(f => {
-        //         console.log("friend:", f.user_id);
-        //         return new mongoose.Types.ObjectId(f.user_id);
-        //       });
-        
-        //     console.log("converted:", ids);
-        
-        //     await friendModel.updateOne(
-        //       { _id: doc._id }, // ✅ always use _id
-        //       { $set: { friends: ids } } // ✅ overwrite correctly
-        //     );
-        
-        //     console.log("updated:", doc._id);
-        
-        //   } catch (err) {
-        //     console.log("ERROR on doc:", doc._id, err.message);
-        //   }
-        // }
-        
-        // console.log("DONE");
-
-
-
       user.email_verified = true ;
       user.uid = uid;
       await user.save()
@@ -204,11 +170,8 @@ export const googleLogin = async (req, res) => {
         });
       }
       const normalizedEmail = email.toLowerCase();
-
-  
       // 🔍 2. FIND USER BY EMAIL (IMPORTANT FIX)
       let user = await userModel.findOne({ email:normalizedEmail });
-  
       // 🆕 3. CREATE USER IF NOT EXISTS
       if (!user) {
         user = await userModel.create({
@@ -240,12 +203,9 @@ export const googleLogin = async (req, res) => {
         if (!user.email_verified && email_verified) {
           user.email_verified = true; // mark verified if Google verified
         }
-  
         await user.save();
       }
-      
       await ensureUserRelations(user);
-
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user);
   
@@ -258,7 +218,6 @@ export const googleLogin = async (req, res) => {
   
     } catch (error) {
       console.error("GOOGLE AUTH ERROR:", error);
-  
       return res.status(401).json({
         message: error.message || "Invalid or expired Firebase token",
       });
