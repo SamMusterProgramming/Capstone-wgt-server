@@ -8,6 +8,7 @@ import admin from "../service/firebase.js";
 import { ensureUserRelations } from "../utilities/helper.js";
 import { Resend } from "resend";
 import { resend } from "../config/resend.js";
+import { getUserProfile } from "./userController.js";
 
 
 // ---------------- SIGNUP ----------------
@@ -86,7 +87,7 @@ export const signup = async (req, res) => {
       const decoded = await admin.auth().verifyIdToken(token);
   
       const { uid, email } = decoded;
-      const user = await userModel.findOne({ email: email.toLowerCase() });
+      const user = await userModel.findOne({ email : email.toLowerCase() });
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -227,10 +228,9 @@ export const googleLogin = async (req, res) => {
   // ---------------- ME ----------------
   export const getMe = async (req, res) => {
     try {
-      const user = await userModel.findById(req.user._id);
+      const user =  await getUserProfile(req.user._id) //await userModel.findById(req.user._id);
+      // console.log(user)
       if(!user) return  res.json({user:false})
-
-    
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });

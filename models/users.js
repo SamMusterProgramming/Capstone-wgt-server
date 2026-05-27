@@ -11,12 +11,11 @@ const userSchema = new mongoose.Schema({
         type:String,
         default:"Unknown Some"
      },
-   //   profile_img:{
-   //      type:String,
-   //      required:false,
-   //      default:"/static/images/avatar.avif"
-   //   },
-     profileImage: {
+     expoPushToken: {
+      type: String,
+      default: null,
+     },
+     profileImage:{
       fileId: String,
       fileName: String,
       publicUrl: String,

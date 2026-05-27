@@ -7,23 +7,6 @@ const friendSchema = new mongoose.Schema({
         type:String,
         required:true
      },
-   //   profile_img:{
-   //      type:String
-   //   },
-   //   cover_img:{
-   //    type:String
-   //   },
-
-    
-
-   //   email:{
-   //      type:String,
-   //      default:"no email"
-   //   },
-   //   name:{
-   //    type:String,
-   //    default:"no email"
-   //   },
 
      friends: [
       {

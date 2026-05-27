@@ -1,8 +1,56 @@
+import redis from "../config/redis.js"
 import friendModel from "../models/friends.js"
 import notificationModel from "../models/notifications.js"
 import talentModel from "../models/talent.js"
 import userModel from "../models/users.js"
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from "../utilities/blackBlazeb2.js"
+
+
+
+// getSenderProfile.js
+
+export const getUserProfile = async (
+  userId
+) => {
+  if (!userId) return null;
+  try {
+    // await redis.del(`user:${userId}`);
+    // 1. REDIS FIRST
+    const cached =
+      await redis.get(
+        `user:${userId}`
+      );
+    if (cached) {
+      console.log("cache hit");
+      return cached;
+    }
+    // 2. FALLBACK TO MONGO
+    const user =
+      await userModel.findById(userId);
+
+    if (!user) return null;
+
+    // convert mongoose document
+    const plainUser =
+      user.toObject();
+
+    // 3. CACHE USER
+    await redis.set(
+      `user:${userId}`,
+      JSON.stringify(plainUser),
+      {
+        EX: 60 * 10,
+      }
+    );
+    return plainUser;
+  } catch (err) {
+    console.log(
+      "GET USER PROFILE ERROR:",
+      err
+    );
+    return null;
+  }
+};
 
 
 export const getUserById = async(req,res)=>{ // get single user by _id
@@ -199,6 +247,8 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
     const notifications = await notificationModel.find({receiver_id:receiver_id}).sort({ createdAt: -1 });
     res.json(notifications).status(200)
   }
+
+  
 
   export const updateNotificationById = async(req,res)=>{
     const _id = req.params.id;

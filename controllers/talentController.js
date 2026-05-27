@@ -6,6 +6,8 @@ import friendModel from "../models/friends.js";
 import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js";
 import talentPostDataModel from "../models/talentPostData.js";
 import redis from "../config/redis.js";
+import { broadcastNotification, emitNotification } from "./notificationController.js";
+import followerModel from "../models/followers.js";
 
 export const generateTalentStage = async (name, region , isUpdated = false) => {
     const cacheKey = `stage:${name}:${region}`;
@@ -23,9 +25,7 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
           region
         }
       },
-      // =======================
       // LOOKUP ALL USERS ONCE
-      // =======================
       {
         $lookup: {
           from: "users",
@@ -191,10 +191,7 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
   
         }
       },
-  
-      // =======================
       // CLEANUP
-      // =======================
       {
         $project: {
           contestantUsers: 0,
@@ -602,59 +599,39 @@ export const getStagesByRegion = async (req, res) => {
         user_id,
         room_id,
         type,
-  
         videoFileName,
         videoFileId,
-  
         thumbnailFileName,
         thumbnailFileId,
-  
-        profile_img,
-        name,
-        email,
       } = req.body;
   
-      // =========================
       // VALIDATION
-      // =========================
-  
       if (!mongoose.Types.ObjectId.isValid(user_id)) {
         return res.status(400).json({
           error: "Invalid user_id"
         });
       }
-  
       if (!mongoose.Types.ObjectId.isValid(stage_id)) {
         return res.status(400).json({
           error: "Invalid stage_id"
         });
       }
-  
-      // =========================
       // GENERATE URLS
-      // =========================
-  
       const thumbnailSignedUrl =
         await getPublicUrlFromB2(thumbnailFileName);
-  
       const thumbNailCdnUrl =
         thumbnailSignedUrl.replace(
           "https://f005.backblazeb2.com",
           "https://cdn.challenmemey.com"
         );
-  
       const signedUrl =
         await getSignedUrlFromB2(videoFileName);
-  
       const cdnUrl =
         signedUrl.replace(
           "https://f005.backblazeb2.com",
           "https://cdn.challenmemey.com"
         );
-  
-      // =========================
       // FIND STAGE
-      // =========================
   
       const talent =
         await talentModel.findById(stage_id);
@@ -664,11 +641,7 @@ export const getStagesByRegion = async (req, res) => {
           error: "Talent stage expired"
         });
       }
-  
-      // =========================
       // PERFORMANCE OBJECT
-      // =========================
-  
       const performance = {
         video: {
           fileId: videoFileId,
@@ -676,19 +649,16 @@ export const getStagesByRegion = async (req, res) => {
           signedUrl,
           cdnUrl,
         },
-  
         thumbnail: {
           fileId: thumbnailFileId,
           fileName: thumbnailFileName,
           publicUrl: thumbNailCdnUrl,
         },
-  
         date: new Date(),
       };
   
-      // =========================
+
       // FIND EXISTING CONTESTANT
-      // =========================
   
       const existingContestant =
         talent.contestants.find(
@@ -768,77 +738,63 @@ export const getStagesByRegion = async (req, res) => {
       await newPostData.save();
 
       if (type === "new") {
-        const friend =
-          await friendModel.findOne({
-            user_id:
-              new mongoose.Types.ObjectId(user_id)
-          });
-        // notify friends
-        if (friend?.friends?.length) {
-          for (const friendId of friend.friends) {
-            const notification = {
-              receiver_id: friendId,
-              type: "talent",
-              stage: talent.name,
-              isRead: false,
-              message:
-                "has participated in a talent show",
-              content: {
-                sender_id: user_id,
-                talentRoom_id: stage_id,
-                talentName: talent.name,
-                region: talent.region,
-                profile_img,
-                name,
-                email,
-              }
-            };
-            await new notificationModel(
-              notification
-            ).save();
-          }
-        }
-        // notify contestants
-        for (const c of talent.contestants) {
-          if (
-            c.user_id?.toString() !==
-            user_id.toString()
-          ) {
-            const isFriend =
-              friend?.friends?.find(
-                f =>
-                  f.toString() ===
-                  c.user_id?.toString()
-              );
-            if (!isFriend) {
-              const notification = {
-                receiver_id:
-                  c.user_id.toString(),
-                type: "talent",
-                isRead: false,
-                message:
-                  "has participated in the Talent Contest you are posted in",
-                content: {
-                  sender_id: user_id,
-                  talentRoom_id: stage_id,
-                  talentName: talent.name,
-                  region: talent.region,
-                  profile_img,
-                  name,
-                  email,
-                }
+
+              const friend = await friendModel.findOne({
+                user_id: new mongoose.Types.ObjectId(user_id)
+              });
+              const friends = friend?.friends || [];
+              const follow = await followerModel.findOne({
+                user_id
+              });
+              const followers = follow?.followers || [];
+              const contestants = talent?.contestants || [];
+              const audienceSet = new Set();
+              // helper to safely add ids
+              const addToSet = (arr, field = null) => {
+                arr?.forEach(item => {
+                  const id = field ? item?.[field] : item;
+                  if (!id) return;
+                  const strId = id.toString();
+                  if (strId !== user_id.toString()) {
+                    audienceSet.add(strId);
+                  }
+                });
               };
-  
-              await new notificationModel(
-                notification
-              ).save();
-            }
-          }
-        }
-      }
-      // =========================
+
+              // merge all groups
+              addToSet(friends);
+              addToSet(followers);
+              addToSet(contestants, "user_id");
+              // final array
+              const audience = Array.from(audienceSet);
+              console.log(audience)
+              await broadcastNotification(
+                                          audience ,
+                                          user_id ,
+                                          "competition" ,
+                                          "contest_joined",
+                                          {
+                                          stage_id: stage_id,
+                                          stageName: talent.name,
+                                          stageRegion: talent.region,
+                                          }
+                                          )
+              // inform the user that his performance is posted
+              await emitNotification (
+                user_id,
+                null,
+                "competition" ,
+                "contest_joined",
+                {
+                stage_id: stage_id,
+                stageName: talent.name,
+                stageRegion: talent.region,
+                }
+                )
+       }
+
+
       // RETURN STRUCTURED STAGE
-      // =========================
       const structuredTalent =
         await generateTalentStage(
           talent.name,
@@ -853,13 +809,14 @@ export const getStagesByRegion = async (req, res) => {
         "Upload error:",
         err
       );
-  
       return res.status(500).json({
         error:
           "Failed to upload contestant"
       });
     }
   }
+
+
 
   export const resignContestantFromStage =  async (req, res) => {
     try {
@@ -939,27 +896,27 @@ export const getStagesByRegion = async (req, res) => {
           c.rank = index + 1;
         }
       );
-      // =========================
+
       // NOTIFY RESIGNED USER
-      // =========================
-      await new notificationModel({
-        receiver_id: user_id,
-        type: "talent",
-        isRead: false,
-        message:
-          "you have been eliminated from talent show",
-        content: {
-          sender_id: user_id,
-          talentRoom_id: room_id,
-          talentName: talentRoom.name,
-          name: "Admin",
-          profile_img: "admin",
-          region: talentRoom.region,
-        }
-      }).save();
-      // =========================
+
+      // await new notificationModel({
+      //   receiver_id: user_id,
+      //   type: "talent",
+      //   isRead: false,
+      //   message:
+      //     "you have been eliminated from talent show",
+      //   content: {
+      //     sender_id: user_id,
+      //     talentRoom_id: room_id,
+      //     talentName: talentRoom.name,
+      //     name: "Admin",
+      //     profile_img: "admin",
+      //     region: talentRoom.region,
+      //   }
+      // }).save();
+ 
       // MOVE QUEUED USER
-      // =========================
+
       let queuedContestant = null;
       if (
         talentRoom.contestants.length < 22 &&
@@ -985,23 +942,23 @@ export const getStagesByRegion = async (req, res) => {
           }
         );
         // notification
-        await new notificationModel({
-          receiver_id:
-            queuedContestant.user_id.toString(),
-          type: "talent",
-          isRead: false,
-          message:
-            "your participation has been posted in the talent contest",
-          content: {
-            sender_id:
-              queuedContestant.user_id.toString(),
-            talentRoom_id: room_id,
-            talentName:
-              talentRoom.name,
-            region:
-              talentRoom.region,
-          }
-        }).save();
+        // await new notificationModel({
+        //   receiver_id:
+        //     queuedContestant.user_id.toString(),
+        //   type: "talent",
+        //   isRead: false,
+        //   message:
+        //     "your participation has been posted in the talent contest",
+        //   content: {
+        //     sender_id:
+        //       queuedContestant.user_id.toString(),
+        //     talentRoom_id: room_id,
+        //     talentName:
+        //       talentRoom.name,
+        //     region:
+        //       talentRoom.region,
+        //   }
+        // }).save();
       }
       // =========================
       // SAVE
@@ -1086,6 +1043,8 @@ export const getStagesByRegion = async (req, res) => {
 
    } 
 
+
+
    export const deleteContestantFromEliminations =   async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
@@ -1132,8 +1091,9 @@ export const getStagesByRegion = async (req, res) => {
   
   export const addUserPerformance = async(req,res)=>{
     const _id = req.params.id
-    console.log("I am here updating")
     const talent = await talentModel.findById(_id)
+    if(!talent) return res.json({error:"expired"}).status(404)
+
     if(req.body.type !== "eupdate"){
     const contestant = req.body.type === "update" ? talent.contestants.find(c => c.user_id.toString() === req.body.user_id.toString() ):
                                                     talent.queue.find(c => c.user_id.toString() === req.body.user_id )
@@ -1167,55 +1127,108 @@ export const getStagesByRegion = async (req, res) => {
       },
       date: new Date()
    })
-  //  req.body.type == "update" && talent.markModified("contestants");
-  //  req.body.type == "qupdate" && talent.markModified("queue");
-   if(req.body.type =="update"){
-    const friend = await friendModel.findOne({receiver_id:req.body.user_id})
-    if(friend)
-      friend.friends.forEach(async(friend) =>{
-        let   message = "has updated his participation in a talent show"     
-        const notification = {
-            receiver_id:friend.user_id,
-            type:"talent",
-            isRead:false,
-            message:message, 
-            content: {  
-                sender_id:req.body.user_id,
-                talentRoom_id:_id,
-                talentName:talent.name,
-                region:talent.region, 
-                profile_img:req.body.profile_img,
-                name:req.body.name,
-                email:req.body.email,  
-            }
-          
-        }
 
-        await notificationModel(notification).save()
-     })
-     talent.contestants.forEach(async(c)=>{
-      if(req.body.user_id !== c.user_id && !friend?.friends.find(f => f.user_idtoString() == c.user_id)){
-        let   message = "has updated his post in the Talent Contest you are posted in"     
-        const notification = {
-          receiver_id:c.user_id,
-          type:"talent",
-          isRead:false,
-          message:message , 
-          content: {  
-              sender_id:req.body.user_id,
-              talentRoom_id:_id,
-              talentName:talent.name,
-              region:talent.region, 
-              profile_img:req.body.profile_img,
-              name:req.body.name,
-              email:req.body.email,  
-          }
+  
+   if(req.body.type =="update"){
+
+    // const friend = await friendModel.findOne({receiver_id:req.body.user_id})
+    // if(friend)
+    //   friend.friends.forEach(async(friend) =>{
+    //     let   message = "has updated his participation in a talent show"     
+    //     const notification = {
+    //         receiver_id:friend.user_id,
+    //         type:"talent",
+    //         isRead:false,
+    //         message:message, 
+    //         content: {  
+    //             sender_id:req.body.user_id,
+    //             talentRoom_id:_id,
+    //             talentName:talent.name,
+    //             region:talent.region, 
+    //             profile_img:req.body.profile_img,
+    //             name:req.body.name,
+    //             email:req.body.email,  
+    //         }
+          
+    //     }
+
+    //     await notificationModel(notification).save()
+    //  })
+    //  talent.contestants.forEach(async(c)=>{
+    //   if(req.body.user_id !== c.user_id && !friend?.friends.find(f => f.user_idtoString() == c.user_id)){
+    //     let   message = "has updated his post in the Talent Contest you are posted in"     
+    //     const notification = {
+    //       receiver_id:c.user_id,
+    //       type:"talent",
+    //       isRead:false,
+    //       message:message , 
+    //       content: {  
+    //           sender_id:req.body.user_id,
+    //           talentRoom_id:_id,
+    //           talentName:talent.name,
+    //           region:talent.region, 
+    //           profile_img:req.body.profile_img,
+    //           name:req.body.name,
+    //           email:req.body.email,  
+    //       }
+    //   }
+    //   await notificationModel(notification).save()
+    // }
+    // })
+    const friend = await friendModel.findOne({
+      user_id: new mongoose.Types.ObjectId(req.body.user_id)
+    });
+    const friends = friend?.friends || [];
+    const follow = await followerModel.findOne({
+      user_id :req.body.user_id
+    });
+    const followers = follow?.followers || [];
+    const contestants = talent?.contestants || [];
+    const audienceSet = new Set();
+    // helper to safely add ids
+    const addToSet = (arr, field = null) => {
+      arr?.forEach(item => {
+        const id = field ? item?.[field] : item;
+        if (!id) return;
+        const strId = id.toString();
+        if (strId !== req.body.user_id.toString()) {
+          audienceSet.add(strId);
+        }
+      });
+    };
+
+    // merge all groups
+    addToSet(friends);
+    addToSet(followers);
+    addToSet(contestants, "user_id");
+    // final array
+    const audience = Array.from(audienceSet);
+    await broadcastNotification(
+                                audience ,
+                                req.body.user_id ,
+                                "competition" ,
+                                "performance_posted",
+                                {
+                                stage_id: talent._id,
+                                stageName: talent.name,
+                                stageRegion: talent.region,
+                                }
+                                )
+    // inform the user that his performance is posted
+    await emitNotification (
+      req.body.user_id,
+      null,
+      "competition" ,
+      "performance_posted",
+      {
+      stage_id: talent._id,
+      stageName: talent.name,
+      stageRegion: talent.region,
       }
-      await notificationModel(notification).save()
+      )
+
     }
-    })
-    }
-    if(!talent) return res.json({error:"expired"}).status(404)
+    // if(!talent) return res.json({error:"expired"}).status(404)
   }else {
        const talent = await talentModel.findById(_id)
        if(!talent) return res.json({error:"expired"}).status(404)

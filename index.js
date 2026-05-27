@@ -45,18 +45,18 @@ app.get("/redis-test", async (req, res) => {
     });
  });
 
- 
+
 function validateRequestNetwork(req,res,next) {
     try {  
         next()
     } catch (error) {
         console.log(error)
     }
-}
+}   
 // console.log("PRIVATE KEY START:", process.env.FIREBASE_PRIVATE_KEY?.slice(0, 30));
 app.listen(process.env.PORT,()=> {
     console.log("running on port" + process.env.PORT)
-})
+})  
 
 
 console.log("PUBLIC KEY ID:", process.env.B2_PUBLIC_KEY_ID);
