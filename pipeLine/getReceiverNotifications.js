@@ -95,3 +95,23 @@ async ({
   }
 
 };
+
+
+export async function sendPush(expoPushToken, payload) {
+  const message = {
+    to: expoPushToken,
+    sound: "default",
+    title: payload.title,
+    body: payload.body,
+    data: payload.data || {},
+  };
+  await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(message),
+  });
+
+}

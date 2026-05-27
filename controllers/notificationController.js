@@ -1,6 +1,7 @@
 import redis from "../config/redis.js";
-import { getReceiverNotifications } from "../pipeLine/getReceiverNotifications.js";
+import { getReceiverNotifications, sendPush } from "../pipeLine/getReceiverNotifications.js";
 import notificationService from "../service/notificationService.js";
+import { getUserProfile } from "./userController.js";
 
 
 
@@ -52,6 +53,12 @@ export const emitNotification = async (
         type,
         metadata,
       });
+      const user = getUserProfile(receiverId)
+      await sendPush(user.expoPushToken, {
+        title: "New Activity",
+        body: "A friend joined a stage",
+      });
+
       return notification;
     } catch (err) {
       console.log('EMIT NOTIFICATION ERROR:', err);
