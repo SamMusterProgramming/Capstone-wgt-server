@@ -1201,7 +1201,7 @@ export const getStagesByRegion = async (req, res) => {
     addToSet(friends);
     addToSet(followers);
     addToSet(contestants, "user_id");
-    // final array
+    //inform friends followers about the joing the stage
     const audience = Array.from(audienceSet);
     await broadcastNotification(
                                 audience ,
@@ -1212,6 +1212,7 @@ export const getStagesByRegion = async (req, res) => {
                                 stage_id: talent._id,
                                 stageName: talent.name,
                                 stageRegion: talent.region,
+                                contestant_id: eq.body.user_id 
                                 }
                                 )
     // inform the user that his performance is posted
@@ -1224,6 +1225,7 @@ export const getStagesByRegion = async (req, res) => {
       stage_id: talent._id,
       stageName: talent.name,
       stageRegion: talent.region,
+      contestant_id: eq.body.user_id 
       }
       )
     }
