@@ -68,7 +68,7 @@ export const emitNotification = async (
       await sendPushNotification(receiver.expoPushToken, {
         title: "New Activity",
         body: pushNotification.presentation.text,
-        data: pushNotification.metadata
+        data: {...pushNotification.metadata , type : notification.type}
       });
       return notification;
     } catch (err) {
