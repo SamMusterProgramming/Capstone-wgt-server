@@ -1226,7 +1226,6 @@ export const getStagesByRegion = async (req, res) => {
       stageRegion: talent.region,
       }
       )
-
     }
     // if(!talent) return res.json({error:"expired"}).status(404)
   }else {

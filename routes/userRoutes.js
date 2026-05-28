@@ -19,7 +19,7 @@ import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
 import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
 import { followingRequest, getFollowersList, unfollowingRequest } from '../controllers/followController.js';
-import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, updateNotificationById, updateUserInfoById } from '../controllers/userController.js';
+import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
 import { getNotifications } from '../controllers/notificationController.js';
 // import admin from '../service/firebase.js';
 
@@ -38,9 +38,11 @@ route.post("/auth/anonymous", anonymouslogin);
 //expoPush token
 route.post("/pushexpotoken", async (req, res) => {
   const { userId, expoPushToken } = req.body;
-  await userModel.findByIdAndUpdate(userId, {
+  const user = await userModel.findByIdAndUpdate(userId, {
     expoPushToken,
-  });
+  },
+  { new: true });
+  await updateUserProfileRedis (user)
   res.sendStatus(200);
 });
 

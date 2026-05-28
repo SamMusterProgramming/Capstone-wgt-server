@@ -21,15 +21,12 @@ export const getUserProfile = async (
         `user:${userId}`
       );
     if (cached) {
-      console.log("cache hit");
       return cached;
     }
     // 2. FALLBACK TO MONGO
     const user =
       await userModel.findById(userId);
-
     if (!user) return null;
-
     // convert mongoose document
     const plainUser =
       user.toObject();
@@ -37,6 +34,35 @@ export const getUserProfile = async (
     // 3. CACHE USER
     await redis.set(
       `user:${userId}`,
+      JSON.stringify(plainUser),
+      {
+        EX: 60 * 10,
+      }
+    );
+    return plainUser;
+  } catch (err) {
+    console.log(
+      "GET USER PROFILE ERROR:",
+      err
+    );
+    return null;
+  }
+};
+
+
+export const updateUserProfileRedis = async (
+  user
+) => {
+  if (!user) return null;
+  try {
+   
+    // convert mongoose document
+    const plainUser =
+      user.toObject();
+
+    // 3. CACHE USER
+    await redis.set(
+      `user:${user._id}`,
       JSON.stringify(plainUser),
       {
         EX: 60 * 10,
@@ -248,7 +274,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
     res.json(notifications).status(200)
   }
 
-  
+
 
   export const updateNotificationById = async(req,res)=>{
     const _id = req.params.id;
