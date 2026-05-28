@@ -30,11 +30,10 @@ export const broadcastNotification = async (
         });
         const pushNotification = await  buildPushNotification(notification)
         const receiver = await getUserProfile(receiverId)
-        console.log(receiver)
         await sendPushNotification(receiver.expoPushToken, {
           title: "New Activity",
-          body: pushNotification.presentation,
-          data: pushNotification.metadata
+          body: pushNotification.presentation.text,
+          data: {...pushNotification.metadata , type : notification.type}
         });
         }
   } catch (err) {
@@ -64,7 +63,6 @@ export const emitNotification = async (
       //try only
       const pushNotification = await  buildPushNotification(notification)
       const receiver = await getUserProfile(receiverId)
-      console.log(receiver)
       await sendPushNotification(receiver.expoPushToken, {
         title: "New Activity",
         body: pushNotification.presentation.text,
