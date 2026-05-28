@@ -36,7 +36,6 @@ export const broadcastNotification = async (
           data: pushNotification.metadata
         });
         }
-      
   } catch (err) {
     console.log(
       'BROADCAST NOTIFICATION ERROR:',
@@ -66,7 +65,7 @@ export const emitNotification = async (
       const receiver = await getUserProfile(receiverId)
       await sendPushNotification(receiver.expoPushToken, {
         title: "New Activity",
-        body: pushNotification.presentation,
+        body: pushNotification.presentation.text,
         data: pushNotification.metadata
       });
       return notification;
