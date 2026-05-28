@@ -145,6 +145,7 @@ export async function sendPushNotification(expoPushToken, payload) {
     body: payload.body,
     data: payload.data || {},
   };
+ 
   await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
