@@ -1,5 +1,5 @@
 import redis from "../config/redis.js";
-import { getReceiverNotifications, sendPush } from "../pipeLine/getReceiverNotifications.js";
+import { buildPushNotification, getReceiverNotifications,  sendPushNotification } from "../pipeLine/getReceiverNotifications.js";
 import notificationService from "../service/notificationService.js";
 import { getUserProfile } from "./userController.js";
 
@@ -19,17 +19,24 @@ export const broadcastNotification = async (
   try {
     const uniqueReceivers =
     [...new Set(receivers)];
-    if (!uniqueReceivers.length) return;
-    for (const receiverId of uniqueReceivers) {
-    await notificationService.emit({
-        receiverId,
-        senderId,
-        category,
-        type,
-        metadata,
-      });
-    }
-   
+        if (!uniqueReceivers.length) return;
+        for (const receiverId of uniqueReceivers) {
+        const notification = await notificationService.emit({
+            receiverId,
+            senderId,
+            category,
+            type,
+            metadata,
+        });
+        const pushNotification = await  buildPushNotification(notification)
+        const receiver = await getUserProfile(receiverId)
+        await sendPushNotification(receiver.expoPushToken, {
+          title: "New Activity",
+          body: pushNotification.presentation,
+          data: pushNotification.metadata
+        });
+        }
+      
   } catch (err) {
     console.log(
       'BROADCAST NOTIFICATION ERROR:',
@@ -37,6 +44,7 @@ export const broadcastNotification = async (
     );
   }
 };
+
 
 export const emitNotification = async (
                                         receiverId,
@@ -53,17 +61,19 @@ export const emitNotification = async (
         type,
         metadata,
       });
-      const user = getUserProfile(receiverId)
-      await sendPush(user.expoPushToken, {
+      //try only
+      const pushNotification = await  buildPushNotification(notification)
+      const receiver = await getUserProfile(receiverId)
+      await sendPushNotification(receiver.expoPushToken, {
         title: "New Activity",
-        body: "A friend joined a stage",
+        body: pushNotification.presentation,
+        data: pushNotification.metadata
       });
-
       return notification;
     } catch (err) {
       console.log('EMIT NOTIFICATION ERROR:', err);
     }
-  };
+};
 
 
   // controller example

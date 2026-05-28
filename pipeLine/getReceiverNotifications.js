@@ -96,8 +96,48 @@ async ({
 
 };
 
+export async function buildPushNotification(notification) {
+      // sender profile
+      const sender =
+      await getUserProfile(
+        notification.sender_id,
+      ) || null;
+    // template builder
+    const builder =
+      notificationViewBuilders[
+        notification.type
+      ];
+    // final presentation
+    const presentation =
+      builder
+        ? builder({
+            sender:
+              sender || {},
+            metadata:
+              notification.metadata || {},
+          })
+        : null;
+    return {
+      _id:
+        notification._id,
+      type:
+        notification.type,
+      category:
+        notification.category,
+      is_read:
+        notification.is_read,
+      createdAt:
+        notification.createdAt,
+      sender,
+      metadata:
+        notification.metadata,
+      presentation,
+    };
+}
 
-export async function sendPush(expoPushToken, payload) {
+
+export async function sendPushNotification(expoPushToken, payload) {
+  if(!expoPushToken) return ;
   const message = {
     to: expoPushToken,
     sound: "default",
