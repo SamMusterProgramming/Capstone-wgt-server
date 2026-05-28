@@ -777,6 +777,7 @@ export const getStagesByRegion = async (req, res) => {
                                           stage_id: stage_id,
                                           stageName: talent.name,
                                           stageRegion: talent.region,
+                                          contestant_id: user_id 
                                           }
                                           )
               // inform the user that his performance is posted
@@ -789,6 +790,7 @@ export const getStagesByRegion = async (req, res) => {
                 stage_id: stage_id,
                 stageName: talent.name,
                 stageRegion: talent.region,
+                contestant_id:user_id 
                 }
                 )
        }
