@@ -783,7 +783,7 @@ export const getStagesByRegion = async (req, res) => {
               // inform the user that his performance is posted
               await emitNotification (
                 user_id,
-                user_id,
+                null,
                 "competition" ,
                 "contest_joined",
                 {

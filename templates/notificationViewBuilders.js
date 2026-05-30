@@ -16,7 +16,6 @@ export const notificationViewBuilders = {
       image:
         sender?.profileImage?.publicUrl || null,
     }),
-
     performance_posted: ({
       sender,
       metadata,
@@ -29,7 +28,6 @@ export const notificationViewBuilders = {
       image:
         sender.profile_image || null,
     }),
-  
     friend_request: ({
       sender,
     }) => ({
