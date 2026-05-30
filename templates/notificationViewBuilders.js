@@ -14,7 +14,7 @@ export const notificationViewBuilders = {
       subtitle:
         `Region ${metadata.stageRegion}`,
       image:
-        sender.profile_image || null,
+        sender?.profileImage?.publicUrl || null,
     }),
 
     performance_posted: ({
@@ -44,4 +44,3 @@ export const notificationViewBuilders = {
   };
 
 
-  

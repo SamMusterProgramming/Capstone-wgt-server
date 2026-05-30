@@ -1,6 +1,7 @@
 import redis from "../config/redis.js";
 import { buildPushNotification, getReceiverNotifications,  sendPushNotification } from "../pipeLine/getReceiverNotifications.js";
 import notificationService from "../service/notificationService.js";
+import { notificationViewBuilders } from "../templates/notificationViewBuilders.js";
 import { getUserProfile } from "./userController.js";
 
 

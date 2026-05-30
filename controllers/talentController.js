@@ -783,7 +783,7 @@ export const getStagesByRegion = async (req, res) => {
               // inform the user that his performance is posted
               await emitNotification (
                 user_id,
-                null,
+                user_id,
                 "competition" ,
                 "contest_joined",
                 {
@@ -1214,7 +1214,7 @@ export const getStagesByRegion = async (req, res) => {
                                 stage_id: talent._id,
                                 stageName: talent.name,
                                 stageRegion: talent.region,
-                                contestant_id: eq.body.user_id 
+                                contestant_id: req.body.user_id 
                                 }
                                 )
     // inform the user that his performance is posted
@@ -1227,7 +1227,7 @@ export const getStagesByRegion = async (req, res) => {
       stage_id: talent._id,
       stageName: talent.name,
       stageRegion: talent.region,
-      contestant_id: eq.body.user_id 
+      contestant_id: req.body.user_id 
       }
       )
     }

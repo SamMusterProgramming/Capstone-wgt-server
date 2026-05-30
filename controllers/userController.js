@@ -55,7 +55,6 @@ export const updateUserProfileRedis = async (
 ) => {
   if (!user) return null;
   try {
-   
     // convert mongoose document
     const plainUser =
       user.toObject();
