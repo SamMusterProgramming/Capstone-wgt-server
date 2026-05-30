@@ -26,8 +26,20 @@ export const notificationViewBuilders = {
       subtitle:
         metadata.stageName || "",
       image:
-        sender.profile_image || null,
+        sender?.profile_image || null,
     }),
+    eliminated: ({
+        sender,
+        metadata,
+      }) => ({
+        text:
+        //   sender.name ?`${sender.name} posted a new performance` :
+       `Your are eliminated from ${metadata.stageName} Stage `,
+        subtitle:
+          metadata.stageName || "",
+        image:
+          sender?.profile_image || null,
+      }),
     friend_request: ({
       sender,
     }) => ({

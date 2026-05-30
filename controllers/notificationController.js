@@ -5,11 +5,6 @@ import { notificationViewBuilders } from "../templates/notificationViewBuilders.
 import { getUserProfile } from "./userController.js";
 
 
-
-
-
-
-
 export const broadcastNotification = async (
                                     receivers = [],
                                     senderId,
@@ -19,7 +14,7 @@ export const broadcastNotification = async (
                                     ) => {
   try {
     const uniqueReceivers =
-    [...new Set(receivers)];
+        [...new Set(receivers)];
         if (!uniqueReceivers.length) return;
         for (const receiverId of uniqueReceivers) {
         const notification = await notificationService.emit({
@@ -34,7 +29,10 @@ export const broadcastNotification = async (
         await sendPushNotification(receiver.expoPushToken, {
           title: "New Activity",
           body: pushNotification.presentation.text,
-          data: {...pushNotification.metadata , type : notification.type}
+          data: {...pushNotification.metadata ,
+                type : notification.type,
+                notification_id:notification._id
+                }
         });
         }
   } catch (err) {
@@ -67,10 +65,11 @@ export const emitNotification = async (
       await sendPushNotification(receiver.expoPushToken, {
         title: "New Activity",
         body: pushNotification.presentation.text,
-        data: {...pushNotification.metadata , 
+        data: {
+               ...pushNotification.metadata , 
                type : notification.type , 
                notification_id:notification._id,
-        }
+              }
       });
       return notification;
     } catch (err) {

@@ -790,7 +790,7 @@ export const getStagesByRegion = async (req, res) => {
                 stage_id: stage_id,
                 stageName: talent.name,
                 stageRegion: talent.region,
-                contestant_id:user_id 
+                contestant_id: user_id 
                 }
                 )
        }
@@ -824,9 +824,7 @@ export const getStagesByRegion = async (req, res) => {
     try {
       const room_id = req.params.id;
       const { user_id, post_id } = req.body;
-      // =========================
       // VALIDATION
-      // =========================
       if (!mongoose.Types.ObjectId.isValid(room_id)) {
         return res.status(400).json({
           error: "Invalid room id"
@@ -837,9 +835,7 @@ export const getStagesByRegion = async (req, res) => {
           error: "Invalid user id"
         });
       }
-      // =========================
       // FIND TALENT ROOM
-      // =========================
       const talentRoom =
         await talentModel.findById(room_id);
 
@@ -848,9 +844,7 @@ export const getStagesByRegion = async (req, res) => {
           error: "Talent room expired"
         });
       }
-      // =========================
       // FIND CONTESTANT
-      // =========================
       const contestantIndex =
         talentRoom.contestants.findIndex(
           c =>
@@ -866,23 +860,16 @@ export const getStagesByRegion = async (req, res) => {
         talentRoom.contestants[
           contestantIndex
         ];
-      // =========================
       // REMOVE CONTESTANT
-      // =========================
       talentRoom.contestants.splice(
         contestantIndex,
         1
       );
-      
-      // =========================
       // MOVE TO ELIMINATIONS
-      // =========================
       talentRoom.eliminations.push(
         deletedContestant
       );
-      // =========================
       // RECALCULATE RANKS
-      // =========================
       talentRoom.contestants.sort(
         (a, b) => {
 
@@ -901,21 +888,18 @@ export const getStagesByRegion = async (req, res) => {
 
       // NOTIFY RESIGNED USER
 
-      // await new notificationModel({
-      //   receiver_id: user_id,
-      //   type: "talent",
-      //   isRead: false,
-      //   message:
-      //     "you have been eliminated from talent show",
-      //   content: {
-      //     sender_id: user_id,
-      //     talentRoom_id: room_id,
-      //     talentName: talentRoom.name,
-      //     name: "Admin",
-      //     profile_img: "admin",
-      //     region: talentRoom.region,
-      //   }
-      // }).save();
+      await emitNotification (
+        user_id,
+        null,
+        "competition" ,
+        "eliminated",
+        {
+        stage_id: room_id,
+        stageName: talentRoom.name, 
+        stageRegion: talentRoom.region, 
+        contestant_id: user_id 
+        }
+      )
  
       // MOVE QUEUED USER
 
