@@ -928,6 +928,20 @@ export const getStagesByRegion = async (req, res) => {
         talentRoom.contestants.push(
           queuedContestant
         );
+        if(queuedContestant){
+            await emitNotification (
+              queuedContestant.user_id,
+              null,
+              "competition" ,
+              "contest_join",
+              {
+              stage_id: room_id,
+              stageName: talentRoom.name, 
+              stageRegion: talentRoom.region, 
+              contestant_id: queuedContestant.user_id 
+              }
+            )
+        }
         // rerank again
         talentRoom.contestants.sort(
           (a, b) => {

@@ -34,7 +34,8 @@ export const notificationViewBuilders = {
       }) => ({
         text:
         //   sender.name ?`${sender.name} posted a new performance` :
-       `Your are joined the queue of the ${metadata.stageName} Stage `,
+       `Your are in queue for the ${metadata.stageName} Stage ,
+        you will be notified when you are on stage`,
         subtitle:
           metadata.stageName || "",
         image:
@@ -46,7 +47,7 @@ export const notificationViewBuilders = {
       }) => ({
         text:
         //   sender.name ?`${sender.name} posted a new performance` :
-       `Your are eliminated from ${metadata.stageName} Stage `,
+       `Your are eliminated from the ${metadata.stageName} Stage `,
         subtitle:
           metadata.stageName || "",
         image:
