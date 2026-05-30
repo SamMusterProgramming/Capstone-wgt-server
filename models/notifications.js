@@ -77,6 +77,7 @@ const notificationSchema = new mongoose.Schema({
       // COMPETITION
       'performance_posted',
       'contest_joined',
+      "contest_queued",
       'advanced_to_next_round',
       'eliminated',
 

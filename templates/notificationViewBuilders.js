@@ -28,6 +28,18 @@ export const notificationViewBuilders = {
       image:
         sender?.profile_image || null,
     }),
+    contest_queued: ({
+        sender,
+        metadata,
+      }) => ({
+        text:
+        //   sender.name ?`${sender.name} posted a new performance` :
+       `Your are joined the queue of the ${metadata.stageName} Stage `,
+        subtitle:
+          metadata.stageName || "",
+        image:
+          sender?.profile_image || null,
+      }),
     eliminated: ({
         sender,
         metadata,

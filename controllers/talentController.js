@@ -604,7 +604,8 @@ export const getStagesByRegion = async (req, res) => {
         thumbnailFileName,
         thumbnailFileId,
       } = req.body;
-  
+      let  hasJoined = false;
+      let  isQueued = false;
       // VALIDATION
       if (!mongoose.Types.ObjectId.isValid(user_id)) {
         return res.status(400).json({
@@ -673,10 +674,7 @@ export const getStagesByRegion = async (req, res) => {
             c.user_id?.toString() ===
             user_id
         );
-  
-      // =========================
       // NEW CONTESTANT
-      // =========================
       const contestant = {
         _id: new mongoose.Types.ObjectId(),
         user_id:
@@ -702,11 +700,12 @@ export const getStagesByRegion = async (req, res) => {
         // stage has room
         if (talent.contestants.length < 22) {
           talent.contestants.push(contestant);
+          hasJoined = true ;
           // ranking
           talent.contestants.sort((a, b) => {
             if (a.votes !== b.votes) {
               return b.votes - a.votes;
-            }
+            } 
             return b.likes - a.likes;
           });
           talent.contestants.forEach((c, index) => {
@@ -714,13 +713,14 @@ export const getStagesByRegion = async (req, res) => {
           });
         } else {
           // push to queue
+          isQueued = true ;
           talent.queue.push(contestant);
         }
       
       }
 
       else {
-
+        isQueued = true ;
         talent.queue.push(contestant);
       }
       await talent.save();
@@ -737,7 +737,7 @@ export const getStagesByRegion = async (req, res) => {
       });
       await newPostData.save();
 
-      if (type === "new") {
+      if (hasJoined) {
 
               const friend = await friendModel.findOne({
                 user_id: new mongoose.Types.ObjectId(user_id)
@@ -786,6 +786,21 @@ export const getStagesByRegion = async (req, res) => {
                 null,
                 "competition" ,
                 "contest_joined",
+                {
+                stage_id: stage_id,
+                stageName: talent.name,
+                stageRegion: talent.region,
+                contestant_id: user_id 
+                }
+                )
+       }
+       if (isQueued) {
+               // inform the user that his is in queue
+               await emitNotification (
+                user_id,
+                null,
+                "competition" ,
+                "contest_queued",
                 {
                 stage_id: stage_id,
                 stageName: talent.name,
