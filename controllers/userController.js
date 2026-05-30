@@ -284,6 +284,15 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
     res.json(notification).status(200)
   }
 
+  export const markNotificationRead = async(req,res)=>{
+    const _id = req.params.id;
+    const notification = await notificationModel.findById(_id)
+    if(!notification) return res.json("notification expired")
+    notification.is_read = true;
+    await notification.save();
+    res.json(notification).status(200)
+  }
+
   export const deleteNotificationById  = async(req,res)=>{
     const _id = req.params.id;
     const notifications = await notificationModel.findByIdAndDelete(_id)
