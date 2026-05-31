@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 import b2 from '../B2.js' 
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
-import { anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
+import { addPushToken, anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
 import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
@@ -36,16 +36,7 @@ route.post("/auth/google", googleLogin);
 route.post("/auth/anonymous", anonymouslogin);
 
 //expoPush token
-route.post("/pushexpotoken", async (req, res) => {
-  const { userId, expoPushToken } = req.body;
-  const user = await userModel.findByIdAndUpdate(userId, {
-    expoPushToken,
-  },
-  { new: true });
-  await updateUserProfileRedis (user)
-  res.sendStatus(200);
-});
-
+route.post("/pushexpotoken", addPushToken);
 
 // update user ,  name , profile image , cover , get user,  materials... 
 route.route('/user/:id')

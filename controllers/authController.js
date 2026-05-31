@@ -111,7 +111,7 @@ export const signup = async (req, res) => {
   };
 
 
-  //**********************anynomousLogin */
+  //********************** anynomousLogin ************************/
 
   export const anonymouslogin = async (req, res) => {
     try {
@@ -201,7 +201,6 @@ export const googleLogin = async (req, res) => {
       await ensureUserRelations(user);
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user);
-  
       // 📦 5. RESPONSE
       return res.status(200).json({
         message: "Google login successful",
@@ -228,3 +227,25 @@ export const googleLogin = async (req, res) => {
       res.status(500).json({ message: "Error fetching user" });
     }
   };                       
+
+  //------------------- pushToken ---------------
+  export const addPushToken = async (req, res) => {
+    const { userId, expoPushToken } = req.body;
+    await userModel.updateMany(
+      {
+        expoPushToken: pushToken,
+        _id: { $ne: user._id }
+      },
+      {
+        $unset: {
+          expoPushToken: ""
+        }
+      }
+    );
+    const user = await userModel.findByIdAndUpdate(userId, {
+      expoPushToken,
+    },
+    { new: true });
+    await updateUserProfileRedis (user)
+    res.sendStatus(200);
+  }
