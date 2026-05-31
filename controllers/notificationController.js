@@ -1,9 +1,9 @@
 import redis from "../config/redis.js";
+import notificationModel from "../models/notifications.js";
 import { buildPushNotification, getReceiverNotifications,  sendPushNotification } from "../pipeLine/getReceiverNotifications.js";
 import notificationService from "../service/notificationService.js";
 import { notificationViewBuilders } from "../templates/notificationViewBuilders.js";
 import { getUserProfile } from "./userController.js";
-
 
 export const broadcastNotification = async (
                                     receivers = [],
@@ -43,7 +43,6 @@ export const broadcastNotification = async (
   }
 };
 
-
 export const emitNotification = async (
                                         receiverId,
                                         senderId = null,
@@ -77,8 +76,56 @@ export const emitNotification = async (
     }
 };
 
+export const emitVotesNotification = async (
+                                            receiverId,
+                                            senderId = null,
+                                            category,
+                                            type,
+                                            metadata = {},
+                                            ) => {
+            try {
+                let existantNotification = await notificationModel.findOne({
+                    receiver_id: receiverId,
+                    category:"competition" ,
+                    type: "vote_received",
+                    is_read: false,
+                    "metadata.stage_id": metadata.stage_id
+                    });
+                if(!existantNotification)
+                    existantNotification = await notificationService.emit({
+                                                        receiverId,
+                                                        senderId,
+                                                        category,
+                                                        type,
+                                                        metadata,
+                                                        });
+                else {
+                    if(!existantNotification.metadata.recent_voters.find(v => v.voter_id == metadata.recent_voters[0].voter_id)){
+                    existantNotification.metadata.total_votes += 1;  
+                    existantNotification.metadata.recent_voters.unshift(metadata.recent_voters[0]);
+                    existantNotification.markModified("metadata");
+                    await existantNotification.save()
+                    }
+                }     
 
-  // controller example
+                if(existantNotification.metadata.recent_voters.length <= 9) return ; 
+                const pushNotification = await  buildPushNotification(existantNotification)
+                const receiver = await getUserProfile(receiverId)
+                await sendPushNotification(receiver.expoPushToken, {
+                    title: "New Activity",
+                    body: pushNotification.presentation.text,
+                    data: {
+                    ...pushNotification.metadata , 
+                    type : existantNotification.type , 
+                    }
+                });
+                return existantNotification;
+            } catch (err) {
+                console.log('EMIT NOTIFICATION ERROR:', err);
+            }
+};
+
+// controller example
 export const getNotifications = async (req, res) => {
   try {
     const notifications =

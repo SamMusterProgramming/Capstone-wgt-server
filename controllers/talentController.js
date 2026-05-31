@@ -50,13 +50,9 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
           as: "eliminationUsers"
         }
       },
-  
-      // =======================
       // SAFE MAPPER FUNCTION (contestants)
-      // =======================
       {
         $addFields: {
-  
           // -------- CONTESTANTS --------
           contestants: {
             $map: {
@@ -887,11 +883,9 @@ export const getStagesByRegion = async (req, res) => {
       // RECALCULATE RANKS
       talentRoom.contestants.sort(
         (a, b) => {
-
           if (a.votes !== b.votes) {
             return b.votes - a.votes;
           }
-
           return b.likes - a.likes;
         }
       );
@@ -933,7 +927,7 @@ export const getStagesByRegion = async (req, res) => {
               queuedContestant.user_id,
               null,
               "competition" ,
-              "contest_join",
+              "contest_joined",
               {
               stage_id: room_id,
               stageName: talentRoom.name, 
@@ -1146,50 +1140,7 @@ export const getStagesByRegion = async (req, res) => {
   
    if(req.body.type =="update"){
 
-    // const friend = await friendModel.findOne({receiver_id:req.body.user_id})
-    // if(friend)
-    //   friend.friends.forEach(async(friend) =>{
-    //     let   message = "has updated his participation in a talent show"     
-    //     const notification = {
-    //         receiver_id:friend.user_id,
-    //         type:"talent",
-    //         isRead:false,
-    //         message:message, 
-    //         content: {  
-    //             sender_id:req.body.user_id,
-    //             talentRoom_id:_id,
-    //             talentName:talent.name,
-    //             region:talent.region, 
-    //             profile_img:req.body.profile_img,
-    //             name:req.body.name,
-    //             email:req.body.email,  
-    //         }
-          
-    //     }
-
-    //     await notificationModel(notification).save()
-    //  })
-    //  talent.contestants.forEach(async(c)=>{
-    //   if(req.body.user_id !== c.user_id && !friend?.friends.find(f => f.user_idtoString() == c.user_id)){
-    //     let   message = "has updated his post in the Talent Contest you are posted in"     
-    //     const notification = {
-    //       receiver_id:c.user_id,
-    //       type:"talent",
-    //       isRead:false,
-    //       message:message , 
-    //       content: {  
-    //           sender_id:req.body.user_id,
-    //           talentRoom_id:_id,
-    //           talentName:talent.name,
-    //           region:talent.region, 
-    //           profile_img:req.body.profile_img,
-    //           name:req.body.name,
-    //           email:req.body.email,  
-    //       }
-    //   }
-    //   await notificationModel(notification).save()
-    // }
-    // })
+   
     const friend = await friendModel.findOne({
       user_id: new mongoose.Types.ObjectId(req.body.user_id)
     });

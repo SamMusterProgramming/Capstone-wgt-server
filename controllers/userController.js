@@ -93,7 +93,6 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
   }
 
   export const updateUserInfoById = async(req,res)=>{ 
-    console.log(req.body.name)
     const userId = req.params.id
     const user = await userModel.findByIdAndUpdate(
              userId,
@@ -101,6 +100,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
             { new: true }
           )
     if(!user) return res.json({error:"cant find the user"}).status(404)
+    await updateUserProfileRedis(user)
     res.status(200).json(user)
   }
 
@@ -163,7 +163,6 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         "https://f005.backblazeb2.com",
         "https://cdn.challenmemey.com"
       );
-  
       const updatedUser = await userModel.findByIdAndUpdate(
         userId,
         {
@@ -186,7 +185,6 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         deleteFileFromB2_Public(deleteFileName, deleteFileId)
           .catch(err => console.error("Delete error:", err));
       }
-  
       await talentModel.updateMany(
         {},
         {
@@ -207,9 +205,8 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
       let findFriend = await friendModel.findOne({ user_id: userId });
       findFriend.profile_img = cdnUrl ; 
       await findFriend.save()
-  
+      await updateUserProfileRedis(updatedUser)
       return res.json(updatedUser);
-  
     } catch (err) {
       console.error("SAVE PROFILE IMAGE ERROR:", err);
       return res.status(500).json({ error: err.message });
@@ -220,12 +217,10 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
   export const saveCoverImage = async (req, res) => {
     try {
       const { userId, fileId, fileName, deleteFileId, deleteFileName } = req.body;
-  
       if (!userId || !fileId || !fileName) {
         return res.status(400).json({ error: "Missing required fields" });
       }
       const signedUrl = await getPublicUrlFromB2(fileName);
-  
       const cdnUrl = signedUrl.replace(
         "https://f005.backblazeb2.com",
         "https://cdn.challenmemey.com"
@@ -243,23 +238,19 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         },
         { new: true }
       );
-  
       let findFriend = await friendModel.findOne({ user_id: userId });
       findFriend.cover_img = cdnUrl ; 
       await findFriend.save()
-  
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
-  
       // 3️⃣ Delete old file (NON-BLOCKING)
       if (deleteFileId && deleteFileName) {
         deleteFileFromB2_Public(deleteFileName, deleteFileId)
           .catch(err => console.error("Delete error:", err));
       }
-  
-      return res.json( updatedUser );
-  
+      await updateUserProfileRedis(updatedUser)
+      return res.json(updatedUser);
     } catch (err) {
       console.error("SAVE PROFILE IMAGE ERROR:", err);
       return res.status(500).json({ error: err.message });
@@ -272,8 +263,6 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
     const notifications = await notificationModel.find({receiver_id:receiver_id}).sort({ createdAt: -1 });
     res.json(notifications).status(200)
   }
-
-
 
   export const updateNotificationById = async(req,res)=>{
     const _id = req.params.id;

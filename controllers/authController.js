@@ -8,7 +8,7 @@ import admin from "../service/firebase.js";
 import { ensureUserRelations } from "../utilities/helper.js";
 import { Resend } from "resend";
 import { resend } from "../config/resend.js";
-import { getUserProfile } from "./userController.js";
+import { getUserProfile, updateUserProfileRedis } from "./userController.js";
 
 
 // ---------------- SIGNUP ----------------
@@ -85,14 +85,11 @@ export const signup = async (req, res) => {
     try {
       const { token } = req.body;
       const decoded = await admin.auth().verifyIdToken(token);
-  
       const { uid, email } = decoded;
       const user = await userModel.findOne({ email : email.toLowerCase() });
-
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-
       if (!user.providers.includes("email")){
         return res.status(403).json({
           message: "Please login using Google",
@@ -102,12 +99,12 @@ export const signup = async (req, res) => {
       user.uid = uid;
       await user.save()
       await ensureUserRelations(user);
+      await updateUserProfileRedis(user)
       const jwtToken = generateToken(user);
       res.json({
         token: jwtToken,
         user,
       });
-  
     } catch (err) {
       res.status(500).json({ message: "Login failed" });
     }
@@ -118,7 +115,6 @@ export const signup = async (req, res) => {
 
   export const anonymouslogin = async (req, res) => {
     try {
-     
       const { token , email } = req.body;
       const decoded = await admin.auth().verifyIdToken(token);
       const { uid } = decoded;
@@ -136,12 +132,12 @@ export const signup = async (req, res) => {
       user.uid = uid;
       await user.save()
       await ensureUserRelations(user);
+      await updateUserProfileRedis(user)
       const jwtToken =  generateToken(user);
       res.json({
         token: jwtToken,
         user,
       });
-  
     } catch (err) {
       res.status(500).json({ message: "Login failed" });
     }
@@ -151,20 +147,15 @@ export const signup = async (req, res) => {
 
 export const googleLogin = async (req, res) => {
     try {
-
       const { token } = req.body;
-    
       if (!token) {
         return res.status(400).json({
           message: "Firebase token is required",
         });
       }
-  
       // 🔥 1. VERIFY FIREBASE TOKEN
       const decoded = await admin.auth().verifyIdToken(token);
-  
       const { uid, email, email_verified, name } = decoded;
-  
       if (!email) {
         return res.status(400).json({
           message: "Email not found in Google account",
@@ -206,6 +197,7 @@ export const googleLogin = async (req, res) => {
         }
         await user.save();
       }
+      await updateUserProfileRedis(user)
       await ensureUserRelations(user);
       // 🔐 4. GENERATE JWT
       const jwtToken = generateToken(user);

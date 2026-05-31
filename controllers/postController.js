@@ -2,6 +2,7 @@ import mongoose from "mongoose"
 import talentModel from "../models/talent.js"
 import talentPostDataModel from "../models/talentPostData.js"
 import { generateTalentStage } from "./talentController.js"
+import { emitVotesNotification } from "./notificationController.js"
 
 
 
@@ -63,6 +64,8 @@ export const votePost = async(req,res)=>{
     const post_id =  req.params.id
     const owner_id = req.body.owner_id
     const voter_id = req.body.voter_id
+    const voter_name = req.body.voter_name
+    console.log(voter_name)
     const vote = {
        voter_id : req.body.voter_id
     }
@@ -72,7 +75,7 @@ export const votePost = async(req,res)=>{
       )
     if(!talentPost || (!talent.contestants.find(c => c._id.toString() === post_id))
     ) { 
-        await generateTalentStage(
+        await generateTalentStage(  
             talent.name, 
             talent.region, 
             true
@@ -85,9 +88,9 @@ export const votePost = async(req,res)=>{
         )
     const post_owner_name =  stage.contestants.find(c => c._id == post_id).name || 
                              stage.queue.find(c => c._id == post_id).name 
-    const voter = talent.voters.find(  v => 
+    const voter = talent.voters.find(v => 
                                     v.voter_id == voter_id
-                                 )
+                                    )
     // let votedTalentPost = null
     // if(voter) votedTalentPost = await talentPostDataModel.findOne(
     //                {post_id:voter.post_id}
@@ -102,6 +105,7 @@ export const votePost = async(req,res)=>{
         talentPost.votes.push(vote)
         await talent.save()
         await talentPost.save()
+       
     }else{   
         talent.voters = talent.voters.filter(v => v.voter_id !== voter_id)
         if(voter.post_id !== post_id){
@@ -110,20 +114,22 @@ export const votePost = async(req,res)=>{
             post_id : post_id,
             name : post_owner_name,
             createdAt:new Date()
-               })
+            })
             talentPost.votes.push(vote)   
             await talentPostDataModel.findOneAndUpdate(
                   {post_id:voter.post_id},
                   { $pull: { votes: vote } },
                   { new: true } 
                 );
+
+
              let contestant = null
              let contestantPost = talent.contestants.find(c => c._id == voter.post_id) 
              if(contestantPost){
               let index = talent.contestants.findIndex(c => c._id == voter.post_id) 
               let contestant = talent.contestants[index]
-              contestant.votes --;
-              talent.contestants[index]=contestant   
+              contestant.votes -- ;
+              talent.contestants[index] = contestant   
              }else{
               contestantPost = talent.queue.find(c => c._id == voter.post_id) 
                   if(contestantPost){
@@ -145,7 +151,29 @@ export const votePost = async(req,res)=>{
         }else{
             talentPost.votes = talentPost.votes.filter(v => v.voter_id !== voter_id )
             }
-        }
+    }
+
+    if(!voter || (voter.post_id !== post_id)) {
+        await emitVotesNotification( 
+            req.body.owner_id,
+            null,
+            "competition",
+            "vote_received",
+            {
+            stage_id: talent._id,
+            stageName: talent.name,
+            stageRegion:talent.region,
+            total_votes: 1,
+            recent_voters: [
+              {
+                voter_id,
+                voter_name
+              }
+            ],
+            contestant_id : req.body.owner_id 
+            }
+         )
+    }
     await talent.save()
     await talentPost.save()
     const talentRoom = await talentModel.findByIdAndUpdate(

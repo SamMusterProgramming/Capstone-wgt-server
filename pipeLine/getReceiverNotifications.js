@@ -119,7 +119,7 @@ export async function buildPushNotification(notification) {
         notification.is_read,
       createdAt:
         notification.createdAt,
-      sender,
+      // sender,
       metadata:
         notification.metadata,
       presentation,
