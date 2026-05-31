@@ -14,7 +14,7 @@ import dotenv from 'dotenv';
 import b2 from '../B2.js' 
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
-import { addPushToken, anonymouslogin, getMe, googleLogin, login, signup } from '../controllers/authController.js';
+import { addPushToken, anonymouslogin, deletePushToken, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
 import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
@@ -37,6 +37,7 @@ route.post("/auth/anonymous", anonymouslogin);
 
 //expoPush token
 route.post("/pushexpotoken", addPushToken);
+route.delete("/pushexpotoken/delete/:id",protect,deletePushToken);
 
 // update user ,  name , profile image , cover , get user,  materials... 
 route.route('/user/:id')

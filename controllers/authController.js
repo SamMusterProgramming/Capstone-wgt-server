@@ -233,7 +233,7 @@ export const googleLogin = async (req, res) => {
     const { userId, expoPushToken } = req.body;
     await userModel.updateMany(
       {
-        expoPushToken: pushToken,
+        expoPushToken : expoPushToken,
         _id: { $ne: user._id }
       },
       {
@@ -247,5 +247,19 @@ export const googleLogin = async (req, res) => {
     },
     { new: true });
     await updateUserProfileRedis (user)
+    res.sendStatus(200);
+  }
+ 
+  //----------------- delete pushToken
+  export const deletePushToken = async (req, res) => {
+    const user_id = req.params.id;
+    await userModel.findByIdAndUpdate(
+      user_id,
+      {
+        $unset: {
+          expoPushToken: ""
+        }
+      }
+    );
     res.sendStatus(200);
   }
