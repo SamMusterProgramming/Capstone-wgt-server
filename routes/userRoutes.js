@@ -37,7 +37,7 @@ route.post("/auth/anonymous", anonymouslogin);
 
 //expoPush token
 route.post("/pushexpotoken", addPushToken);
-route.delete("/pushexpotoken/delete/:id",protect,deletePushToken);
+route.patch("/pushexpotoken/delete/:id",protect,deletePushToken);
 
 // update user ,  name , profile image , cover , get user,  materials... 
 route.route('/user/:id')
