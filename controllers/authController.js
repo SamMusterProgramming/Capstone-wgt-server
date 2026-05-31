@@ -259,8 +259,9 @@ export const googleLogin = async (req, res) => {
         $unset: {
           expoPushToken: ""
         }
-      }
+      },{ new: true }
     );
+    // console.log(user)
     await updateUserProfileRedis (user)
     res.sendStatus(200);
   }
