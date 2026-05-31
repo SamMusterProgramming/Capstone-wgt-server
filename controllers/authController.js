@@ -234,7 +234,7 @@ export const googleLogin = async (req, res) => {
     await userModel.updateMany(
       {
         expoPushToken : expoPushToken,
-        _id: { $ne: user._id }
+        _id: { $ne: userId }
       },
       {
         $unset: {
