@@ -253,7 +253,7 @@ export const googleLogin = async (req, res) => {
   //----------------- delete pushToken
   export const deletePushToken = async (req, res) => {
     const user_id = req.params.id;
-    await userModel.findByIdAndUpdate(
+    const user = await userModel.findByIdAndUpdate(
       user_id,
       {
         $unset: {
@@ -261,5 +261,6 @@ export const googleLogin = async (req, res) => {
         }
       }
     );
+    await updateUserProfileRedis (user)
     res.sendStatus(200);
   }
