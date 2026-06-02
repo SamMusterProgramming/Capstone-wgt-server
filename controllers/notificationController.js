@@ -108,7 +108,7 @@ export const emitVotesNotification = async (
                     }
                 }     
 
-                if(existantNotification.metadata.recent_voters.length <= 9) return ; 
+                if(existantNotification.metadata.recent_voters.length % 9 == 0) return ; 
                 const pushNotification = await  buildPushNotification(existantNotification)
                 const receiver = await getUserProfile(receiverId)
                 await sendPushNotification(receiver.expoPushToken, {
