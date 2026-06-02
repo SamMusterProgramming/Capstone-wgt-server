@@ -58,7 +58,7 @@ export const notificationViewBuilders = {
         metadata,
         }) => ({
         text:
-        `${metadata.recent_voters[0].voter_name} ${metadata.recent_voters[1].voter_name} and ${metadata.total_votes - 2} others have voted for your in ${metadata.stageName} Stage `,
+        `${metadata.recent_voters[0]?.voter_name} ${metadata.recent_voters[1]?.voter_name} and ${metadata.total_votes - 2} others have voted for your in ${metadata.stageName} Stage `,
         subtitle:
         metadata.stageName || "",
         image:

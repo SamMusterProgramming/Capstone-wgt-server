@@ -113,12 +113,15 @@ const notificationSchema = new mongoose.Schema({
   read_at: {
     type: Date,
     default: null,
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  }
+  // createdAt: {
+  //   type: Date,
+  //   default: Date.now,
+  // },
+ 
+},
+{
+  timestamps: true,
 },
 {
   versionKey: false,
