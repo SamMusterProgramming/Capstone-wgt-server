@@ -246,6 +246,7 @@ export const createTalentStage =  async(req,res)=>{
         return b.likes - a.likes
      }
      })
+
      talent.contestants.forEach((c, index) => {
         c.rank = index + 1;
      });
@@ -269,10 +270,8 @@ export const createTalentStage =  async(req,res)=>{
        const differenceInMilliseconds = (now - roundDate)/(1000*60000)
 
        if(differenceInMilliseconds >= 100) {
-              
          let eliminatedContestants=[]
          let queuedContestants =[]  
-   
          if(edition.round < 3 ){
          eliminatedContestants = talent.contestants.splice(-6)
          talent.eliminations.push(...eliminatedContestants)

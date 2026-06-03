@@ -62,7 +62,7 @@ export const emitNotification = async (
       const pushNotification = await  buildPushNotification(notification)
       const receiver = await getUserProfile(receiverId)
       await sendPushNotification(receiver.expoPushToken, {
-        title: "New Activity",
+        title: category,
         body: pushNotification.presentation.text,
         data: {
                ...pushNotification.metadata , 
@@ -107,7 +107,6 @@ export const emitVotesNotification = async (
                     await existantNotification.save()
                     }
                 }     
-
                 if(existantNotification.metadata.recent_voters.length % 9 !== 0) return ; 
                 const pushNotification = await  buildPushNotification(existantNotification)
                 const receiver = await getUserProfile(receiverId)

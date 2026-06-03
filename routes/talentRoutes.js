@@ -147,8 +147,6 @@ route.get('/user/performance/:id',protect,async(req,res)=>{
                     }
                    }
               }
-            
-
               if(performance) performances.push(performance)
           })
        })

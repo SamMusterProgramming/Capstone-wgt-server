@@ -50,7 +50,7 @@ const notificationSchema = new mongoose.Schema({
   category: {
     type: String,
     enum: [
-      'social',
+      'Friends',
       'challenge',
       'competition',
       'voting',

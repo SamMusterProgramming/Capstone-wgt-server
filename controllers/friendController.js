@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import friendModel from "../models/friends.js";
 import notificationModel from "../models/notifications.js";
 import userModel from "../models/users.js";
+import { emitNotification } from "./notificationController.js";
 
 
 
@@ -118,24 +119,32 @@ export const friendRequest =
       console.log(sender)
 
       // 5. Create notification
-      const notification = new notificationModel({
-        receiver_id: receiverId,
-        content: {
-          sender_id: senderId,
-          name: sender.name,
-          profile_img: sender.profileImage.publicUrl,
-          cover_img: sender.coverImage.publicUrl,
-        },
-        message: "sent you a friend request",
-        type: "friend request",
-        isRead: false
-      });
-
-      await notification.save();
+      // const notification = new notificationModel({
+      //   receiver_id: receiverId,
+      //   content: {
+      //     sender_id: senderId,
+      //     name: sender.name,
+      //     profile_img: sender.profileImage.publicUrl,
+      //     cover_img: sender.coverImage.publicUrl,
+      //   },
+      //   message: "sent you a friend request",
+      //   type: "friend request",
+      //   isRead: false
+      // });
+      await emitNotification( 
+        receiverId,
+        senderId,
+        'Friends',
+        "friend_request",
+        {
+          sender_name: sender.name,
+          sender_profile_img: sender.profileImage.publicUrl,
+          sender_cover_img: sender.coverImage.publicUrl,
+        }
+     )
+      // await notification.save();
       const fList = await generateFriends(req.params.id)
-      console.log(fList)
       return res.status(200).json(fList);
-
     } catch (err) {
       console.log(err);
       return res.status(500).json({ message: "Server error" });
@@ -278,17 +287,14 @@ export const friendRequest =
         try {
           const userA = new mongoose.Types.ObjectId(req.params.id);   // current user
           const userB = new mongoose.Types.ObjectId(req.body._id);    // friend to remove
-    
           // Optional: check if they are actually friends
           const exists = await friendModel.findOne({
             user_id: userA,
             friends: userB
           });
-    
           if (!exists) {
             return res.status(400).json({ message: "Users are not friends" });
           }
-    
           // Remove each other from friends list
           await friendModel.updateOne(
             { user_id: userA },
@@ -296,17 +302,14 @@ export const friendRequest =
               $pull: { friends: userB }
             }
           );
-    
           const updatedUserB = await friendModel.updateOne(
             { user_id: userB },
             {
               $pull: { friends: userA }
             }
           );
-    
           const fList = await generateFriends(req.body._id)
           return res.status(200).json(fList);
-    
         } catch (err) {
           console.log(err);
           return res.status(500).json({ message: "Server error" });
@@ -316,10 +319,7 @@ export const friendRequest =
 
   
     export const getFriendList = async(req,res)=>{
-        const user_id = req.params.id;
-        console.log(user_id)
-        // const friendlist = await friendModel.findOne({user_id:user_id})
-      
+        const user_id = req.params.id;     
         const result = await friendModel.aggregate([
             {
               $match: { user_id: user_id }

@@ -66,13 +66,14 @@ export const notificationViewBuilders = {
         }),
     friend_request: ({
                     sender,
+                    metadata
                     }) => ({
       text:
-        `${sender.name} sent you a friend request`,
-      subtitle:
-        sender.city || "",
+        `${metadata.sender_name} sent you a friend request`,
+    //   subtitle:
+    //     sender.city || "",
       image:
-        sender.profile_image || null,
+        metadata.sender_profile_image || null,
     }),
   };
 

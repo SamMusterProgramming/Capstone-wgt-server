@@ -32,7 +32,6 @@ async ({
         .skip((page - 1) * limit)
         .limit(limit)
         .lean();
-
     const formatted =
       await Promise.all(
         notifications.map(
