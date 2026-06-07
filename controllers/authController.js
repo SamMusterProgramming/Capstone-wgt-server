@@ -14,7 +14,7 @@ import { getUserProfile, updateUserProfileRedis } from "./userController.js";
 // ---------------- SIGNUP ----------------
 export const signup = async (req, res) => {
     try {
-      const { token } = req.body;
+      const { token ,form } = req.body;
       // 🔥 verify firebase token
       const decoded = await admin.auth().verifyIdToken(token);
       const { uid , email, email_verified } = decoded;
@@ -33,6 +33,7 @@ export const signup = async (req, res) => {
           email: email,
           username: normalizedEmail.split("@")[0],
           email_verified:email_verified ,
+          name:form.name,
           providers: ["email"],
           profileImage:{
             fileId:null ,   
@@ -50,20 +51,14 @@ export const signup = async (req, res) => {
         await admin
           .auth()
           .generateEmailVerificationLink(email);
-        
-      
           await resend.emails.send({
             from:
               "Challengify <verify@challenmemey.com>",
-    
             to: email,
-    
             subject:
               "Verify your Challengify account",
-    
             html: `
               <h2>Welcome to Challengify</h2>
-    
               <a href="${verificationLink}">
                 Verify Email
               </a>

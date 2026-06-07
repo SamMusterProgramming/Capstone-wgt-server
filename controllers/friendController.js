@@ -114,27 +114,10 @@ export const friendRequest =
       // 4. Get sender info for notification (fresh from users collection)
       const sender = await userModel
         .findById(senderId)
-       
-
-      console.log(sender)
-
-      // 5. Create notification
-      // const notification = new notificationModel({
-      //   receiver_id: receiverId,
-      //   content: {
-      //     sender_id: senderId,
-      //     name: sender.name,
-      //     profile_img: sender.profileImage.publicUrl,
-      //     cover_img: sender.coverImage.publicUrl,
-      //   },
-      //   message: "sent you a friend request",
-      //   type: "friend request",
-      //   isRead: false
-      // });
       await emitNotification( 
         receiverId,
         senderId,
-        'Friends',
+        'friends',
         "friend_request",
         {
           sender_name: sender.name,
@@ -142,7 +125,7 @@ export const friendRequest =
           sender_cover_img: sender.coverImage.publicUrl,
         }
      )
-      // await notification.save();
+
       const fList = await generateFriends(req.params.id)
       return res.status(200).json(fList);
     } catch (err) {

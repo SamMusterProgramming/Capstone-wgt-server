@@ -8,7 +8,10 @@ import talentPostDataModel from "../models/talentPostData.js";
 import redis from "../config/redis.js";
 import { broadcastNotification, emitNotification } from "./notificationController.js";
 import followerModel from "../models/followers.js";
+import { COUNTRY_REGIONS } from "../utilities/data.js";
 
+
+//aggregation 
 export const generateTalentStage = async (name, region , isUpdated = false) => {
     const cacheKey = `stage:${name}:${region}`;
     if(!isUpdated){
@@ -210,6 +213,181 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
 
 
 
+//aggreg hotStages
+export const aggregateHotStages = async() =>{
+  return await talentModel.aggregate([
+    {
+      $addFields: {
+        contestantsCount: {
+          $size: {
+            $ifNull: ["$contestants", []],
+          },
+        },
+  
+        queueCount: {
+          $size: {
+            $ifNull: ["$queue", []],
+          },
+        },
+  
+        votersCount: {
+          $size: {
+            $ifNull: ["$voters", []],
+          },
+        },
+  
+        eliminationsCount: {
+          $size: {
+            $ifNull: ["$eliminations", []],
+          },
+        },
+      },
+    },
+  
+    // MUST have contestants
+    {
+      $match: {
+        contestantsCount: {
+          $gt: 0,
+        },
+      },
+    },
+  
+    {
+      $addFields: {
+        occupancyScore: {
+          $multiply: [
+            {
+              $divide: [
+                "$contestantsCount",
+                "$MAXCONTESTANTS",
+              ],
+            },
+            100,
+          ],
+        },
+  
+        queueScore: {
+          $multiply: [
+            "$queueCount",
+            4,
+          ],
+        },
+  
+        voterScore: {
+          $multiply: [
+            "$votersCount",
+            1.5,
+          ],
+        },
+  
+        progressionScore: {
+          $multiply: [
+            "$eliminationsCount",
+            2,
+          ],
+        },
+  
+        recencyScore: {
+          $switch: {
+            branches: [
+              {
+                case: {
+                  $gte: [
+                    "$updatedAt",
+                    {
+                      $dateSubtract: {
+                        startDate: "$$NOW",
+                        unit: "day",
+                        amount: 1,
+                      },
+                    },
+                  ],
+                },
+                then: 25,
+              },
+  
+              {
+                case: {
+                  $gte: [
+                    "$updatedAt",
+                    {
+                      $dateSubtract: {
+                        startDate: "$$NOW",
+                        unit: "day",
+                        amount: 3,
+                      },
+                    },
+                  ],
+                },
+                then: 15,
+              },
+  
+              {
+                case: {
+                  $gte: [
+                    "$updatedAt",
+                    {
+                      $dateSubtract: {
+                        startDate: "$$NOW",
+                        unit: "day",
+                        amount: 7,
+                      },
+                    },
+                  ],
+                },
+                then: 5,
+              },
+            ],
+            default: 0,
+          },
+        },
+      },
+    },
+  
+    {
+      $addFields: {
+        hotScore: {
+          $add: [
+            "$occupancyScore",
+            "$queueScore",
+            "$voterScore",
+            "$progressionScore",
+            "$recencyScore",
+          ],
+        },
+      },
+    },
+  
+    {
+      $sort: {
+        hotScore: -1,
+        votersCount: -1,
+        updatedAt: -1,
+      },
+    },
+  
+    {
+      $limit: 20,
+    },
+  
+    {
+      $project: {
+        contestantsCount: 0,
+        queueCount: 0,
+        votersCount: 0,
+        eliminationsCount: 0,
+        occupancyScore: 0,
+        queueScore: 0,
+        voterScore: 0,
+        progressionScore: 0,
+        recencyScore: 0,
+      },
+    },
+  ]);
+}
+
+  // stages here
 export const createTalentStage =  async(req,res)=>{
     const TalentName =  req.body.name
     const regionName =  req.body.region
@@ -490,7 +668,7 @@ export const getStagesByRegion = async (req, res) => {
 
   // get stages where a user is hero , participatant , queued , eliminiated 
   
-  export const getUserContestantInStage = async(req,res)=>{
+export const getUserContestantInStage = async(req,res)=>{
     const user_id = req.params.id
     let userTalents = await talentModel.find({
       $or: [
@@ -506,19 +684,188 @@ export const getStagesByRegion = async (req, res) => {
     userTalents = userTalents.filter(t => t.contestants.length !== 0)
     res.json(userTalents)
 }
-
-  export const getHotStages = async(req,res)=>{
+     
+export const getHotStages = async(req,res)=>{
     const user_id = req.params.id
-    // let friendIDS = []
-    // friends && friends.friends.forEach(f => friendIDS.push(f.user_id))
-    const talents = await talentModel.find({
-                // 'contestants.user_id': { $in: friendIDS }
-               })
-              
-    res.json(talents)
+    const stages = await aggregateHotStages()          
+    res.json(stages) 
 }
 
+export const getTrendingStages = async(req,res)=>{
+  const userCountryCode = req.params.countryCode?.toUpperCase();
+  if (!userCountryCode) {
+    return res.status(400).json({
+      message: "Country code required",
+    });
+  }
+  let regionCountries = [];
+  for (const region of Object.values(
+    COUNTRY_REGIONS
+  )) {
+    if (region.includes(userCountryCode)) {
+      regionCountries = region;
+      break;
+    }
+  }
+  if (!regionCountries.length) {
+    return res.json([]);
+  }
+  const otherCountries =
+  regionCountries.filter(
+    (c) => c !== userCountryCode
+  );
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(
+    thirtyDaysAgo.getDate() - 30
+  );
 
+  const buildPipeline = (countries) => [
+    {
+      $match: {
+        region: {
+          $in: countries,
+        },
+
+        updatedAt: {
+          $gte: thirtyDaysAgo,
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        contestantsCount: {
+          $size: {
+            $ifNull: [
+              "$contestants",
+              [],
+            ],
+          },
+        },
+
+        queueCount: {
+          $size: {
+            $ifNull: [
+              "$queue",
+              [],
+            ],
+          },
+        },
+
+        votersCount: {
+          $size: {
+            $ifNull: [
+              "$voters",
+              [],
+            ],
+          },
+        },
+
+        eliminationsCount: {
+          $size: {
+            $ifNull: [
+              "$eliminations",
+              [],
+            ],
+          },
+        },
+      },
+    },
+
+    {
+      $match: {
+        contestantsCount: {
+          $gt: 0,
+        },
+      },
+    },
+
+    {
+      $addFields: {
+        hotScore: {
+          $add: [
+            {
+              $multiply: [
+                {
+                  $divide: [
+                    "$contestantsCount",
+                    "$MAXCONTESTANTS",
+                  ],
+                },
+                100,
+              ],
+            },
+
+            {
+              $multiply: [
+                "$queueCount",
+                4,
+              ],
+            },
+
+            {
+              $multiply: [
+                "$votersCount",
+                2,
+              ],
+            },
+
+            {
+              $multiply: [
+                "$eliminationsCount",
+                3,
+              ],
+            },
+          ],
+        },
+      },
+    },
+
+    {
+      $sort: {
+        hotScore: -1,
+        updatedAt: -1,
+      },
+    },
+
+    {
+      $project: {
+        hotScore: 0,
+        contestantsCount: 0,
+        queueCount: 0,
+        votersCount: 0,
+        eliminationsCount: 0,
+      },
+    },
+  ];
+  
+  // const localStages =
+  //     await talentModel.aggregate(
+  //       buildPipeline([
+  //         userCountryCode,
+  //       ])
+  //     );
+  const localStages = await talentModel.aggregate(
+    [...buildPipeline([userCountryCode]), { $limit: 15 }]
+  );
+      
+    // REGION AFTER
+    // const regionalStages =
+    //   await talentModel.aggregate(
+    //     buildPipeline(otherCountries)
+    //   );
+    const regionalStages = await talentModel.aggregate(
+      [...buildPipeline(otherCountries), { $limit: 15 }]
+    );
+
+    const stages = [
+      ...localStages,
+      ...regionalStages,
+    ];
+
+    res.status(200).json(stages);         
+  // res.json(stages) 
+}
 
 
 
