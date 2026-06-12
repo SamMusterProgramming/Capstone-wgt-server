@@ -34,8 +34,7 @@ export const notificationViewBuilders = {
                     }) => ({
         text:
         //   sender.name ?`${sender.name} posted a new performance` :
-       `Your are in queue for the ${metadata.stageName} Stage ,
-        you will be notified when you are on stage`,
+       `Your are in queue for the ${metadata.stageName} Stage , you will be notified when you are on stage`,
         subtitle:
           metadata.stageName || "",
         image:
