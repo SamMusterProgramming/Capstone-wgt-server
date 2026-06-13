@@ -100,14 +100,6 @@ function validateMongoObjectId(req,res,next) {
     //   res.status(200).json(user)
     // })
 
-
-
-
-
-
-
-
-
 //********************************* search for users */
 
 route.get('/find/search',protect,async(req,res)=>{

@@ -1,61 +1,82 @@
+import mongoose from "mongoose";
 
-
-const ArenaSchema = {
-    _id: ObjectId,
-    user_id: ObjectId,
-    arenaName: String,
-    slug: String,
-    talentType: String,
-    region: String,
-    city: String,
-    biography: String,
-    description: String,
-    avatar: String,
-    banner: String,
+const ArenaSchema = new mongoose.Schema({
+    owner_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    arenaName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 40,
+    },
+    talentType: {
+      type: String,
+      required: true,
+      enum: [
+        "Sport",
+        "Fitness",
+        "Art",
+        "Singing",
+        "Dance",
+        "Music",
+        "Comedy",
+        "Magic"
+      ],
+    },
+    region: {
+      type: String,
+      required: true,
+    },
+    biography: {
+      type: String,
+      maxlength: 300,
+    },
+    description: {
+      type: String,
+      maxlength: 800,
+    },
+    coverImage: {
+      publicUrl: String,
+      filedId : String
+    },
+    profileImage: {
+      publicUrl: String,
+      filedId : String
+    },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    posts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ArenaPost",
+      },
+    ],
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    views: {
+      type: Number,
+      default: 0,
+    },
     verified: {
       type: Boolean,
       default: false,
     },
-    followers: [
-      {
-        type: ObjectId,
-        ref: "User",
-      },
-    ],
-    featuredPerformances: [
-      {
-        type: ObjectId,
-        ref: "Performance",
-      },
-    ],
-    featuredStages: [
-      {
-        type: ObjectId,
-        ref: "Stage",
-      },
-    ],
-    stats: {
-      followers: {
-        type: Number,
-        default: 0,
-      },
-      views: {
-        type: Number,
-        default: 0,
-      },
-      likes: {
-        type: Number,
-        default: 0,
-      },
-      performances: {
-        type: Number,
-        default: 0,
-      },
-      posts: {
-        type: Number,
-        default: 0,
-      },
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
-    createdAt: Date,
-    updatedAt: Date,
-  };
+  },
+  { versionKey: false }    
+);
+ArenaSchema.index({owner_id:1});   
+let arenaModel = mongoose.model("arenas",ArenaSchema);
+export default  arenaModel;

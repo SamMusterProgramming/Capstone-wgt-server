@@ -3,10 +3,11 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import connectDB from './db.js';
-import userModel from './models/users.js';
 import userRoute from './routes/userRoutes.js';
 import challengeRoute from './routes/challengeRoutes.js';
 import talentRoute from './routes/talentRoutes.js';
+import arenaRoute from './routes/arenaRoutes.js';
+
 import B2 from 'backblaze-b2';
 import "./config/redis.js";
 import redis from './config/redis.js';
@@ -29,6 +30,7 @@ app.use(express.json())
 app.use('/users',userRoute)
 app.use('/challenges',challengeRoute)
 app.use('/talents',talentRoute)
+app.use('/arenas' , arenaRoute)
 app.use(validateRequestNetwork)
 app.set("trust proxy", true);
 
