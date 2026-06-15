@@ -13,15 +13,27 @@ const ArenaPostSchema = new mongoose.Schema({
       required: true,
     },
   
-    caption: String,
-  
-    media: [
-      {
-        publicUrl: String,
-        publicId: String,
+    caption: {
         type: String,
+        maxlength: 1000,
       },
-    ],
+
+    spotLight: {
+    type: Boolean,
+    default: false,
+    },
+    
+    media: {
+        video: {
+          cdnUrl: String,
+          fileId: String,
+        },
+  
+        thumbnail: {
+          cdnUrl: String,
+          fileId: String,
+        },
+      },
   
     likes: [
       {
@@ -42,7 +54,9 @@ const ArenaPostSchema = new mongoose.Schema({
       type: Date,
       default: Date.now,
     },
-  });
+  },
+  { versionKey: false }    
+);
 
 ArenaPostSchema.index({owner_id:1});   
 let arenaPostModel = mongoose.model("arenaPosts",ArenaPostSchema);
