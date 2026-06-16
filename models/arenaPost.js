@@ -18,7 +18,7 @@ const ArenaPostSchema = new mongoose.Schema({
         maxlength: 1000,
       },
 
-    spotLight: {
+    spotlight: {
     type: Boolean,
     default: false,
     },
@@ -27,19 +27,21 @@ const ArenaPostSchema = new mongoose.Schema({
         video: {
           cdnUrl: String,
           fileId: String,
+          fileName : String
         },
   
         thumbnail: {
           cdnUrl: String,
           fileId: String,
+          fileName : String
         },
       },
   
-    likes: [
-      {
+    fires: [
+    {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-      },
+    },
     ],
   
     comments: [

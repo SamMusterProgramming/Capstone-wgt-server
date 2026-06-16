@@ -40,11 +40,13 @@ const ArenaSchema = new mongoose.Schema({
     },
     coverImage: {
       publicUrl: String,
-      filedId : String
+      fileId : String,
+      fileName : String
     },
     profileImage: {
       publicUrl: String,
-      filedId : String
+      fileId : String,
+      fileName : String
     },
     followers: [
       {

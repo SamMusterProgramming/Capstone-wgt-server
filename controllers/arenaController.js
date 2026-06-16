@@ -1,6 +1,6 @@
 import arenaModel from "../models/arena.js"
 import arenaPostModel from "../models/arenaPost.js"
-import { getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js"
+import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js"
 
 export const createArena = async (req, res) => {
    try {
@@ -64,7 +64,7 @@ export const getArenaByUser = async (req, res) => {
  export const addPerformanceToArena = async (req, res) => {
     try {
      const arenaId = req.params.id
-     const {owner_id,description,spotLight,video,thumbnail} = req.body
+     const {owner_id,description,spotlight,video,thumbnail} = req.body
      // GENERATE URLS
      const thumbnailSignedUrl =
      await getPublicUrlFromB2(thumbnail.fileName);
@@ -88,13 +88,15 @@ export const getArenaByUser = async (req, res) => {
             video: {
               cdnUrl: cdnUrl,
               fileId: video.fileId,
+              fileName: video.fileName
             },
             thumbnail: {
               cdnUrl: thumbNailCdnUrl,
               fileId: thumbnail.fileId,
+              fileName : thumbnail.fileName
             },
           },
-        //   spotLight,
+          spotlight,
       });
       const arena = await arenaModel.findByIdAndUpdate(
         arenaId,
@@ -109,3 +111,105 @@ export const getArenaByUser = async (req, res) => {
        console.log(error)
     }
  }
+
+ export const deletePostFromArena = async (req, res) => {
+    try {
+      const  postId  = req.params.id;
+      const post = await arenaPostModel.findById(postId);
+      if (!post) {
+        return res.status(404).json({
+                                        message:
+                                        "Post not found",
+                                    });
+      }
+      const media = post.media;
+      let filesToDelete = []
+      if (media.video?.fileId) {
+         filesToDelete.push(
+           deleteFileFromB2_Private(
+              media.video?.fileName,
+              media.video?.fileId
+           )
+         );  
+      }
+      if (media.thumbnail?.fileId) {
+         filesToDelete.push(
+           deleteFileFromB2_Public(
+              media.thumbnail.fileName,
+              media.thumbnail.fileId
+            )
+         );     
+      }
+      await Promise.all(filesToDelete);
+
+      const updatedArena =
+      await arenaModel.findByIdAndUpdate(
+        post.arena_id,
+        {
+            $pull: {
+            posts: post._id,
+            },
+        },
+        {
+            new: true,
+        }
+      );
+      await arenaPostModel.findByIdAndDelete(postId);
+      return res.status(200).json(updatedArena);
+    } catch (error) {
+       console.log(error)
+    }
+ }
+
+ export const toggleSpotlight = async (req, res) => {
+    try {
+        const  post_id  = req.params.id;
+        const post =
+        await arenaPostModel.findById(
+            post_id
+        );
+
+        if (!post) {
+        return res.status(404).json({
+            message: "Post not found",
+        });
+        }
+        post.spotlight =
+        !post.spotlight;
+        await post.save();
+        return res.status(200).json({
+        message: post.spotlight
+            ? "Featured in Spotlight"
+            : "Returned to Arena",
+        post,
+        });
+    } catch (error) {
+        console.log(error)
+    }
+ }
+
+ // user fire the performance , toggling 
+
+ export const toggleFire = async (req,res) => {
+    const post_id  = req.params.id;
+    const { userId } = req.body;
+    const post =
+      await arenaPostModel.findById(
+        post_id
+      );
+    const fired =
+      post.fires.some(
+        id =>  id.toString() === userId
+      );
+    if (fired) {
+      post.fires =
+        post.fires.filter(
+          id =>
+            id.toString() !== userId
+        );
+    } else {
+      post.fires.push(userId);
+    }
+    await post.save();
+    return res.json(post);
+  };
