@@ -141,7 +141,7 @@ export const getArenaByUser = async (req, res) => {
          );     
       }
       await Promise.all(filesToDelete);
-
+      
       const updatedArena =
       await arenaModel.findByIdAndUpdate(
         post.arena_id,

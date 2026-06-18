@@ -60,7 +60,7 @@ const ArenaSchema = new mongoose.Schema({
         ref: "ArenaPost",
       },
     ],
-    likes: {
+    fires: {
       type: Number,
       default: 0,
     },
