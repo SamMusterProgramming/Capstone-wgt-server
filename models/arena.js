@@ -60,10 +60,10 @@ const ArenaSchema = new mongoose.Schema({
         ref: "ArenaPost",
       },
     ],
-    fires: {
-      type: Number,
-      default: 0,
-    },
+    stars: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    }],
     views: {
       type: Number,
       default: 0,

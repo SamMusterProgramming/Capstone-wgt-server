@@ -44,6 +44,99 @@ export const getArenaByUser = async (req, res) => {
     }
  }
 
+ export const toggleArenaStar = async (req, res) => {
+    try {
+      const  arenaId  = req.params.id;
+      const { userId } = req.body;
+  
+      const arena = await arenaModel.findById(arenaId);
+  
+      if (!arena) {
+        return res.status(404).json({
+          success: false,
+          message: "Arena not found",
+        });
+      }
+
+      const alreadyStarred = arena.stars.some(
+        starId => starId.toString() === userId
+      );
+
+      let query = {}
+      if (alreadyStarred) {
+        query = {
+            $pull: {
+              stars: userId,
+            },
+          }
+      }else {
+        query =  {
+            $addToSet: {
+              stars: userId,
+            },
+          }
+      }
+      const newArena =  await arenaModel.findByIdAndUpdate(
+        arenaId,
+        query,
+        { new: true }
+      );
+      return res.status(200).json(newArena)
+    } catch (error) {
+      console.error(error);
+  
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
+    }
+  };
+
+  export const toggleArenaFollower = async (req, res) => {
+    try {
+      const  arenaId  = req.params.id;
+      const { userId } = req.body;
+      const arena = await arenaModel.findById(arenaId);
+      if (!arena) {
+        return res.status(404).json({
+          success: false,
+          message: "Arena not found",
+        });
+      }
+      const alreadyStarred = arena.followers.some(
+        starId => starId.toString() === userId
+      );
+      let query = {}
+      if (alreadyStarred) {
+        query = {
+            $pull: {
+              followers : userId,
+            },
+          }
+      }else {
+        query =  {
+            $addToSet: {
+              followers : userId,
+            },
+          }
+      }
+      const newArena =  await arenaModel.findByIdAndUpdate(
+        arenaId,
+        query,
+        { new: true }
+      );
+      return res.status(200).json(newArena)
+    } catch (error) {
+      console.error(error);
+  
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
+    }
+  };
+
+
  export const getPostsArena = async (req, res) => {
     try {
         const arenaId = req.params.id
@@ -141,7 +234,7 @@ export const getArenaByUser = async (req, res) => {
          );     
       }
       await Promise.all(filesToDelete);
-      
+
       const updatedArena =
       await arenaModel.findByIdAndUpdate(
         post.arena_id,
