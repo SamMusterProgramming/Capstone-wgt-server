@@ -124,6 +124,7 @@ export const getLocalArenas = async (req, res) => {
       },
       {
         $project: {
+          owner_id: 1,
           arenaName: 1,
           talentType: 1,
           region: 1,
@@ -157,8 +158,6 @@ export const getLocalArenas = async (req, res) => {
   }
 };
 
-
-
  export const toggleArenaStar = async (req, res) => {
     try {
       const  arenaId  = req.params.id;
@@ -172,7 +171,6 @@ export const getLocalArenas = async (req, res) => {
           message: "Arena not found",
         });
       }
-
       const alreadyStarred = arena.stars.some(
         starId => starId.toString() === userId
       );
