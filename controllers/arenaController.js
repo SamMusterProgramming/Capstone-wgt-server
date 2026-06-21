@@ -2,6 +2,7 @@ import mongoose from "mongoose"
 import arenaModel from "../models/arena.js"
 import arenaPostModel from "../models/arenaPost.js"
 import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js"
+import localArenas from "../redisCash/arenas/localArenas.js"
 
 export const createArena = async (req, res) => {
    try {
@@ -49,106 +50,107 @@ export const getLocalArenas = async (req, res) => {
   try {
     const countryCode  = req.params.id
     const { userId } = req.body;
-    const arenas = await arenaModel.aggregate([
-      {
-        $match: {
-          region: countryCode,
-        },
-      },
-      { 
-        $addFields: {
-          postsCount: {
-            $size: "$posts",
-          },
-          starsCount: {
-            $size: "$stars",
-          },
-          followersCount: {
-            $size: "$followers",
-          },
-        },
-      },
-      // only arenas with performances
-      {
-        $match: {
-          postsCount: { $gt: 0 },
-        },
-      },
-      {
-        $addFields: {
-          score: {
-            $add: [
-              {
-                $multiply: [
-                  "$postsCount",
-                  10,
-                ],
-              },
-              {
-                $multiply: [
-                  "$starsCount",
-                  2,
-                ],
-              },
-            ],
-          },
-          isStarred: {
-            $in: [
-              new mongoose.Types.ObjectId(userId),
-              "$stars",
-            ],
-          },
-          isFollowing: {
-            $in: [
-              new mongoose.Types.ObjectId(userId),
-              "$followers",
-            ],
-          },
-        },
-      },
-      {
-        $sort: {
-          score: -1,
-          postsCount: -1,
-          starsCount: -1,
-          createdAt: -1,
-        },
-      },
-      {
-        $lookup: {
-          from: "arenaposts",
-          localField: "posts",
-          foreignField: "_id",
-          as: "posts",
-        },
-      },
-      {
-        $project: {
-          owner_id: 1,
-          arenaName: 1,
-          talentType: 1,
-          region: 1,
-          biography: 1,
-          description: 1,
-          coverImage: 1,
-          profileImage: 1,
-          posts: 1,
-          stars: 1,
-          followers: 1,
-          postsCount: 1,
-          starsCount: 1,
-          followersCount: 1,
-          isStarred: 1,
-          isFollowing: 1,
-          verified: 1,
-          score: 1,
-        },
-      },
-      {
-        $limit: 20,
-      },
-    ]);
-    console.log(arenas[0].posts)
+    const arenas = await localArenas(countryCode)
+    //  await arenaModel.aggregate([
+    //   {
+    //     $match: {
+    //       region: countryCode,
+    //     },
+    //   },
+    //   { 
+    //     $addFields: {
+    //       postsCount: {
+    //         $size: "$posts",
+    //       },
+    //       starsCount: {
+    //         $size: "$stars",
+    //       },
+    //       followersCount: {
+    //         $size: "$followers",
+    //       },
+    //     },
+    //   },
+    //   // only arenas with performances
+    //   {
+    //     $match: {
+    //       postsCount: { $gt: 0 },
+    //     },
+    //   },
+    //   {
+    //     $addFields: {
+    //       score: {
+    //         $add: [
+    //           {
+    //             $multiply: [
+    //               "$postsCount",
+    //               10,
+    //             ],
+    //           },
+    //           {
+    //             $multiply: [
+    //               "$starsCount",
+    //               2,
+    //             ],
+    //           },
+    //         ],
+    //       },
+    //       isStarred: {
+    //         $in: [
+    //           new mongoose.Types.ObjectId(userId),
+    //           "$stars",
+    //         ],
+    //       },
+    //       isFollowing: {
+    //         $in: [
+    //           new mongoose.Types.ObjectId(userId),
+    //           "$followers",
+    //         ],
+    //       },
+    //     },
+    //   },
+    //   {
+    //     $sort: {
+    //       score: -1,
+    //       postsCount: -1,
+    //       starsCount: -1,
+    //       createdAt: -1,
+    //     },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: "arenaposts",
+    //       localField: "posts",
+    //       foreignField: "_id",
+    //       as: "posts",
+    //     },
+    //   },
+    //   {
+    //     $project: {
+    //       owner_id: 1,
+    //       arenaName: 1,
+    //       talentType: 1,
+    //       region: 1,
+    //       biography: 1,
+    //       description: 1,
+    //       coverImage: 1,
+    //       profileImage: 1,
+    //       posts: 1,
+    //       stars: 1,
+    //       followers: 1,
+    //       postsCount: 1,
+    //       starsCount: 1,
+    //       followersCount: 1,
+    //       isStarred: 1,
+    //       isFollowing: 1,
+    //       verified: 1,
+    //       score: 1,
+    //     },
+    //   },
+    //   {
+    //     $limit: 20,
+    //   },
+    // ]);
+   
     return res.status(200).json(arenas);
   } catch (err) {
     console.log(err);
