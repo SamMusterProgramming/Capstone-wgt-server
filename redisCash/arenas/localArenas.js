@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 import arenaModel from "../../models/arena.js";
 import redis from "../../config/redis.js";
 
-const CACHE_HOURS = 60 * 60 * 5;
+
 const LOCAL_ARENAS_CACHE_SECONDS =
-    60 * 60 * 4; // 5 hours
+    60 * 5; // 30 minutes
   
 const localArenas = async (
     countryCode = "US",
@@ -16,8 +16,15 @@ const localArenas = async (
       // REDIS
       if (!refreshCache) {
         const cached = await redis.get(cacheKey);
+
         if (cached) {
-          return JSON.parse(cached);
+          if (typeof cached === "object") {
+            return cached;
+          }
+        
+          if (typeof cached === "string") {
+            return JSON.parse(cached);
+          }
         }
       }
       // MONGO
@@ -109,8 +116,23 @@ const localArenas = async (
           {
             $lookup: {
               from: "arenaposts",
-              localField: "posts",
-              foreignField: "_id",
+              let: {
+                postIds: "$posts",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ["$_id", "$$postIds"],
+                    },
+                  },
+                },
+                {
+                  $sort: {
+                    createdAt: -1,
+                  },
+                },
+              ],
               as: "posts",
             },
           },

@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-import arenaModel from "../models/arenaModel.js";
 import redis from "../../config/redis.js";
+import arenaModel from "../../models/arena.js";
 
 const USER_ARENAS_CACHE_SECONDS =
-  60 * 60 * 5; // 5 hours
+  60  * 5; // 5 minutes
 
-export const userArenas = async (
+ const userArenas = async (
   userId,
   refreshCache = false
 ) => {
@@ -16,13 +16,19 @@ export const userArenas = async (
     if (!refreshCache) {
       const cached =
         await redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
+        if (cached) {
+            if (typeof cached === "object") {
+              return cached;
+            }
+          
+            if (typeof cached === "string") {
+              return JSON.parse(cached);
+            }
+        }
     }
     // MONGODB
     const arenas =
-      await arenaModel.aggregate([
+      await arenaModel.aggregate([  
         {
           $match: {
             owner_id:
@@ -90,14 +96,37 @@ export const userArenas = async (
 
         // pull all performances
 
+        // {
+        //   $lookup: {
+        //     from: "arenaposts",
+        //     localField: "posts",
+        //     foreignField: "_id",
+        //     as: "posts",
+        //   },
+        // },
         {
-          $lookup: {
-            from: "arenaPosts",
-            localField: "posts",
-            foreignField: "_id",
-            as: "posts",
+            $lookup: {
+              from: "arenaposts",
+              let: {
+                postIds: "$posts",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ["$_id", "$$postIds"],
+                    },
+                  },
+                },
+                {
+                  $sort: {
+                    createdAt: -1,
+                  },
+                },
+              ],
+              as: "posts",
+            },
           },
-        },
 
         {
           $sort: {
@@ -155,3 +184,5 @@ export const userArenas = async (
     throw error;
   }
 };
+
+export default userArenas ;

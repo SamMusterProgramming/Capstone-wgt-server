@@ -3,6 +3,7 @@ import arenaModel from "../models/arena.js"
 import arenaPostModel from "../models/arenaPost.js"
 import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js"
 import localArenas from "../redisCash/arenas/localArenas.js"
+import userArenas from "../redisCash/arenas/userArenas.js"
 
 export const createArena = async (req, res) => {
    try {
@@ -30,7 +31,11 @@ export const createArena = async (req, res) => {
         profileImage,
         coverImage
     })
-    return res.json(arena)
+    const arenas = await userArenas(userId , true)
+    return res.json({
+        arenas:arenas,
+        selectedArena:arenas.find ( a => a._id.toString() === arena._id.toString())
+    })
    } catch (error) {
       console.log(error)
    }
@@ -39,118 +44,29 @@ export const createArena = async (req, res) => {
 export const getArenaByUser = async (req, res) => {
     try {
      const userId = req.params.id
-     const arenas = await arenaModel.find({owner_id:userId})
+     const arenas = await userArenas(userId , true)
      return res.json(arenas)
     } catch (error) {
        console.log(error)
     }
- }
+}
+
+export const getArenaByProfile = async (req, res) => {
+    try {
+     const userId = req.params.id
+     const arenas = await userArenas(userId , false)
+     return res.json(arenas)
+    } catch (error) {
+       console.log(error)
+    }
+}
 
 export const getLocalArenas = async (req, res) => {
-  try {
+  try {   
     const countryCode  = req.params.id
+    console.log(countryCode)
     const { userId } = req.body;
-    const arenas = await localArenas(countryCode)
-    //  await arenaModel.aggregate([
-    //   {
-    //     $match: {
-    //       region: countryCode,
-    //     },
-    //   },
-    //   { 
-    //     $addFields: {
-    //       postsCount: {
-    //         $size: "$posts",
-    //       },
-    //       starsCount: {
-    //         $size: "$stars",
-    //       },
-    //       followersCount: {
-    //         $size: "$followers",
-    //       },
-    //     },
-    //   },
-    //   // only arenas with performances
-    //   {
-    //     $match: {
-    //       postsCount: { $gt: 0 },
-    //     },
-    //   },
-    //   {
-    //     $addFields: {
-    //       score: {
-    //         $add: [
-    //           {
-    //             $multiply: [
-    //               "$postsCount",
-    //               10,
-    //             ],
-    //           },
-    //           {
-    //             $multiply: [
-    //               "$starsCount",
-    //               2,
-    //             ],
-    //           },
-    //         ],
-    //       },
-    //       isStarred: {
-    //         $in: [
-    //           new mongoose.Types.ObjectId(userId),
-    //           "$stars",
-    //         ],
-    //       },
-    //       isFollowing: {
-    //         $in: [
-    //           new mongoose.Types.ObjectId(userId),
-    //           "$followers",
-    //         ],
-    //       },
-    //     },
-    //   },
-    //   {
-    //     $sort: {
-    //       score: -1,
-    //       postsCount: -1,
-    //       starsCount: -1,
-    //       createdAt: -1,
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: "arenaposts",
-    //       localField: "posts",
-    //       foreignField: "_id",
-    //       as: "posts",
-    //     },
-    //   },
-    //   {
-    //     $project: {
-    //       owner_id: 1,
-    //       arenaName: 1,
-    //       talentType: 1,
-    //       region: 1,
-    //       biography: 1,
-    //       description: 1,
-    //       coverImage: 1,
-    //       profileImage: 1,
-    //       posts: 1,
-    //       stars: 1,
-    //       followers: 1,
-    //       postsCount: 1,
-    //       starsCount: 1,
-    //       followersCount: 1,
-    //       isStarred: 1,
-    //       isFollowing: 1,
-    //       verified: 1,
-    //       score: 1,
-    //     },
-    //   },
-    //   {
-    //     $limit: 20,
-    //   },
-    // ]);
-   
+    const arenas = await localArenas(countryCode , false)
     return res.status(200).json(arenas);
   } catch (err) {
     console.log(err);
@@ -306,6 +222,7 @@ export const getLocalArenas = async (req, res) => {
           },
           spotlight,
       });
+
       const arena = await arenaModel.findByIdAndUpdate(
         arenaId,
         {
@@ -314,7 +231,11 @@ export const getLocalArenas = async (req, res) => {
           },
         }
       );
-      return res.json(arena)
+      const arenas = await userArenas(owner_id , true)
+      return res.json({
+                      arenas:arenas,
+                      selectedArena:arenas.find( a => a._id.toString() === arena._id.toString())
+                    })
     } catch (error) {
        console.log(error)
     }
@@ -363,7 +284,11 @@ export const getLocalArenas = async (req, res) => {
         }
       );
       await arenaPostModel.findByIdAndDelete(postId);
-      return res.status(200).json(updatedArena);
+      const arenas = await userArenas(post.owner_id , true)
+      return res.json({
+        arenas:arenas,
+        selectedArena:arenas.find( a => a._id.toString() === post.arena_id.toString())
+      })
     } catch (error) {
        console.log(error)
     }
@@ -376,7 +301,6 @@ export const getLocalArenas = async (req, res) => {
         await arenaPostModel.findById(
             post_id
         );
-
         if (!post) {
         return res.status(404).json({
             message: "Post not found",

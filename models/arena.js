@@ -20,7 +20,7 @@ const ArenaSchema = new mongoose.Schema({
         "Fitness",
         "Art",
         "Singing",
-        "Dance",
+        "Dancing",
         "Music",
         "Comedy",
         "Magic"
