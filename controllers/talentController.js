@@ -9,6 +9,9 @@ import redis from "../config/redis.js";
 import { broadcastNotification, emitNotification } from "./notificationController.js";
 import followerModel from "../models/followers.js";
 import { COUNTRY_REGIONS } from "../utilities/data.js";
+import hotStages from "../redisCash/stages/hotStages.js";
+import trendingStages from "../redisCash/stages/trendingStages.js";
+import favouriteStages from "../redisCash/stages/favouriteStages.js";
 
 
 //aggregation 
@@ -214,178 +217,178 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
 
 
 //aggreg hotStages
-export const aggregateHotStages = async() =>{
-  return await talentModel.aggregate([
-    {
-      $addFields: {
-        contestantsCount: {
-          $size: {
-            $ifNull: ["$contestants", []],
-          },
-        },
+// export const aggregateHotStages = async() =>{
+//   return await talentModel.aggregate([
+//     {
+//       $addFields: {
+//         contestantsCount: {
+//           $size: {
+//             $ifNull: ["$contestants", []],
+//           },
+//         },
   
-        queueCount: {
-          $size: {
-            $ifNull: ["$queue", []],
-          },
-        },
+//         queueCount: {
+//           $size: {
+//             $ifNull: ["$queue", []],
+//           },
+//         },
   
-        votersCount: {
-          $size: {
-            $ifNull: ["$voters", []],
-          },
-        },
+//         votersCount: {
+//           $size: {
+//             $ifNull: ["$voters", []],
+//           },
+//         },
   
-        eliminationsCount: {
-          $size: {
-            $ifNull: ["$eliminations", []],
-          },
-        },
-      },
-    },
+//         eliminationsCount: {
+//           $size: {
+//             $ifNull: ["$eliminations", []],
+//           },
+//         },
+//       },
+//     },
   
-    // MUST have contestants
-    {
-      $match: {
-        contestantsCount: {
-          $gt: 0,
-        },
-      },
-    },
+//     // MUST have contestants
+//     {
+//       $match: {
+//         contestantsCount: {
+//           $gt: 0,
+//         },
+//       },
+//     },
   
-    {
-      $addFields: {
-        occupancyScore: {
-          $multiply: [
-            {
-              $divide: [
-                "$contestantsCount",
-                "$MAXCONTESTANTS",
-              ],
-            },
-            100,
-          ],
-        },
+//     {
+//       $addFields: {
+//         occupancyScore: {
+//           $multiply: [
+//             {
+//               $divide: [
+//                 "$contestantsCount",
+//                 "$MAXCONTESTANTS",
+//               ],
+//             },
+//             100,
+//           ],
+//         },
   
-        queueScore: {
-          $multiply: [
-            "$queueCount",
-            4,
-          ],
-        },
+//         queueScore: {
+//           $multiply: [
+//             "$queueCount",
+//             4,
+//           ],
+//         },
   
-        voterScore: {
-          $multiply: [
-            "$votersCount",
-            1.5,
-          ],
-        },
+//         voterScore: {
+//           $multiply: [
+//             "$votersCount",
+//             1.5,
+//           ],
+//         },
   
-        progressionScore: {
-          $multiply: [
-            "$eliminationsCount",
-            2,
-          ],
-        },
+//         progressionScore: {
+//           $multiply: [
+//             "$eliminationsCount",
+//             2,
+//           ],
+//         },
   
-        recencyScore: {
-          $switch: {
-            branches: [
-              {
-                case: {
-                  $gte: [
-                    "$updatedAt",
-                    {
-                      $dateSubtract: {
-                        startDate: "$$NOW",
-                        unit: "day",
-                        amount: 1,
-                      },
-                    },
-                  ],
-                },
-                then: 25,
-              },
+//         recencyScore: {
+//           $switch: {
+//             branches: [
+//               {
+//                 case: {
+//                   $gte: [
+//                     "$updatedAt",
+//                     {
+//                       $dateSubtract: {
+//                         startDate: "$$NOW",
+//                         unit: "day",
+//                         amount: 1,
+//                       },
+//                     },
+//                   ],
+//                 },
+//                 then: 25,
+//               },
   
-              {
-                case: {
-                  $gte: [
-                    "$updatedAt",
-                    {
-                      $dateSubtract: {
-                        startDate: "$$NOW",
-                        unit: "day",
-                        amount: 3,
-                      },
-                    },
-                  ],
-                },
-                then: 15,
-              },
+//               {
+//                 case: {
+//                   $gte: [
+//                     "$updatedAt",
+//                     {
+//                       $dateSubtract: {
+//                         startDate: "$$NOW",
+//                         unit: "day",
+//                         amount: 3,
+//                       },
+//                     },
+//                   ],
+//                 },
+//                 then: 15,
+//               },
   
-              {
-                case: {
-                  $gte: [
-                    "$updatedAt",
-                    {
-                      $dateSubtract: {
-                        startDate: "$$NOW",
-                        unit: "day",
-                        amount: 7,
-                      },
-                    },
-                  ],
-                },
-                then: 5,
-              },
-            ],
-            default: 0,
-          },
-        },
-      },
-    },
+//               {
+//                 case: {
+//                   $gte: [
+//                     "$updatedAt",
+//                     {
+//                       $dateSubtract: {
+//                         startDate: "$$NOW",
+//                         unit: "day",
+//                         amount: 7,
+//                       },
+//                     },
+//                   ],
+//                 },
+//                 then: 5,
+//               },
+//             ],
+//             default: 0,
+//           },
+//         },
+//       },
+//     },
   
-    {
-      $addFields: {
-        hotScore: {
-          $add: [
-            "$occupancyScore",
-            "$queueScore",
-            "$voterScore",
-            "$progressionScore",
-            "$recencyScore",
-          ],
-        },
-      },
-    },
+//     {
+//       $addFields: {
+//         hotScore: {
+//           $add: [
+//             "$occupancyScore",
+//             "$queueScore",
+//             "$voterScore",
+//             "$progressionScore",
+//             "$recencyScore",
+//           ],
+//         },
+//       },
+//     },
   
-    {
-      $sort: {
-        hotScore: -1,
-        votersCount: -1,
-        updatedAt: -1,
-      },
-    },
+//     {
+//       $sort: {
+//         hotScore: -1,
+//         votersCount: -1,
+//         updatedAt: -1,
+//       },
+//     },
   
-    {
-      $limit: 20,
-    },
+//     {
+//       $limit: 20,
+//     },
   
-    {
-      $project: {
-        contestantsCount: 0,
-        queueCount: 0,
-        votersCount: 0,
-        eliminationsCount: 0,
-        occupancyScore: 0,
-        queueScore: 0,
-        voterScore: 0,
-        progressionScore: 0,
-        recencyScore: 0,
-      },
-    },
-  ]);
-}
+//     {
+//       $project: {
+//         contestantsCount: 0,
+//         queueCount: 0,
+//         votersCount: 0,
+//         eliminationsCount: 0,
+//         occupancyScore: 0,
+//         queueScore: 0,
+//         voterScore: 0,
+//         progressionScore: 0,
+//         recencyScore: 0,
+//       },
+//     },
+//   ]);
+// }
 
   // stages here
 export const createTalentStage =  async(req,res)=>{
@@ -428,19 +431,7 @@ export const createTalentStage =  async(req,res)=>{
      talent.contestants.forEach((c, index) => {
         c.rank = index + 1;
      });
-   // let fix = talent.contestants.splice(-3)
-   // talent.eliminations.push(fix)
-
-
-   
-   // if(talent.eliminations.length > 0){
-   //    let contest = talent.eliminations.splice(0,6)
-   //    talent.queue.push(...contest)  
-   // }
-
-   //************************* elimination ****************/
-   // let edition = talent.editions.find(e => e.status == "open")
-   // let edIndex = talent.editions.findIndex( e => e.status === "open")
+  
    if(edition && ((edition.round < 3 && talent.contestants.length >= 22 && talent.queue.length >= 6)||
     (edition.round >= 3 ))) {
        const roundDate = new Date(edition.updatedAt)
@@ -598,9 +589,7 @@ export const createTalentStage =  async(req,res)=>{
 
 export const getStagesByRegion = async (req, res) => {
     try {
-      const { region } = req.params;
-      // const normalizedRegion =
-      // region.slice(1).toLowerCase();
+      const { region } = req.params; 
       const normalizedCountry = region.length == 2 ? region.toUpperCase() : region;
       const stages = await talentModel.find({
         region: normalizedCountry,
@@ -687,7 +676,7 @@ export const getUserContestantInStage = async(req,res)=>{
      
 export const getHotStages = async(req,res)=>{
     const user_id = req.params.id
-    const stages = await aggregateHotStages()          
+    const stages = await hotStages(false)         
     res.json(stages) 
 }
 
@@ -714,157 +703,12 @@ export const getTrendingStages = async(req,res)=>{
   regionCountries.filter(
     (c) => c !== userCountryCode
   );
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(
-    thirtyDaysAgo.getDate() - 30
-  );
-
-  const buildPipeline = (countries) => [
-    {
-      $match: {
-        region: {
-          $in: countries,
-        },
-
-        updatedAt: {
-          $gte: thirtyDaysAgo,
-        },
-      },
-    },
-
-    {
-      $addFields: {
-        contestantsCount: {
-          $size: {
-            $ifNull: [
-              "$contestants",
-              [],
-            ],
-          },
-        },
-
-        queueCount: {
-          $size: {
-            $ifNull: [
-              "$queue",
-              [],
-            ],
-          },
-        },
-
-        votersCount: {
-          $size: {
-            $ifNull: [
-              "$voters",
-              [],
-            ],
-          },
-        },
-
-        eliminationsCount: {
-          $size: {
-            $ifNull: [
-              "$eliminations",
-              [],
-            ],
-          },
-        },
-      },
-    },
-
-    {
-      $match: {
-        contestantsCount: {
-          $gt: 0,
-        },
-      },
-    },
-
-    {
-      $addFields: {
-        hotScore: {
-          $add: [
-            {
-              $multiply: [
-                {
-                  $divide: [
-                    "$contestantsCount",
-                    "$MAXCONTESTANTS",
-                  ],
-                },
-                100,
-              ],
-            },
-
-            {
-              $multiply: [
-                "$queueCount",
-                4,
-              ],
-            },
-
-            {
-              $multiply: [
-                "$votersCount",
-                2,
-              ],
-            },
-
-            {
-              $multiply: [
-                "$eliminationsCount",
-                3,
-              ],
-            },
-          ],
-        },
-      },
-    },
-
-    {
-      $sort: {
-        hotScore: -1,
-        updatedAt: -1,
-      },
-    },
-
-    {
-      $project: {
-        hotScore: 0,
-        contestantsCount: 0,
-        queueCount: 0,
-        votersCount: 0,
-        eliminationsCount: 0,
-      },
-    },
-  ];
-  
-  // const localStages =
-  //     await talentModel.aggregate(
-  //       buildPipeline([
-  //         userCountryCode,
-  //       ])
-  //     );
-  const localStages = await talentModel.aggregate(
-    [...buildPipeline([userCountryCode]), { $limit: 15 }]
-  );
-      
-    // REGION AFTER
-    // const regionalStages =
-    //   await talentModel.aggregate(
-    //     buildPipeline(otherCountries)
-    //   );
-    const regionalStages = await talentModel.aggregate(
-      [...buildPipeline(otherCountries), { $limit: 15 }]
-    );
-
-    const stages = [
-      ...localStages,
-      ...regionalStages,
-    ];
-
-    res.status(200).json(stages);         
-  // res.json(stages) 
+ 
+  const stages = await trendingStages(
+                                  userCountryCode,
+                                  otherCountries,
+                                  false)
+  res.status(200).json(stages);           
 }
 
 
@@ -872,28 +716,8 @@ export const getTrendingStages = async(req,res)=>{
   //favourites
   export const getFavouriteStages = async (req, res) => {
     try {
-      const user_id = req.params.id;
-      const favourite = await favouriteModel.findOne({ user_id });
-      if (!favourite || !favourite.favourites?.length) {
-        return res.status(200).json([]);
-      }
-      const sortedFavorites = [...favourite.favourites].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-      const ids = [...new Set(
-        sortedFavorites.map(f => f._id.toString())
-      )];
-      const talentRooms = await talentModel.find({
-        _id: { $in: ids }
-      }).lean();
-  
-      const map = new Map(
-        talentRooms.map(room => [room._id.toString(), room])
-      );
-      const favourites = ids
-        .map(id => map.get(id))
-        .filter(Boolean);
-  
+      const userId = req.params.id;
+      const favourites = await favouriteStages(userId , true)
       return res.status(200).json(favourites);
     } catch (error) {
       console.error(error);
@@ -902,34 +726,44 @@ export const getTrendingStages = async(req,res)=>{
   }
 
   
-  export const addFavouriteStage = async(req,res)=> {
-    const user_id = req.params.id;
-    const talent = await talentModel.findById(
-        req.body.talentRoom_id 
-       )
+  export const toggleFavouriteStage = async(req,res)=> {
+    const userId = req.params.id;
+    const talentRoomId = new mongoose.Types.ObjectId(
+                          req.body.talentRoom_id
+                         );
     let favourite = await favouriteModel.findOne(
-        {user_id:user_id } 
+        {user_id:userId } 
     )
     if(!favourite)  {
-        const newFavourite = new favouriteModel({
-            user_id:user_id,
-            favourites:[{
-                       _id:req.body.talentRoom_id , 
-                       dataType:"talent",
-                       createdAt : new Date()
-                       }]
+        await favouriteModel.create({
+            user_id:userId,
+            favourites:[talentRoomId]
         } 
         )
-        await newFavourite.save()
-        return res.json(newFavourite)
+        const favourites = await favouriteStages(userId , true)
+        return res.json(favourites)
     }
-    favourite.favourites.push({
-                                _id:req.body.talentRoom_id ,
-                                 dataType:"talent",
-                                 createdAt : new Date()
-                                })
+    const exists =
+      favourite.favourites.some(
+        (id) =>
+          id.toString() ===
+          talentRoomId.toString()
+      );
+    if (exists) {
+      favourite.favourites =
+        favourite.favourites.filter(
+          (id) =>
+            id.toString() !==
+            talentRoomId.toString()
+        );
+    } else {
+      favourite.favourites.push(
+        talentRoomId
+      );
+    }
     await favourite.save()
-    return res.json(favourite).status(200)
+    const favourites = await favouriteStages(userId , true)
+    return res.json(favourites).status(200)
   }
 
   // user performances

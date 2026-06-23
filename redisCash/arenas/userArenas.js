@@ -167,8 +167,7 @@ const USER_ARENAS_CACHE_SECONDS =
       cacheKey,
       JSON.stringify(arenas),
       {
-        EX:
-          USER_ARENAS_CACHE_SECONDS,
+        ex: USER_ARENAS_CACHE_SECONDS,
       }
     );
 

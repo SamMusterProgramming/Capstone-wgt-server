@@ -4,7 +4,7 @@ import redis from "../../config/redis.js";
 
 
 const LOCAL_ARENAS_CACHE_SECONDS =
-    60 * 5; // 30 minutes
+    60 * 5; // 5 minutes
   
 const localArenas = async (
     countryCode = "US",
@@ -21,7 +21,6 @@ const localArenas = async (
           if (typeof cached === "object") {
             return cached;
           }
-        
           if (typeof cached === "string") {
             return JSON.parse(cached);
           }
@@ -169,9 +168,11 @@ const localArenas = async (
         cacheKey,
         JSON.stringify(arenas),
         {
-          EX: LOCAL_ARENAS_CACHE_SECONDS,
+          ex: LOCAL_ARENAS_CACHE_SECONDS,
         }
       );
+      const ttl = await redis.ttl(cacheKey);
+      console.log("TTL:", ttl);
       return arenas;
     } catch (error) {
       console.error(

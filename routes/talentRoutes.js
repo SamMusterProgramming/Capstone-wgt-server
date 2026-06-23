@@ -27,11 +27,12 @@ import { verifyFirebaseToken } from '../middleware/auth.js';
 import { protect } from '../middleware/jwtProtect.js';
 import { getClientIp, getLocationFromIP } from '../ipGeolocation.js';
 import {
-   addFavouriteStage, addUserPerformance, createTalentStage, deleteContestantFromEliminations, deleteContestantFromQueue, 
+   addUserPerformance, createTalentStage, deleteContestantFromEliminations, deleteContestantFromQueue, 
    deleteUserPerformanceQueue, 
    deleteUserPerformanceStage, 
    generateTalentStage, getAllStages, getEliminatedUserBackToQueue, getFavouriteStages, getHotStages, getStagesByRegion, getTrendingStages, getUserContestantInStage, 
-   joinStageOrQueueFirstPerformance, resignContestantFromStage 
+   joinStageOrQueueFirstPerformance, resignContestantFromStage, 
+   toggleFavouriteStage
   } from '../controllers/talentController.js';
 import { addComment, deleteComment, flagPost, getPostById, LikePost, votePost } from '../controllers/postController.js';
 
@@ -50,7 +51,7 @@ route.get('/trendingStages/:countryCode', protect, getTrendingStages)
 
 //favouriteStages
 route.get("/favouriteStages/:id", protect,getFavouriteStages);
-route.post('/favourite/:id',protect ,addFavouriteStage)
+route.post('/favourite/:id',protect ,toggleFavouriteStage)
 
 // user performances , add , update , delete , resign 
 route.post('/uploads/:id', protect, joinStageOrQueueFirstPerformance);

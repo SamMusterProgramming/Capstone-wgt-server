@@ -36,7 +36,7 @@ export const getUserProfile = async (
       `user:${userId}`,
       JSON.stringify(plainUser),
       {
-        EX: 60 * 10,
+        ex: 60 * 10,
       }
     );
     return plainUser;
