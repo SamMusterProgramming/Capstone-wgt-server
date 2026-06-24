@@ -4,6 +4,7 @@ import arenaPostModel from "../models/arenaPost.js"
 import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from "../utilities/blackBlazeb2.js"
 import localArenas from "../redisCash/arenas/localArenas.js"
 import userArenas from "../redisCash/arenas/userArenas.js"
+import redis from "../config/redis.js"
 
 export const createArena = async (req, res) => {
    try {
@@ -40,6 +41,165 @@ export const createArena = async (req, res) => {
       console.log(error)
    }
 }
+
+export const updateArena = async (
+    req,
+    res
+  ) => {
+    try {
+      const arena_id = req.params.id
+      const {
+        userId,
+        biography,
+        description,
+        profileImage,
+        coverImage,
+      } = req.body
+      console.log(req.body)
+      const updateData = {};
+
+      if (biography !== undefined)
+            updateData.biography = biography;
+
+      if (description !== undefined)
+            updateData.description = description;
+
+      if ( profileImage?.fileId !== undefined)
+        {
+          const signedUrl = await getPublicUrlFromB2(profileImage.fileName);
+          const cdnUrl = signedUrl.replace(
+          "https://f005.backblazeb2.com",
+          "https://cdn.challenmemey.com"
+          );
+          updateData.profileImage = {
+             publicUrl : cdnUrl ,
+             fileId : profileImage.fileId,
+             fileName : profileImage .fileName
+          }
+        }
+
+      if (coverImage?.fileId !== undefined ) 
+        {
+            const signedUrl = await getPublicUrlFromB2(coverImage.fileName);
+            const cdnUrl = signedUrl.replace(
+            "https://f005.backblazeb2.com",
+            "https://cdn.challenmemey.com"
+            );
+            updateData.coverImage = {
+                publicUrl : cdnUrl ,
+                fileId : coverImage.fileId,
+                fileName : coverImage.fileName
+            }
+        }
+      console.log(updateData)
+      const arena = await arenaModel.findOneAndUpdate(
+        {
+            _id: arena_id,
+            owner_id: userId,
+        },
+        {
+            $set: updateData,
+        },
+        {
+            new: true,
+        }
+      );
+      
+     if (!arena) {
+        return res.status(404).json({
+          message: "Arena not found",
+        });
+     }
+
+     await redis.del(
+        `user_arenas_${userId}`
+      );
+  
+      await redis.del(
+        `local_arenas_${arena.region}`
+      );
+
+      const freshArenas = await userArenas(
+                        userId,
+                        true // refreshCache
+                    );
+
+      return res.status(200).json({
+         arenas : freshArenas ,
+         selectedArena : freshArenas.find ( a => a._id.toString() === arena._id.toString()) 
+      });
+  
+    } catch (error) {
+      console.error(
+        "editArena error:",
+        error
+      );
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to update arena",
+      });
+    }
+  };
+
+export const deleteArena = async (req, res) => {
+    try {
+        const  arena_id  = req.params.id;
+        const {userId} = req.body
+        if (!arena_id) {
+          return res.status(400).json({
+            success: false,
+            message: "arena_id is required",
+          });
+        }
+        const arena =
+          await arenaModel.findById(
+            arena_id
+          );
+    
+        if (!arena) {
+          return res.status(404).json({
+            success: false,
+            message: "Arena not found",
+          });
+        }
+        // delete performances
+        await arenaPostModel.deleteMany({
+          _id: {
+            $in: arena.posts || [],
+          },
+        });
+    
+        // delete arena
+    
+        await arenaModel.findByIdAndDelete(
+          arena_id
+        );
+    
+        // optional cache cleanup
+        await redis.del(
+        `local_arenas_${arena.region}`
+        );
+        await redis.del(
+        `user_arenas_${arena.owner_id}`
+        );
+        const arenas = await userArenas(userId , true)
+        return res.json({
+        arenas,
+        selectedArena: arenas.length !== 0 ? arenas[0] : null
+        });
+      } catch (error) {
+        console.error(
+          "deleteArena error:",
+          error
+        );
+        return res.status(500).json({
+          success: false,
+          message:
+            "Failed to delete arena",
+        });
+      }
+ }
 
 export const getArenaByUser = async (req, res) => {
     try {
@@ -80,9 +240,7 @@ export const getLocalArenas = async (req, res) => {
     try {
       const  arenaId  = req.params.id;
       const { userId } = req.body;
-  
       const arena = await arenaModel.findById(arenaId);
-  
       if (!arena) {
         return res.status(404).json({
           success: false,
@@ -159,7 +317,6 @@ export const getLocalArenas = async (req, res) => {
       return res.status(200).json(newArena)
     } catch (error) {
       console.error(error);
-  
       return res.status(500).json({
         success: false,
         message: "Server error",
