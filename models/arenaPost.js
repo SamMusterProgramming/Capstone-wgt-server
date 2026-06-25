@@ -18,9 +18,16 @@ const ArenaPostSchema = new mongoose.Schema({
         maxlength: 1000,
       },
 
+    // automatic discovery system
+
     spotlight: {
-    type: Boolean,
-    default: false,
+        type: Boolean,
+        default: false,
+    },
+
+    spotlightScore: {
+        type: Number,
+        default: 0,
     },
     
     media: {
@@ -29,13 +36,14 @@ const ArenaPostSchema = new mongoose.Schema({
           fileId: String,
           fileName : String
         },
-  
         thumbnail: {
           cdnUrl: String,
           fileId: String,
           fileName : String
         },
-      },
+    },
+
+    // ---------- ENGAGEMENT ----------
   
     fires: [
     {
@@ -45,13 +53,58 @@ const ArenaPostSchema = new mongoose.Schema({
     ],
   
     comments: [
-      {
-        user_id: mongoose.Schema.Types.ObjectId,
-        text: String,
-        createdAt: Date,
-      },
+        {
+          user_id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+    
+          text: {
+            type: String,
+            maxlength: 500,
+          },
+    
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
     ],
-  
+
+    views: {
+        type:Number,
+        default:0
+      },
+
+    // ---------- COUNTERS ----------
+
+    viewCount: {
+        type: Number,
+        default: 0,
+    },
+
+    fireCount: {
+        type: Number,
+        default: 0,
+    },
+
+    commentCount: {
+        type: Number,
+        default: 0,
+    },
+
+    shareCount: {
+        type: Number,
+        default: 0,
+    },
+
+    // ---------- DISCOVERY ----------
+
+    lastInteractionAt: {
+        type: Date,
+        default: Date.now,
+    },
+
     createdAt: {
       type: Date,
       default: Date.now,

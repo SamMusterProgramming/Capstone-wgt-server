@@ -6,6 +6,26 @@ import localArenas from "../redisCash/arenas/localArenas.js"
 import userArenas from "../redisCash/arenas/userArenas.js"
 import redis from "../config/redis.js"
 
+
+const recalculateSpotlightScore = (post) => {
+    let score =
+      (post.viewCount * 0.1) +
+      (post.fireCount * 3) +
+      (post.commentCount * 5) +
+      (post.shareCount * 8);
+  
+    const ageHours =
+      (Date.now() - new Date(post.createdAt).getTime()) /
+      (1000 * 60 * 60);
+  
+    if (ageHours <= 24) score += 100;
+    else if (ageHours <= 72) score += 50;
+    else if (ageHours <= 168) score += 20;
+  
+    post.spotlightScore = score;
+    post.spotlight = score >= 150;
+  };
+
 export const createArena = async (req, res) => {
    try {
     const userId = req.params.id
@@ -345,7 +365,7 @@ export const getLocalArenas = async (req, res) => {
  export const addPerformanceToArena = async (req, res) => {
     try {
      const arenaId = req.params.id
-     const {owner_id,description,spotlight,video,thumbnail} = req.body
+     const {owner_id,description,video,thumbnail} = req.body
      // GENERATE URLS
      const thumbnailSignedUrl =
      await getPublicUrlFromB2(thumbnail.fileName);
@@ -377,7 +397,6 @@ export const getLocalArenas = async (req, res) => {
               fileName : thumbnail.fileName
             },
           },
-          spotlight,
       });
 
       const arena = await arenaModel.findByIdAndUpdate(
@@ -482,23 +501,39 @@ export const getLocalArenas = async (req, res) => {
  export const toggleFire = async (req,res) => {
     const post_id  = req.params.id;
     const { userId } = req.body;
-    const post =
-      await arenaPostModel.findById(
+    const post = await arenaPostModel.findById(
         post_id
       );
-    const fired =
-      post.fires.some(
+    const fired = post.fires.some(
         id =>  id.toString() === userId
       );
     if (fired) {
-      post.fires =
-        post.fires.filter(
-          id =>
-            id.toString() !== userId
+      post.fires = post.fires.filter(
+          id =>  id.toString() !== userId
         );
+    post.fireCount = Math.max( 0, (post.fireCount || 0) - 1 );
     } else {
       post.fires.push(userId);
+      post.fireCount = (post.fireCount || 0) + 1;
     }
+
+    recalculateSpotlightScore(post)
     await post.save();
     return res.json(post);
   };
+
+
+  export const addPostView = async(req,res)=>{
+    const postId = req.params.id;
+    await arenaPostModel.findByIdAndUpdate(
+      postId,
+      {
+        $inc:{
+          viewCount:1
+        }
+      }
+    );
+    res.json({
+      success:true
+    });
+   }

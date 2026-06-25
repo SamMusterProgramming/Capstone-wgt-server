@@ -1,7 +1,7 @@
 
 import dotenv from 'dotenv';
 import express from 'express';
-import { addPerformanceToArena, createArena, deleteArena, deletePostFromArena, getArenaByProfile, getArenaByUser, getLocalArenas, getPostsArena, toggleArenaFollower, toggleArenaStar, toggleFire, toggleSpotlight, updateArena } from '../controllers/arenaController.js';
+import { addPerformanceToArena, addPostView, createArena, deleteArena, deletePostFromArena, getArenaByProfile, getArenaByUser, getLocalArenas, getPostsArena, toggleArenaFollower, toggleArenaStar, toggleFire, toggleSpotlight, updateArena } from '../controllers/arenaController.js';
 import { protect } from '../middleware/jwtProtect.js';
 
 
@@ -24,6 +24,7 @@ route.get('/posts/:id' , protect , getPostsArena)
 route.delete('/post/:id' , protect , deletePostFromArena)
 route.patch('/post/spotlight/:id' , protect , toggleSpotlight)
 route.patch('/post/fire/:id' , protect , toggleFire)
+route.patch('/post/view/:id' , protect , addPostView)
 
 
 export default route; 
