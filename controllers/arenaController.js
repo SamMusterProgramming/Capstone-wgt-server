@@ -5,6 +5,11 @@ import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, 
 import localArenas from "../redisCash/arenas/localArenas.js"
 import userArenas from "../redisCash/arenas/userArenas.js"
 import redis from "../config/redis.js"
+import arenaFollowerModel from "../models/arena/arenaFollower.js"
+import arenaStarModel from "../models/arena/arenaStar.js"
+import arenaPostFireModel from "../models/arena/postArena/arenaPostFire.js"
+import arenaById from "../redisCash/arenas/arenaById.js"
+
 
 
 const recalculateSpotlightScore = (post) => {
@@ -231,22 +236,90 @@ export const getArenaByUser = async (req, res) => {
     }
 }
 
+// export const getArenaByProfile = async (req, res) => {
+//     try {
+//      const userId = req.params.id
+//      const {requesterId} = req.body
+//      const arenas = await userArenas(userId , false)
+//      return res.json(arenas)
+//     } catch (error) {
+//        console.log(error)
+//     }
+// }
 export const getArenaByProfile = async (req, res) => {
     try {
-     const userId = req.params.id
-     const arenas = await userArenas(userId , false)
-     return res.json(arenas)
+
+        const userId = req.params.id;
+        const { requesterId } = req.body;
+
+        const arenas = await userArenas(userId, false);
+
+        if (!requesterId || arenas.length === 0) {
+            return res.json(arenas);
+        }
+
+        const arenaIds = arenas.map(arena => arena._id);
+
+        const [followers, stars] = await Promise.all([
+
+            arenaFollowerModel.find(
+                {
+                    user_id: requesterId,
+                    arena_id: { $in: arenaIds },
+                },
+                {
+                    arena_id: 1,
+                    _id: 0,
+                }
+            ),
+
+            arenaStarModel.find(
+                {
+                    user_id: requesterId,
+                    arena_id: { $in: arenaIds },
+                },
+                {
+                    arena_id: 1,
+                    _id: 0,
+                }
+            ),
+
+        ]);
+
+        const followedSet = new Set(
+            followers.map(item => item.arena_id.toString())
+        );
+
+        const starredSet = new Set(
+            stars.map(item => item.arena_id.toString())
+        );
+
+        const result = arenas.map(arena => ({
+            ...arena,
+            isFollower: followedSet.has(arena._id.toString()),
+            isStarred: starredSet.has(arena._id.toString()),
+        }));
+
+        return res.json(result);
+
     } catch (error) {
-       console.log(error)
+
+        console.log(error);
+
+        return res.status(500).json({
+            success: false,
+        });
+
     }
-}
+};
+
 
 export const getLocalArenas = async (req, res) => {
   try {   
     const countryCode  = req.params.id
     console.log(countryCode)
     const { userId } = req.body;
-    const arenas = await localArenas(countryCode , false)
+    const arenas = await localArenas(countryCode , true)
     return res.status(200).json(arenas);
   } catch (err) {
     console.log(err);
@@ -256,90 +329,221 @@ export const getLocalArenas = async (req, res) => {
   }
 };
 
- export const toggleArenaStar = async (req, res) => {
-    try {
-      const  arenaId  = req.params.id;
-      const { userId } = req.body;
-      const arena = await arenaModel.findById(arenaId);
-      if (!arena) {
-        return res.status(404).json({
-          success: false,
-          message: "Arena not found",
-        });
-      }
-      const alreadyStarred = arena.stars.some(
-        starId => starId.toString() === userId
-      );
 
-      let query = {}
-      if (alreadyStarred) {
-        query = {
-            $pull: {
-              stars: userId,
-            },
-          }
-      }else {
-        query =  {
-            $addToSet: {
-              stars: userId,
-            },
-          }
-      }
-      const newArena =  await arenaModel.findByIdAndUpdate(
-        arenaId,
-        query,
-        { new: true }
-      );
-      return res.status(200).json(newArena)
+//star arena , toggleStar
+export const isUserStarredArena = async (req, res) => {
+    try {
+      const { arenaId, userId } = req.body;
+      const exists = await arenaStarModel.exists({
+        arena_id: arenaId,
+        user_id: userId,
+      });
+      return res.json(exists);
     } catch (error) {
       console.error(error);
+      return res.status(500).json(false);
+    }
+};
+
+// export const toggleArenaStar = async (req, res) => {
+//     try {
+//       const  arenaId  = req.params.id;
+//       const { userId } = req.body;
+//       const arena = await arenaModel.findById(arenaId);
+//       if (!arena) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Arena not found",
+//         });
+//       }
+//       const alreadyStarred = arena.stars.some(
+//         starId => starId.toString() === userId
+//       );
+//       let query = {}
+//       if (alreadyStarred) {
+//         query = {
+//             $pull: {
+//               stars: userId,
+//             },
+//           }
+//       }else {
+//         query =  {
+//             $addToSet: {
+//               stars: userId,
+//             },
+//           }
+//       }
+//       const newArena =  await arenaModel.findByIdAndUpdate(
+//         arenaId,
+//         query,
+//         { new: true }
+//       );
+//       return res.status(200).json(newArena)
+//     } catch (error) {
+//       console.error(error);
+//       return res.status(500).json({
+//         success: false,
+//         message: "Server error",
+//       });
+//     }
+//   };
+
+export const toggleArenaStar = async (req, res) => {
+    try {
+      const { arenaId, userId } = req.body;
+      const existing = await arenaStarModel.findOne({
+        arena_id: arenaId,
+        user_id: userId,
+      });
+      let starred = false;
+      if (existing) {
+        await arenaStarModel.deleteOne({
+          _id: existing._id,
+        });
+        await arenaModel.findByIdAndUpdate(
+          arenaId,
+          {
+            $inc: {
+              starCount: -1,
+            },
+          },
+          {new:true}
+        );
   
+      } else {
+        await arenaStarModel.create({
+          arena_id: arenaId,
+          user_id: userId,
+        });
+        await arenaModel.findByIdAndUpdate(
+          arenaId,
+          {
+            $inc: {
+              starCount: 1,
+            },
+          },
+          {new:true}
+        );
+        starred = true;
+      }
+    //   await redis.del(`arena_${arenaId}`);
+      const arena = await arenaById(arenaId,true)
+      const freshArena = {...arena, isStarred:starred}
+      return res.json(freshArena);
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({
         success: false,
-        message: "Server error",
       });
     }
   };
 
-  export const toggleArenaFollower = async (req, res) => {
+//following , 
+  export const isUserFollowingArena = async (req, res) => {
     try {
-      const  arenaId  = req.params.id;
-      const { userId } = req.body;
-      const arena = await arenaModel.findById(arenaId);
-      if (!arena) {
-        return res.status(404).json({
-          success: false,
-          message: "Arena not found",
+      const { arenaId, userId } = req.body;
+      const exists = await arenaFollowerModel.exists({
+        arena_id: arenaId,
+        user_id: userId,
+      });
+      return res.json(exists);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json(false);
+    }
+  };
+  
+//   export const toggleArenaFollower = async (req, res) => {
+//     try {
+//       const  arenaId  = req.params.id;
+//       const { userId } = req.body;
+//       const arena = await arenaModel.findById(arenaId);
+//       if (!arena) {
+//         return res.status(404).json({
+//           success: false,
+//           message: "Arena not found",
+//         });
+//       }
+//       const alreadyStarred = arena.followers.some(
+//         starId => starId.toString() === userId
+//       );
+//       let query = {}
+//       if (alreadyStarred) {
+//         query = {
+//             $pull: {
+//               followers : userId,
+//             },
+//           }
+//       }else {
+//         query =  {
+//             $addToSet: {
+//               followers : userId,
+//             },
+//           }
+//       }
+//       const newArena =  await arenaModel.findByIdAndUpdate(
+//         arenaId,
+//         query,
+//         { new: true }
+//       );
+//       return res.status(200).json(newArena)
+//     } catch (error) {
+//       console.error(error);
+//       return res.status(500).json({
+//         success: false,
+//         message: "Server error",
+//       });
+//     }
+//   };
+ 
+export const toggleArenaFollower = async (req, res) => {
+    try {
+      const { arenaId, userId } = req.body;
+      const existing = await arenaFollowerModel.findOne({
+        arena_id: arenaId,
+        user_id: userId,
+      });
+      let following = false;
+      
+      if (existing) {
+        await arenaFollowerModel.deleteOne({
+          _id: existing._id,
         });
-      }
-      const alreadyStarred = arena.followers.some(
-        starId => starId.toString() === userId
-      );
-      let query = {}
-      if (alreadyStarred) {
-        query = {
-            $pull: {
-              followers : userId,
+         await arenaModel.findByIdAndUpdate(
+          arenaId,
+          {
+            $inc: {
+              followerCount: -1,
             },
-          }
-      }else {
-        query =  {
-            $addToSet: {
-              followers : userId,
+          },
+          {new:true}
+        );
+      } else {
+         await arenaFollowerModel.create({
+          arena_id: arenaId,
+          user_id: userId,
+        });
+         await arenaModel.findByIdAndUpdate(
+          arenaId,
+          {
+            $inc: {
+              followerCount: 1,
             },
-          }
+          },
+          {new:true}
+        );
+        following = true;
       }
-      const newArena =  await arenaModel.findByIdAndUpdate(
-        arenaId,
-        query,
-        { new: true }
-      );
-      return res.status(200).json(newArena)
+  
+      // invalidate cache
+    //   await redis.del(`arena_${arenaId}`);
+      const arena = await arenaById(arenaId,true)
+      const freshArena = {...arena, isFollower:following}
+      return res.json(freshArena);
     } catch (error) {
       console.error(error);
       return res.status(500).json({
         success: false,
-        message: "Server error",
       });
     }
   };
@@ -361,7 +565,6 @@ export const getLocalArenas = async (req, res) => {
     }
  }
  
-
  export const addPerformanceToArena = async (req, res) => {
     try {
      const arenaId = req.params.id
@@ -405,6 +608,9 @@ export const getLocalArenas = async (req, res) => {
           $push: {
             posts: post._id,
           },
+          $inc: {
+            postCount: 1,
+          },
         }
       );
       const arenas = await userArenas(owner_id , true)
@@ -446,13 +652,15 @@ export const getLocalArenas = async (req, res) => {
          );     
       }
       await Promise.all(filesToDelete);
-
       const updatedArena =
       await arenaModel.findByIdAndUpdate(
         post.arena_id,
         {
             $pull: {
             posts: post._id,
+            },
+            $inc: {
+                postCount: -1,
             },
         },
         {
@@ -498,32 +706,118 @@ export const getLocalArenas = async (req, res) => {
 
  // user fire the performance , toggling 
 
- export const toggleFire = async (req,res) => {
-    const post_id  = req.params.id;
-    const { userId } = req.body;
-    const post = await arenaPostModel.findById(
-        post_id
-      );
-    const fired = post.fires.some(
-        id =>  id.toString() === userId
-      );
-    if (fired) {
-      post.fires = post.fires.filter(
-          id =>  id.toString() !== userId
-        );
-    post.fireCount = Math.max( 0, (post.fireCount || 0) - 1 );
-    } else {
-      post.fires.push(userId);
-      post.fireCount = (post.fireCount || 0) + 1;
+ export const isUserFiredPost = async (req, res) => {
+    try {
+
+        const { postId, userId } = req.body;
+        const fired = await arenaPostFireModel.exists({
+            post_id: postId,
+            user_id: userId,
+        });
+        return res.json(fired);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json(false);
     }
+};
 
-    recalculateSpotlightScore(post)
-    await post.save();
-    return res.json(post);
-  };
+//  export const toggleFire = async (req,res) => {
+//     const post_id  = req.params.id;
+//     const { userId } = req.body;
+//     const post = await arenaPostModel.findById(
+//         post_id
+//       );
+//     const fired = post.fires.some(
+//         id =>  id.toString() === userId
+//       );
+//     if (fired) {
+//       post.fires = post.fires.filter(
+//           id =>  id.toString() !== userId
+//         );
+//     post.fireCount = Math.max( 0, (post.fireCount || 0) - 1 );
+//     } else {
+//       post.fires.push(userId);
+//       post.fireCount = (post.fireCount || 0) + 1;
+//     }
+//     recalculateSpotlightScore(post)
+//     await post.save();
+
+//     if(post.owner_id.toString() === userId){
+//         const arenas = await userArenas(userId , true)
+//         return res.json({
+//             arenas:arenas,
+//             fired:!fired
+//         });
+//         // const selectedArena = arenas.find( a => a._id.toString() === )
+//     }
+//     return res.json(!fired);
+//   };
 
 
-  export const addPostView = async(req,res)=>{
+export const toggleFirePost = async (req, res) => {
+    try {
+        const { postId, userId } = req.body;
+        const existing = await arenaPostFireModel.findOne({
+            post_id: postId,
+            user_id: userId,
+        });
+        let active = false;
+        let count = 0;
+        let post = {}
+        if (existing) {
+            await arenaPostFireModel.deleteOne({
+                _id: existing._id,
+            });
+             post = await arenaPostModel.findByIdAndUpdate(
+                postId,
+                {
+                    $inc: {
+                        fireCount: -1,
+                    },
+                },
+                {
+                    new: true,
+                    // select: "fireCount arena_id",
+                }
+            );
+            count = post.fireCount;
+            // await redis.del(`arena_posts_${post.arena_id}`);
+
+        } else {
+            await arenaPostFireModel.create({
+                post_id: postId,
+                user_id: userId,
+            });
+                post = await arenaPostModel.findByIdAndUpdate(
+                postId,
+                {
+                    $inc: {
+                        fireCount: 1,
+                    },
+                },
+                {
+                    new: true,
+                    // select: "fireCount arena_id",
+                }
+            );
+            active = true;
+            count = post.fireCount;
+            // await redis.del(`arena_posts_${post.arena_id}`);
+        }
+        console.log(post)
+        return res.json({active,
+                         post
+                       });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+        });
+    }
+};
+
+
+export const addPostView = async(req,res)=>{
     const postId = req.params.id;
     await arenaPostModel.findByIdAndUpdate(
       postId,

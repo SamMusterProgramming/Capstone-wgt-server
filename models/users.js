@@ -82,6 +82,6 @@ const userSchema = new mongoose.Schema({
 // userSchema.index({uid:1});   
 userSchema.index({email:1,password:1});
 
-let userModel = mongoose.model("users",userSchema);
+let userModel = mongoose.model("User",userSchema);
 
 export default  userModel ;

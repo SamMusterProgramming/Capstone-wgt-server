@@ -45,31 +45,37 @@ const ArenaPostSchema = new mongoose.Schema({
 
     // ---------- ENGAGEMENT ----------
   
-    fires: [
-    {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-    },
-    ],
+    // fires: [
+    // {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    // },
+    // ],
   
-    comments: [
-        {
-          user_id: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-          },
-    
-          text: {
-            type: String,
-            maxlength: 500,
-          },
-    
-          createdAt: {
-            type: Date,
-            default: Date.now,
-          },
-        },
-    ],
+    // comments: [
+    //     {
+    //         _id: mongoose.Schema.Types.ObjectId,
+    //         user_id:{
+    //             type:mongoose.Schema.Types.ObjectId,
+    //             ref:"User",
+    //         },
+    //         text:String,
+    //         likes:[
+    //             {
+    //                 type:mongoose.Schema.Types.ObjectId,
+    //                 ref:"User"
+    //             }
+    //         ],
+    //         likeCount:{
+    //             type:Number,
+    //             default:0
+    //         },
+    //         createdAt:{
+    //             type:Date,
+    //             default:Date.now
+    //         }
+    //     }
+    // ],
 
     views: {
         type:Number,
@@ -114,6 +120,6 @@ const ArenaPostSchema = new mongoose.Schema({
 );
 
 ArenaPostSchema.index({owner_id:1});   
-let arenaPostModel = mongoose.model("arenaPosts",ArenaPostSchema);
+let arenaPostModel = mongoose.model("ArenaPost",ArenaPostSchema);
 
 export default  arenaPostModel ;

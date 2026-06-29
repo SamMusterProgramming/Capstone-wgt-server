@@ -48,25 +48,42 @@ const ArenaSchema = new mongoose.Schema({
       fileId : String,
       fileName : String
     },
-    followers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    // followers: [
+    //   {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    //   },
+    // ],
     posts: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ArenaPost",
       },
     ],
-    stars: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-    }],
-    views: {
-      type: Number,
-      default: 0,
+    // stars: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User",
+    // }],
+    // views: {
+    //   type: Number,
+    //   default: 0,
+    // },
+    // ---------- COUNTERS ----------
+    followerCount: {
+        type: Number,
+        default: 0,
+    },
+    starCount: {
+        type: Number,
+        default: 0,
+    },
+    postCount: {
+        type: Number,
+        default: 0,
+    },
+    viewCount: {
+        type: Number,
+        default: 0,
     },
     verified: {
       type: Boolean,
@@ -80,5 +97,5 @@ const ArenaSchema = new mongoose.Schema({
   { versionKey: false }    
 );
 ArenaSchema.index({owner_id:1});   
-let arenaModel = mongoose.model("arenas",ArenaSchema);
+let arenaModel = mongoose.model("Arena",ArenaSchema);
 export default  arenaModel;
