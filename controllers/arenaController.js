@@ -780,7 +780,7 @@ export const toggleFirePost = async (req, res) => {
                     // select: "fireCount arena_id",
                 }
             );
-            count = post.fireCount;
+            count = post?.fireCount;
             // await redis.del(`arena_posts_${post.arena_id}`);
 
         } else {
@@ -801,12 +801,13 @@ export const toggleFirePost = async (req, res) => {
                 }
             );
             active = true;
-            count = post.fireCount;
+            count = post?.fireCount;
             // await redis.del(`arena_posts_${post.arena_id}`);
         }
-        console.log(post)
-        return res.json({active,
-                         post
+        return res.json({
+                         active,
+                         post,
+                         count
                        });
     } catch (error) {
         console.error(error);
