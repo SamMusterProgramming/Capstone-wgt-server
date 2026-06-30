@@ -9,6 +9,8 @@ import arenaFollowerModel from "../models/arena/arenaFollower.js"
 import arenaStarModel from "../models/arena/arenaStar.js"
 import arenaPostFireModel from "../models/arena/postArena/arenaPostFire.js"
 import arenaById from "../redisCash/arenas/arenaById.js"
+import postCommentArena from "../redisCash/arenas/postCommentArena.js"
+import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js"
 
 
 
@@ -18,7 +20,7 @@ const recalculateSpotlightScore = (post) => {
       (post.fireCount * 3) +
       (post.commentCount * 5) +
       (post.shareCount * 8);
-  
+     
     const ageHours =
       (Date.now() - new Date(post.createdAt).getTime()) /
       (1000 * 60 * 60);
@@ -721,38 +723,6 @@ export const toggleArenaFollower = async (req, res) => {
     }
 };
 
-//  export const toggleFire = async (req,res) => {
-//     const post_id  = req.params.id;
-//     const { userId } = req.body;
-//     const post = await arenaPostModel.findById(
-//         post_id
-//       );
-//     const fired = post.fires.some(
-//         id =>  id.toString() === userId
-//       );
-//     if (fired) {
-//       post.fires = post.fires.filter(
-//           id =>  id.toString() !== userId
-//         );
-//     post.fireCount = Math.max( 0, (post.fireCount || 0) - 1 );
-//     } else {
-//       post.fires.push(userId);
-//       post.fireCount = (post.fireCount || 0) + 1;
-//     }
-//     recalculateSpotlightScore(post)
-//     await post.save();
-
-//     if(post.owner_id.toString() === userId){
-//         const arenas = await userArenas(userId , true)
-//         return res.json({
-//             arenas:arenas,
-//             fired:!fired
-//         });
-//         // const selectedArena = arenas.find( a => a._id.toString() === )
-//     }
-//     return res.json(!fired);
-//   };
-
 
 export const toggleFirePost = async (req, res) => {
     try {
@@ -832,3 +802,60 @@ export const addPostView = async(req,res)=>{
       success:true
     });
    }
+
+   // comments 
+
+   export const getArenaPostComments = async (req, res) => {
+    try {
+      const  postId  = req.params.id;
+      const comments = await postCommentArena(postId,false);
+      return res.status(200).json(comments);
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Server Error",
+      });
+    }
+  };
+  
+
+  export const addArenaPostComments = async (req, res) => {
+    try {
+      const  postId  = req.params.id;
+      const { userId, text } = req.body;
+  
+      if (!text?.trim()) {
+        return res.status(400).json({
+          message: "Comment cannot be empty.",
+        });
+      }
+  
+      const comment = await arenaPostCommentModel.create({
+        post_id: postId,
+        user_id: userId,
+        text: text.trim(),
+      });
+  
+      await arenaPostModel.findByIdAndUpdate(
+        postId,
+        {
+          $inc: {
+            commentCount: 1,
+          },
+        }
+      );
+  
+      // Invalidate comments cache
+      await redis.del(`post_comments_${postId}`);
+      const comments = await postCommentArena(postId , true)
+      console.log(comments)
+      return res.status(201).json(comments);
+  
+    } catch (error) {
+      console.error(error);
+  
+      return res.status(500).json({
+        message: "Internal Server Error",
+      });
+    }
+  };

@@ -1,7 +1,7 @@
 
 import dotenv from 'dotenv';
 import express from 'express';
-import { addPerformanceToArena, addPostView, createArena, deleteArena, deletePostFromArena, getArenaByProfile, getArenaByUser, getLocalArenas, getPostsArena, isUserFiredPost, isUserFollowingArena, isUserStarredArena, toggleArenaFollower, toggleArenaStar,  toggleFirePost,  updateArena } from '../controllers/arenaController.js';
+import { addArenaPostComments, addPerformanceToArena, addPostView, createArena, deleteArena, deletePostFromArena, getArenaByProfile, getArenaByUser, getArenaPostComments, getLocalArenas, getPostsArena, isUserFiredPost, isUserFollowingArena, isUserStarredArena, toggleArenaFollower, toggleArenaStar,  toggleFirePost,  updateArena } from '../controllers/arenaController.js';
 import { protect } from '../middleware/jwtProtect.js';
 
 
@@ -15,11 +15,13 @@ route.post("/delete/:id", protect , deleteArena);
 route.get('/user/:id' , protect , getArenaByUser)
 route.post('/profile/:id' , protect , getArenaByProfile)
 route.get('/local/:id' , protect , getLocalArenas)
-//following, starring
+//following, starring , comments
 route.patch('/arena/star' , protect , toggleArenaStar)
 route.get('/arena/isStarred' , protect , isUserStarredArena)
 route.patch('/arena/follower' , protect , toggleArenaFollower)
 route.get('/arena/isFollowing' , protect , isUserFollowingArena)
+route.get('/post/comment/:id' , protect , getArenaPostComments)
+route.post('/post/addComment/:id' , protect , addArenaPostComments)
 
 //add to arena post  performances , delete 
 route.post("/post/addPost/:id",protect, addPerformanceToArena);
