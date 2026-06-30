@@ -654,6 +654,18 @@ export const toggleArenaFollower = async (req, res) => {
          );     
       }
       await Promise.all(filesToDelete);
+
+      await Promise.all([
+        // remove all fires
+        arenaPostFireModel.deleteMany({
+          post_id:postId,
+        }),
+        // remove all comments
+        arenaPostCommentModel.deleteMany({
+          post_id:postId,
+        }),
+      ]);
+
       const updatedArena =
       await arenaModel.findByIdAndUpdate(
         post.arena_id,
@@ -670,6 +682,12 @@ export const toggleArenaFollower = async (req, res) => {
         }
       );
       await arenaPostModel.findByIdAndDelete(postId);
+      await redis.del(
+        `post_comments_${postId}`
+      );
+      await redis.del(
+        `arena_${post.arena_id}`
+      );
       const arenas = await userArenas(post.owner_id , true)
       return res.json({
         arenas:arenas,
@@ -856,6 +874,65 @@ export const addPostView = async(req,res)=>{
   
       return res.status(500).json({
         message: "Internal Server Error",
+      });
+    }
+  };
+
+
+  export const deleteArenaPostComment = async(req,res)=>{
+    try{
+      const { commentId , postId , userId }=req.body;
+      if(!commentId || !postId){
+        return res.status(400).json({
+          message:"Missing data"
+        });
+      }
+      const comment =  await arenaPostCommentModel.findOne({
+          _id:commentId,
+          post_id:postId
+        });
+      if(!comment){
+        return res.status(404).json({
+          message:"Comment not found"
+        });
+      }
+      const post = await arenaPostModel.findById(postId);
+      if(!post){
+        return res.status(404).json({
+          message:"Post not found"
+        });
+      }
+      const isCommentOwner = comment.user_id.toString() ===userId.toString();
+      const isPostOwner = post.owner_id.toString() === userId.toString();
+      if( !isCommentOwner && !isPostOwner ){
+        return res.status(403).json({
+          message:"Not authorized"
+        });
+      }
+      await arenaPostCommentModel.deleteOne({
+        _id:commentId
+      });
+      await arenaPostModel.findByIdAndUpdate(
+        postId,
+        {
+          $inc:{
+            commentCount:-1
+          }
+        }
+      );
+      await redis.del(
+        `post_comments_${postId}`
+      );
+      const comments = await postCommentArena(postId , true)
+      return res.status(200).json(comments);
+    }
+    catch(error){
+      console.log(
+        "deleteArenaComment error",
+        error
+      );
+      return res.status(500).json({
+        message:"Server error"
       });
     }
   };
