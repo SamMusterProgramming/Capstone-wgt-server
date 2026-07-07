@@ -72,7 +72,7 @@ export const notificationViewBuilders = {
     //   subtitle:
     //     sender.city || "",
       image:
-        metadata.sender_profile_image || null,
+      sender?.profileImage?.publicUrl || null,
     }),
   };
 

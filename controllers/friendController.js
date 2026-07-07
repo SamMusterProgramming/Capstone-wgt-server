@@ -75,7 +75,7 @@ export const friendRequest =
     try {
       const senderId =   new mongoose.Types.ObjectId(req.params.id);
       const receiverId = new mongoose.Types.ObjectId(req.body._id);
-
+      
       // 1. Prevent duplicate request
       const alreadySent = await friendModel.findOne({
         user_id: senderId,

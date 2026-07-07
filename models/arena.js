@@ -48,26 +48,14 @@ const ArenaSchema = new mongoose.Schema({
       fileId : String,
       fileName : String
     },
-    // followers: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "User",
-    //   },
-    // ],
+  
     posts: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "ArenaPost",
       },
     ],
-    // stars: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "User",
-    // }],
-    // views: {
-    //   type: Number,
-    //   default: 0,
-    // },
+
     // ---------- COUNTERS ----------
     followerCount: {
         type: Number,
