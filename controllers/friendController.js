@@ -139,9 +139,10 @@ export const friendRequest =
     export const acceptRequest = 
     async (req, res) => {
         try {
-          const receiverId = new mongoose.Types.ObjectId(req.body._id); // accepts
+          const receiverId = new mongoose.Types.ObjectId(req.body.user_id); // accepts
           const senderId = new mongoose.Types.ObjectId(req.params.id);   // sent request
-    
+          const notificationId = new mongoose.Types.ObjectId(req.body._id); // accepts
+
           // 1. Check if request exists
           const exists = await friendModel.findOne({
             user_id: receiverId,
@@ -173,16 +174,11 @@ export const friendRequest =
     
           // 4. Update existing notification (request → friends)
           await notificationModel.updateOne(
-            {
-              receiver_id:receiverId, 
-              type: "friend request",
-              "content.sender_id": senderId,
-            },
+            { _id: notificationId },
             {
               $set: {
-                type: "friends",
-                message: "is now a friend, start sharing",
-                isRead: true
+                type: "friend_request_accepted",
+                is_read: true
               }
             }
           );
@@ -191,18 +187,19 @@ export const friendRequest =
         .findById(receiverId)
     
           // 5. Create notification for receiver
-          await notificationModel.create({
-            receiver_id: senderId,
-            content: {
-              sender_id: receiverId,
-              name: receiver.name,
-              profile_img: receiver.profileImage.publicUrl,
-              cover_img: receiver.coverImage.publicUrl,
-            },
-            message: "has accepted your friend request",
-            type: "friends",
-            isRead: false
-          });
+
+          await emitNotification( 
+            senderId,
+            receiverId,
+            'friends',
+            "friend_request_accepted",
+            {
+              sender_name: receiver.name,
+              sender_profile_img: receiver.profileImage.publicUrl,
+              sender_cover_img: receiver.coverImage.publicUrl,
+            }
+          )
+
           const fList = await generateFriends(req.body._id)
           return res.status(200).json(fList);
     

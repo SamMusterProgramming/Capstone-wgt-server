@@ -74,6 +74,17 @@ export const notificationViewBuilders = {
       image:
       sender?.profileImage?.publicUrl || null,
     }),
+    friend_request_accepted: ({
+        sender,
+        metadata
+        }) => ({
+        text:
+        `${metadata.sender_name} has accepted your friend request`,
+        //   subtitle:
+        //     sender.city || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+        }),
   };
 
 
