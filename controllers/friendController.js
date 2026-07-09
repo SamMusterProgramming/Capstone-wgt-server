@@ -200,7 +200,8 @@ export const friendRequest =
             }
           )
 
-          const fList = await generateFriends(req.body._id)
+          const fList = await generateFriends(receiverId.toString())
+          console.log(fList)
           return res.status(200).json(fList);
     
         } catch (err) {
