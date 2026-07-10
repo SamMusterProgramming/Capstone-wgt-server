@@ -248,22 +248,17 @@ export const getArenaByUser = async (req, res) => {
 //        console.log(error)
 //     }
 // }
+
 export const getArenaByProfile = async (req, res) => {
     try {
-
         const userId = req.params.id;
         const { requesterId } = req.body;
-
         const arenas = await userArenas(userId, false);
-
         if (!requesterId || arenas.length === 0) {
             return res.json(arenas);
         }
-
         const arenaIds = arenas.map(arena => arena._id);
-
         const [followers, stars] = await Promise.all([
-
             arenaFollowerModel.find(
                 {
                     user_id: requesterId,
@@ -274,7 +269,6 @@ export const getArenaByProfile = async (req, res) => {
                     _id: 0,
                 }
             ),
-
             arenaStarModel.find(
                 {
                     user_id: requesterId,
@@ -285,33 +279,24 @@ export const getArenaByProfile = async (req, res) => {
                     _id: 0,
                 }
             ),
-
         ]);
-
         const followedSet = new Set(
             followers.map(item => item.arena_id.toString())
         );
-
         const starredSet = new Set(
             stars.map(item => item.arena_id.toString())
         );
-
         const result = arenas.map(arena => ({
             ...arena,
             isFollower: followedSet.has(arena._id.toString()),
             isStarred: starredSet.has(arena._id.toString()),
         }));
-
         return res.json(result);
-
     } catch (error) {
-
         console.log(error);
-
         return res.status(500).json({
             success: false,
         });
-
     }
 };
 
@@ -790,8 +775,8 @@ export const toggleFirePost = async (req, res) => {
             );
             active = true;
             count = post?.fireCount;
-            // await redis.del(`arena_posts_${post.arena_id}`);
         }
+        await redis.del(`user_arenas_${post.owner_id.toString()}`);
         return res.json({
                          active,
                          post,
@@ -854,7 +839,7 @@ export const addPostView = async(req,res)=>{
         text: text.trim(),
       });
   
-      await arenaPostModel.findByIdAndUpdate(
+      const post = await arenaPostModel.findByIdAndUpdate(
         postId,
         {
           $inc: {
@@ -865,6 +850,7 @@ export const addPostView = async(req,res)=>{
   
       // Invalidate comments cache
       await redis.del(`post_comments_${postId}`);
+      await redis.del(`user_arenas_${post.owner_id.toString()}`);
       const comments = await postCommentArena(postId , true)
       console.log(comments)
       return res.status(201).json(comments);
@@ -923,6 +909,7 @@ export const addPostView = async(req,res)=>{
       await redis.del(
         `post_comments_${postId}`
       );
+      await redis.del(`user_arenas_${post.owner_id.toString()}`);
       const comments = await postCommentArena(postId , true)
       return res.status(200).json(comments);
     }
