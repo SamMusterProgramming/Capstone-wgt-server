@@ -23,12 +23,8 @@ app.use(express.urlencoded({ extended: true, limit: "200mb" }));
 
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
-// app.use(cors())
-app.use(cors({
-    origin: [
-        "https://api.challenmemey.com"
-    ]
-}))
+app.use(cors())
+
 // app.use(urlencodedParser)
 app.use('/static', express.static('public'))
 app.use(express.json())
