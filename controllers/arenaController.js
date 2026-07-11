@@ -852,7 +852,6 @@ export const addPostView = async(req,res)=>{
       await redis.del(`post_comments_${postId}`);
       await redis.del(`user_arenas_${post.owner_id.toString()}`);
       const comments = await postCommentArena(postId , true)
-      console.log(comments)
       return res.status(201).json(comments);
   
     } catch (error) {
