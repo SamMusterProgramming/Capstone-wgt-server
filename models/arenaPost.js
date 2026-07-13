@@ -44,43 +44,7 @@ const ArenaPostSchema = new mongoose.Schema({
     },
 
     // ---------- ENGAGEMENT ----------
-  
-    // fires: [
-    // {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "User",
-    // },
-    // ],
-  
-    // comments: [
-    //     {
-    //         _id: mongoose.Schema.Types.ObjectId,
-    //         user_id:{
-    //             type:mongoose.Schema.Types.ObjectId,
-    //             ref:"User",
-    //         },
-    //         text:String,
-    //         likes:[
-    //             {
-    //                 type:mongoose.Schema.Types.ObjectId,
-    //                 ref:"User"
-    //             }
-    //         ],
-    //         likeCount:{
-    //             type:Number,
-    //             default:0
-    //         },
-    //         createdAt:{
-    //             type:Date,
-    //             default:Date.now
-    //         }
-    //     }
-    // ],
 
-    views: {
-        type:Number,
-        default:0
-      },
 
     // ---------- COUNTERS ----------
 
@@ -105,6 +69,11 @@ const ArenaPostSchema = new mongoose.Schema({
     },
 
     // ---------- DISCOVERY ----------
+    
+    spotlightRank: {
+        type: Number,
+        default: null
+    },
 
     lastInteractionAt: {
         type: Date,
@@ -115,11 +84,24 @@ const ArenaPostSchema = new mongoose.Schema({
       type: Date,
       default: Date.now,
     },
+
+    spotlightUpdatedAt: {
+        type: Date,
+        default: null
+    }
+    
   },
   { versionKey: false }    
 );
 
 ArenaPostSchema.index({owner_id:1});   
-let arenaPostModel = mongoose.model("ArenaPost",ArenaPostSchema);
+ArenaPostSchema.index({ spotlightScore: -1 });
+ArenaPostSchema.index({ createdAt: -1 });
+ArenaPostSchema.index({ lastInteractionAt: -1 });
+ArenaPostSchema.index({
+    spotlightScore: -1,
+    createdAt: -1
+});
 
+let arenaPostModel = mongoose.model("ArenaPost",ArenaPostSchema);
 export default  arenaPostModel ;

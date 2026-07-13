@@ -13,24 +13,33 @@ import postCommentArena from "../redisCash/arenas/postCommentArena.js"
 import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js"
 
 
+export const SPOTLIGHT_THRESHOLD = 250;
 
-const recalculateSpotlightScore = (post) => {
-    let score =
-      (post.viewCount * 0.1) +
-      (post.fireCount * 3) +
-      (post.commentCount * 5) +
-      (post.shareCount * 8);
-     
-    const ageHours =
+export const recalculateSpotlightScore = (post) => {
+    const engagement =
+      (post.viewCount * 0.05) +
+      (post.fireCount * 4) +
+      (post.commentCount * 8) +
+      (post.shareCount * 12);
+  
+    const ageDays =
       (Date.now() - new Date(post.createdAt).getTime()) /
-      (1000 * 60 * 60);
+      (1000 * 60 * 60 * 24);
   
-    if (ageHours <= 24) score += 100;
-    else if (ageHours <= 72) score += 50;
-    else if (ageHours <= 168) score += 20;
+    const decay = 1 / (1 + ageDays * 0.15);
   
-    post.spotlightScore = score;
-    post.spotlight = score >= 150;
+    const freshness =
+      ageDays < 1
+        ? 1.25
+        : ageDays < 3
+        ? 1.12  
+        : 1;
+  
+    const score = Math.round(
+      engagement * decay * freshness
+    );
+  
+    return score;
   };
 
 export const createArena = async (req, res) => {
@@ -776,6 +785,9 @@ export const toggleFirePost = async (req, res) => {
             active = true;
             count = post?.fireCount;
         }
+        const score = recalculateSpotlightScore(post)
+        post.spotlightScore = score;
+        await post.save()
         await redis.del(`user_arenas_${post.owner_id.toString()}`);
         return res.json({
                          active,
@@ -847,7 +859,10 @@ export const addPostView = async(req,res)=>{
           },
         }
       );
-  
+
+      const score = recalculateSpotlightScore(post)
+      post.spotlightScore = score;
+      await post.save()
       // Invalidate comments cache
       await redis.del(`post_comments_${postId}`);
       await redis.del(`user_arenas_${post.owner_id.toString()}`);
@@ -887,6 +902,9 @@ export const addPostView = async(req,res)=>{
           message:"Post not found"
         });
       }
+      const score = recalculateSpotlightScore(post)
+      post.spotlightScore = score;
+      await post.save()
       const isCommentOwner = comment.user_id.toString() ===userId.toString();
       const isPostOwner = post.owner_id.toString() === userId.toString();
       if( !isCommentOwner && !isPostOwner ){
@@ -922,3 +940,41 @@ export const addPostView = async(req,res)=>{
       });
     }
   };
+
+  // getting spotlight arenas , performances , global , regional 
+
+  export const getSpotlightPerformances = async(req,res)=>{
+
+    try {
+
+        const page =
+            Number(req.query.page) || 1;
+        const key = `spotlight:global:page:${page}`;
+        const cached = await redis.get(key);
+        if(!cached){
+            return res.status(200).json({
+                page,
+                limit:50,
+                performances:[]
+            });
+        
+        }
+        const performances =
+                        typeof cached === "string"
+                        ? JSON.parse(cached)
+                        : cached;
+        return res.status(200).json({
+            page,
+            limit:50,
+            performances
+        });
+
+    } catch(error){
+        console.log(error);
+        res.status(500).json({
+            message:"Server error"
+        });
+
+    }
+
+}

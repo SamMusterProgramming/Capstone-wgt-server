@@ -9,6 +9,7 @@ import { ensureUserRelations } from "../utilities/helper.js";
 import { Resend } from "resend";
 import { resend } from "../config/resend.js";
 import { getUserProfile, updateUserProfileRedis } from "./userController.js";
+import { rebuildSpotlight } from "../redisCash/spotlight/performances/rebuildSpotlight.js";
 
 
 // ---------------- SIGNUP ----------------
@@ -217,6 +218,7 @@ export const googleLogin = async (req, res) => {
       const user =  await getUserProfile(req.user._id) //await userModel.findById(req.user._id);
       // console.log(user)
       if(!user) return  res.json({user:false})
+      await rebuildSpotlight();
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });
