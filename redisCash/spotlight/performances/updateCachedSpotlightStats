@@ -1,0 +1,51 @@
+import redis from "../../../config/redis.js";
+
+const updateCachedSpotlightStats = async (post) => {
+
+    // Performance is not currently inside Spotlight
+    if (!post.spotlightPage) {
+        return;
+    }
+
+    const cacheKey = `spotlight:global:page:${post.spotlightPage}`;
+
+    const cached = await redis.get(cacheKey);
+
+    if (!cached) {
+        return;
+    }
+
+    const page =
+        typeof cached === "string"
+            ? JSON.parse(cached)
+            : cached;
+
+    const index = page.findIndex(
+        performance =>
+            performance._id.toString() === post._id.toString()
+    );
+
+    if (index === -1) {
+        return;
+    }
+
+    // Update only interaction fields
+    page[index].viewCount = post.viewCount;
+    page[index].fireCount = post.fireCount;
+    page[index].commentCount = post.commentCount;
+    page[index].shareCount = post.shareCount;
+
+    page[index].spotlightScore = post.spotlightScore;
+    page[index].lastInteractionAt = post.lastInteractionAt;
+
+    await redis.set(
+        cacheKey,
+        JSON.stringify(page),
+        {
+            ex: 60 * 60 * 12
+        }
+    );
+
+};
+
+export default updateCachedSpotlightStats;

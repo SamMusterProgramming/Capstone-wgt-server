@@ -29,7 +29,10 @@ const ArenaPostSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    
+    spotlightPage : {
+        type: Number,
+        default: 999,
+    },
     media: {
         video: {
           cdnUrl: String,
@@ -89,7 +92,7 @@ const ArenaPostSchema = new mongoose.Schema({
         type: Date,
         default: null
     }
-    
+
   },
   { versionKey: false }    
 );

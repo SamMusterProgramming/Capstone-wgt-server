@@ -28,7 +28,7 @@ const cacheSpotlightPerformances = async (
             `spotlight:global:page:${page + 1}`,
             JSON.stringify(data),
             {
-                EX:60 * 60 * 12
+                ex:60 * 60 * 12
             }
         );
     }

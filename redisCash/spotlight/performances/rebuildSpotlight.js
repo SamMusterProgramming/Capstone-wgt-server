@@ -7,7 +7,8 @@ export const rebuildSpotlight = async()=>{
 
     const performances =
         await generateSpotlightLeaderboard();
-    console.log(performances.map(p => p.spotlightScore))
+
+    await updateSpotlightRanks(performances)
     await cacheSpotlightPerformances(
         performances
     );

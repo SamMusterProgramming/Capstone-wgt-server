@@ -11,6 +11,8 @@ import arenaPostFireModel from "../models/arena/postArena/arenaPostFire.js"
 import arenaById from "../redisCash/arenas/arenaById.js"
 import postCommentArena from "../redisCash/arenas/postCommentArena.js"
 import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js"
+import updateCachedSpotlightPerformance from "../redisCash/spotlight/performances/updateCachedSpotlightPerformance.js"
+import updateCachedSpotlightStats from "../redisCash/spotlight/performances/updateCachedSpotlightStats"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -21,7 +23,7 @@ export const recalculateSpotlightScore = (post) => {
       (post.fireCount * 4) +
       (post.commentCount * 8) +
       (post.shareCount * 12);
-  
+
     const ageDays =
       (Date.now() - new Date(post.createdAt).getTime()) /
       (1000 * 60 * 60 * 24);
@@ -38,7 +40,6 @@ export const recalculateSpotlightScore = (post) => {
     const score = Math.round(
       engagement * decay * freshness
     );
-  
     return score;
   };
 
@@ -789,6 +790,8 @@ export const toggleFirePost = async (req, res) => {
         post.spotlightScore = score;
         await post.save()
         await redis.del(`user_arenas_${post.owner_id.toString()}`);
+        await updateCachedSpotlightStats(post);
+
         return res.json({
                          active,
                          post,
@@ -805,7 +808,7 @@ export const toggleFirePost = async (req, res) => {
 
 export const addPostView = async(req,res)=>{
     const postId = req.params.id;
-    await arenaPostModel.findByIdAndUpdate(
+    const post =  await arenaPostModel.findByIdAndUpdate(
       postId,
       {
         $inc:{
@@ -813,6 +816,7 @@ export const addPostView = async(req,res)=>{
         }
       }
     );
+    await updateCachedSpotlightStats(post)
     res.json({
       success:true
     });
@@ -866,6 +870,7 @@ export const addPostView = async(req,res)=>{
       // Invalidate comments cache
       await redis.del(`post_comments_${postId}`);
       await redis.del(`user_arenas_${post.owner_id.toString()}`);
+      await updateCachedSpotlightStats (post);
       const comments = await postCommentArena(postId , true)
       return res.status(201).json(comments);
   
@@ -928,6 +933,7 @@ export const addPostView = async(req,res)=>{
       );
       await redis.del(`user_arenas_${post.owner_id.toString()}`);
       const comments = await postCommentArena(postId , true)
+      await updateCachedSpotlightStats(post);
       return res.status(200).json(comments);
     }
     catch(error){
