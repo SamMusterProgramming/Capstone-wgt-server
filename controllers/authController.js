@@ -218,7 +218,7 @@ export const googleLogin = async (req, res) => {
       const user =  await getUserProfile(req.user._id) //await userModel.findById(req.user._id);
       // console.log(user)
       if(!user) return  res.json({user:false})
-      await rebuildSpotlight();
+      // await rebuildSpotlight();
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });
