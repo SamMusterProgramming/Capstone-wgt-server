@@ -5,7 +5,7 @@ import followerModel from "../models/followers.js";
 import friendModel from "../models/friends.js";
 import userModel from "../models/users.js";
 import admin from "../service/firebase.js";
-import { ensureUserRelations } from "../utilities/helper.js";
+import { ensureUserRelations, getSpotlightRegion } from "../utilities/helper.js";
 import { Resend } from "resend";
 import { resend } from "../config/resend.js";
 import { getUserProfile, updateUserProfileRedis } from "./userController.js";
@@ -219,7 +219,8 @@ export const googleLogin = async (req, res) => {
       // console.log(user)
       if(!user) return  res.json({user:false})
       await rebuildSpotlight();
-      // await rebuildSpotlight("northAmerica")
+     const region =  getSpotlightRegion(user.country);
+      await rebuildSpotlight(region)
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });

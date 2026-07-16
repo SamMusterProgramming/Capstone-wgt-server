@@ -1013,9 +1013,9 @@ export const getRegionalSpotlightPerformances = async (req,res) => {
             });
         }
         const cacheKey = `spotlight:${region}:page:${page}`;
-        const cached = null  // await redis.get(cacheKey);
+        const cached = await redis.get(cacheKey);
         if(!cached){
-            return res.status(201).json({
+            return res.status(200).json({
                 success:true,
                 message: "Regional spotlight not available",
                 performances :[]
