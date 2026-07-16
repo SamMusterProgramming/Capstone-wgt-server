@@ -77,22 +77,22 @@ const ArenaPostSchema = new mongoose.Schema({
         type: Number,
         default: null
     },
-
+    spotlightRegion: {
+        type: String,
+        index: true
+    },
     lastInteractionAt: {
         type: Date,
         default: Date.now,
     },
-
     createdAt: {
       type: Date,
       default: Date.now,
     },
-
     spotlightUpdatedAt: {
         type: Date,
         default: null
     }
-
   },
   { versionKey: false }    
 );

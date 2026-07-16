@@ -208,4 +208,27 @@ const challenges = [{
   ]
 };
 
-export { users, challenges , COUNTRY_REGIONS };
+ const SPOTLIGHT_REGIONS = [
+  "northAfrica",
+  "westAfrica",
+  "centralAfrica",
+  "eastAfrica",
+  "southernAfrica",
+  "northAmerica",
+  "centralAmerica",
+  "caribbean",
+  "southAmerica",
+  "westernEurope",
+  "northernEurope",
+  "southernEurope",
+  "easternEurope",
+  "middleEast",
+  "southAsia",
+  "eastAsia",
+  "southeastAsia",
+  "centralAsia",
+  "australiaNewZealand",
+  "pacificIslands",
+];
+
+export { users, challenges , COUNTRY_REGIONS ,SPOTLIGHT_REGIONS};

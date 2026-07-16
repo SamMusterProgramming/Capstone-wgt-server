@@ -3,14 +3,20 @@ import cacheSpotlightPerformances from "./spotlightCache.js";
 import updateSpotlightRanks from "./updatePotlightRanking.js";
 
 
-export const rebuildSpotlight = async()=>{
+export const rebuildSpotlight = async(region = null)=>{
+    const filter = region
+    ? { spotlightRegion : region }
+    : {};
 
-    const performances =
-        await generateSpotlightLeaderboard();
+    const performances = await generateSpotlightLeaderboard(filter);
 
-    await updateSpotlightRanks(performances)
+    await updateSpotlightRanks( performances
+    )
     await cacheSpotlightPerformances(
-        performances
+        performances,
+        region
+        ? `spotlight:${region}`
+        : "spotlight:global"
     );
 
 };

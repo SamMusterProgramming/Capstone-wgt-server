@@ -13,6 +13,7 @@ import postCommentArena from "../redisCash/arenas/postCommentArena.js"
 import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js"
 import updateCachedSpotlightPerformance from "../redisCash/spotlight/performances/updateCachedSpotlightPerformance.js"
 import updateCachedSpotlightStats from "../redisCash/spotlight/performances/updateCachedSpotlightStats"
+import { getSpotlightRegion } from "../utilities/helper.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -610,6 +611,8 @@ export const toggleArenaFollower = async (req, res) => {
           },
         }
       );
+      post.spotlightRegion = getSpotlightRegion(arena.region)
+      await post.save()
       const arenas = await userArenas(owner_id , true)
       return res.json({
                       arenas:arenas,
@@ -693,31 +696,31 @@ export const toggleArenaFollower = async (req, res) => {
     }
  }
 
- export const toggleSpotlight = async (req, res) => {
-    try {
-        const  post_id  = req.params.id;
-        const post =
-        await arenaPostModel.findById(
-            post_id
-        );
-        if (!post) {
-        return res.status(404).json({
-            message: "Post not found",
-        });
-        }
-        post.spotlight =
-        !post.spotlight;
-        await post.save();
-        return res.status(200).json({
-        message: post.spotlight
-            ? "Featured in Spotlight"
-            : "Returned to Arena",
-        post,
-        });
-    } catch (error) {
-        console.log(error)
-    }
- }
+//  export const toggleSpotlight = async (req, res) => {
+//     try {
+//         const  post_id  = req.params.id;
+//         const post =
+//         await arenaPostModel.findById(
+//             post_id
+//         );
+//         if (!post) {
+//         return res.status(404).json({
+//             message: "Post not found",
+//         });
+//         }
+//         post.spotlight =
+//         !post.spotlight;
+//         await post.save();
+//         return res.status(200).json({
+//         message: post.spotlight
+//             ? "Featured in Spotlight"
+//             : "Returned to Arena",
+//         post,
+//         });
+//     } catch (error) {
+//         console.log(error)
+//     }
+//  }
 
  // user fire the performance , toggling 
 
@@ -786,6 +789,9 @@ export const toggleFirePost = async (req, res) => {
             active = true;
             count = post?.fireCount;
         }
+        const arena = await arenaModel.findById(post.arena_id)
+        post.spotlightRegion = getSpotlightRegion(arena.region)
+        await post.save()
         const score = recalculateSpotlightScore(post)
         post.spotlightScore = score;
         await post.save()
@@ -984,3 +990,57 @@ export const addPostView = async(req,res)=>{
     }
 
 }
+
+
+export const getRegionalSpotlightPerformances = async (req,res) => {
+    try {
+        const {
+            page = 1,
+            countryCode
+        } = req.query;
+        if(!countryCode){
+            return res.status(400).json({
+                success:false,
+                message:"Country code is required"
+            });
+        }
+        // Convert country code into spotlight region
+        const region =  getSpotlightRegion(countryCode);
+        if(!region){
+            return res.status(400).json({
+                success:false,
+                message:"Region not supported"
+            });
+        }
+        const cacheKey = `spotlight:${region}:page:${page}`;
+        const cached = null  // await redis.get(cacheKey);
+        if(!cached){
+            return res.status(201).json({
+                success:true,
+                message: "Regional spotlight not available",
+                performances :[]
+            });
+        }
+        const performances =
+                        typeof cached === "string"
+                        ? JSON.parse(cached)
+                        : cached;
+        return res.status(200).json({
+            success:true,
+            region,
+            page:Number(page),
+            performances,
+            hasMore:
+            performances.length === 50
+        });
+    } catch(error){
+        console.error(
+            "Regional Spotlight Error:",
+            error
+        );
+        return res.status(500).json({
+            success:false,
+            message:"Server error"
+        });
+    }
+};

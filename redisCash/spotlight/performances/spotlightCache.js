@@ -2,7 +2,8 @@ import redis from "../../../config/redis.js";
 
 
 const cacheSpotlightPerformances = async (
-    performances
+    performances,
+    cacheKey = "spotlight:global"
 )=>{
 
     const PAGE_SIZE = 5;
@@ -10,7 +11,7 @@ const cacheSpotlightPerformances = async (
     const oldPages = [];
     for(let i = 1; i <= 20; i++){
         oldPages.push(
-            `spotlight:global:page:${i}`
+            `${cacheKey}:page:${i}`
         );
     }
     await redis.del(...oldPages);
@@ -25,10 +26,10 @@ const cacheSpotlightPerformances = async (
             start + PAGE_SIZE
         );
         await redis.set(
-            `spotlight:global:page:${page + 1}`,
+            `${cacheKey}:page:${page + 1}`,
             JSON.stringify(data),
             {
-                ex:60 * 60 * 12
+                ex: 60 * 60 * 12
             }
         );
     }

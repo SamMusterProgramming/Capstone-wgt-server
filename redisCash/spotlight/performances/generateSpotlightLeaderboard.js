@@ -1,13 +1,14 @@
 import arenaPostModel from "../../../models/arenaPost.js";
 
  
-const generateSpotlightLeaderboard = async () => {
+const generateSpotlightLeaderboard = async (filter = {}) => {
 
     const performances = await arenaPostModel.aggregate([
         // Ignore performances with no engagement
         {
             $match: {
-                spotlightScore: { $gt: 5 }
+                spotlightScore: { $gt: 5 },
+                ...filter
             }
         },
         // Highest score first
@@ -84,7 +85,6 @@ const generateSpotlightLeaderboard = async () => {
         }
 
     ]);
-
     return performances;
 
 };

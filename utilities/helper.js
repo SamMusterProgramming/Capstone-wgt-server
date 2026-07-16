@@ -1,5 +1,6 @@
 import followerModel from "../models/followers.js";
 import friendModel from "../models/friends.js";
+import { COUNTRY_REGIONS } from "./data.js";
 
 
 
@@ -33,3 +34,19 @@ export const ensureUserRelations = async (user) => {
       });
     }
   };
+
+
+  export const getSpotlightRegion = (countryCode) => {
+
+    const code = countryCode.toUpperCase();
+
+    for (const [region, countries] of Object.entries(COUNTRY_REGIONS)) {
+
+        if (countries.includes(code)) {
+            return region;
+        }
+
+    }
+
+    return null;
+};
