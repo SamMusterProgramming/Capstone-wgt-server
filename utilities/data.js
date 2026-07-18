@@ -231,4 +231,88 @@ const challenges = [{
   "pacificIslands",
 ];
 
+export const SPOTLIGHT_COUNTRIES = [
+
+  // Africa
+  "DZ","EG","LY","MA","SD","TN",
+  "BJ","BF","CV","CI","GM","GH",
+  "GN","GW","LR","ML","MR","NE",
+  "NG","SN","SL","TG",
+  "AO","CM","CF","TD","CG","CD",
+  "GQ","GA",
+  "BI","DJ","ER","ET","KE","RW",
+  "SO","SS","TZ","UG",
+  "BW","LS","MG","MW","MU","MZ",
+  "NA","SC","SZ","ZA","ZM","ZW","KM",
+
+
+  // North America
+  "US","CA",
+
+
+  // Central America
+  "BZ","CR","SV","GT",
+  "HN","MX","NI","PA",
+
+
+  // Caribbean
+  "AG","BS","BB","CU","DM",
+  "DO","GD","HT","JM",
+  "KN","LC","VC","TT",
+
+
+  // South America
+  "AR","BO","BR","CL",
+  "CO","EC","GY","PY",
+  "PE","SR","UY","VE",
+
+
+  // Europe
+  "AT","BE","FR","DE",
+  "IE","LI","LU","MC",
+  "NL","CH","GB",
+
+  "DK","EE","FI","IS",
+  "LV","LT","NO","SE",
+
+  "AL","AD","BA","HR",
+  "CY","GR","IT","MT",
+  "ME","MK","PT","SM",
+  "RS","SI","ES","VA",
+
+  "BY","BG","CZ","HU",
+  "MD","PL","RO","RU",
+  "SK","UA",
+
+
+  // Middle East
+  "BH","IR","IQ","IL",
+  "JO","KW","LB","OM",
+  "QA","SA","SY","AE",
+  "YE","TR",
+
+
+  // Asia
+  "AF","BD","BT","IN",
+  "MV","NP","PK","LK",
+
+  "CN","JP","KP",
+  "KR","MN","TW",
+
+  "BN","KH","ID","LA",
+  "MY","MM","PH","SG",
+  "TH","TL","VN",
+
+  "AM","AZ","GE","KZ",
+  "KG","TJ","TM","UZ",
+
+
+  // Oceania
+  "AU","NZ",
+  "FJ","KI","MH","FM",
+  "NR","PW","PG","WS",
+  "SB","TO","TV","VU"
+
+];
+
 export { users, challenges , COUNTRY_REGIONS ,SPOTLIGHT_REGIONS};

@@ -1,7 +1,12 @@
 
 import dotenv from 'dotenv';
 import express from 'express';
-import { addArenaPostComments, addPerformanceToArena, addPostView, createArena, deleteArena, deleteArenaPostComment, deletePostFromArena, getArenaByProfile, getArenaByUser, getArenaPostComments, getLocalArenas, getPostsArena, getRegionalSpotlightPerformances, getSpotlightPerformances, isUserFiredPost, isUserFollowingArena, isUserStarredArena, toggleArenaFollower, toggleArenaStar,  toggleFirePost,  updateArena } from '../controllers/arenaController.js';
+import { addArenaPostComments, addPerformanceToArena, addPostView, createArena,
+         deleteArena, deleteArenaPostComment, deletePostFromArena, getArenaByProfile,
+         getArenaByUser, getArenaPostComments, getGlobalSpotlightPerformances,
+         getLocalArenas, getPostsArena, getRegionalSpotlightPerformances, 
+         isUserFiredPost, isUserFollowingArena, isUserStarredArena, toggleArenaFollower, 
+         toggleArenaStar,  toggleFirePost,  updateArena } from '../controllers/arenaController.js';
 import { protect } from '../middleware/jwtProtect.js';
 
 
@@ -15,7 +20,7 @@ route.post("/delete/:id", protect , deleteArena);
 route.get('/user/:id' , protect , getArenaByUser)
 route.post('/profile/:id' , protect , getArenaByProfile)
 route.get('/local/:id' , protect , getLocalArenas)
-route.get('/global/spotlightPerformances' , protect , getSpotlightPerformances)
+route.get('/global/spotlightPerformances' , protect , getGlobalSpotlightPerformances)
 route.get('/regional/spotlightPerformances' , protect , getRegionalSpotlightPerformances)
 
 //following, starring , comments

@@ -612,6 +612,7 @@ export const toggleArenaFollower = async (req, res) => {
         }
       );
       post.spotlightRegion = getSpotlightRegion(arena.region)
+      post.spotlightCountry = arena.region
       await post.save()
       const arenas = await userArenas(owner_id , true)
       return res.json({
@@ -791,6 +792,7 @@ export const toggleFirePost = async (req, res) => {
         }
         const arena = await arenaModel.findById(post.arena_id)
         post.spotlightRegion = getSpotlightRegion(arena.region)
+        post.spotlightCountry = arena.region
         await post.save()
         const score = recalculateSpotlightScore(post)
         post.spotlightScore = score;
@@ -955,7 +957,7 @@ export const addPostView = async(req,res)=>{
 
   // getting spotlight arenas , performances , global , regional 
 
-  export const getSpotlightPerformances = async(req,res)=>{
+  export const getGlobalSpotlightPerformances = async(req,res)=>{
 
     try {
 

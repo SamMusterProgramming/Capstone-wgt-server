@@ -20,19 +20,7 @@ const ArenaPostSchema = new mongoose.Schema({
 
     // automatic discovery system
 
-    spotlight: {
-        type: Boolean,
-        default: false,
-    },
 
-    spotlightScore: {
-        type: Number,
-        default: 0,
-    },
-    spotlightPage : {
-        type: Number,
-        default: 999,
-    },
     media: {
         video: {
           cdnUrl: String,
@@ -72,27 +60,50 @@ const ArenaPostSchema = new mongoose.Schema({
     },
 
     // ---------- DISCOVERY ----------
-    
-    spotlightRank: {
+
+    spotlightScore: {
         type: Number,
-        default: null
+        default: 0,
     },
+
     spotlightRegion: {
         type: String,
         index: true
     },
+
+    spotlightCountry: {
+        type: String,
+        index: true
+    },
+
     lastInteractionAt: {
         type: Date,
         default: Date.now,
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
+    
+    globalSpotlight: {
+        spotlight: Boolean,
+        rank: Number,
+        page: Number,
+        updatedAt: Date
     },
-    spotlightUpdatedAt: {
-        type: Date,
-        default: null
+    
+    regionalSpotlight: {
+        spotlight: Boolean,
+        rank: Number,
+        page: Number,
+        region: String,
+        updatedAt: Date
+    },
+    
+    localSpotlight: {
+        spotlight: Boolean,
+        rank: Number,
+        page: Number,
+        country: String,
+        updatedAt: Date
     }
+   
   },
   { versionKey: false }    
 );

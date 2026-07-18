@@ -11,13 +11,14 @@ import arenaRoute from './routes/arenaRoutes.js';
 import B2 from 'backblaze-b2';
 import "./config/redis.js";
 import redis from './config/redis.js';
-import { startSpotlightGlobalJob } from './jobs/spotlightJob.js';
+import startSpotlightJobs from './redisCash/spotlight/performances/jobs/spotlightJobs.js';
+
 
 dotenv.config();
 
 
 connectDB() 
-startSpotlightGlobalJob();
+startSpotlightJobs();
 const app = express();
 app.use(express.urlencoded({ extended: true, limit: "200mb" }));
 
