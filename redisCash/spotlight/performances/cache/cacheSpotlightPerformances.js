@@ -2,7 +2,7 @@ import redis from "../../../../config/redis.js";
 
 
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const SPOTLIGHT_TTL = {
     global: 60 * 60 * 8,       // 8 hours
     regional: 60 * 60 * 4,     // 4 hours
@@ -26,7 +26,7 @@ const buildCacheKey = ({
     }
 };
 
-const ttl = SPOTLIGHT_TTL["global"];
+
 
 const cacheSpotlightPerformances = async ({
     performances,
@@ -35,20 +35,19 @@ const cacheSpotlightPerformances = async ({
     country = null
 })=>{
 
-
     const baseKey = buildCacheKey({
         type,
         region,
         country
     });
-
+    const ttl = SPOTLIGHT_TTL[type];
     /*
         1. Remove old pages
     */
 
     const oldKeys = [];
 
-    for(let i = 1; i <= 25; i++){
+    for(let i = 1; i <= 50; i++){
         oldKeys.push(
             `${baseKey}:page:${i}`
         );
@@ -68,7 +67,7 @@ const cacheSpotlightPerformances = async ({
 
     for( let page = 1; page <= totalPages; page++ ){
         const start =
-            (page - 1) * PAGE_SIZE;
+            (page - 1 ) * PAGE_SIZE;
         const pageData =
             performances.slice(
                 start,
@@ -78,7 +77,7 @@ const cacheSpotlightPerformances = async ({
             `${baseKey}:page:${page}`,
             JSON.stringify(pageData),
             {
-                EX: TTL
+                ex: ttl
             }
         );
     }

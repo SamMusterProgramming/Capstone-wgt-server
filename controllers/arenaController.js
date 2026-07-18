@@ -14,6 +14,7 @@ import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js
 import updateCachedSpotlightPerformance from "../redisCash/spotlight/performances/updateCachedSpotlightPerformance.js"
 import updateCachedSpotlightStats from "../redisCash/spotlight/performances/updateCachedSpotlightStats"
 import { getSpotlightRegion } from "../utilities/helper.js"
+import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -798,8 +799,7 @@ export const toggleFirePost = async (req, res) => {
         post.spotlightScore = score;
         await post.save()
         await redis.del(`user_arenas_${post.owner_id.toString()}`);
-        await updateCachedSpotlightStats(post);
-
+        await updateSpotlightInteractionCache(post)
         return res.json({
                          active,
                          post,
@@ -878,7 +878,8 @@ export const addPostView = async(req,res)=>{
       // Invalidate comments cache
       await redis.del(`post_comments_${postId}`);
       await redis.del(`user_arenas_${post.owner_id.toString()}`);
-      await updateCachedSpotlightStats (post);
+      // await updateCachedSpotlightStats (post);
+      await updateSpotlightInteractionCache(post)
       const comments = await postCommentArena(postId , true)
       return res.status(201).json(comments);
   
@@ -918,6 +919,7 @@ export const addPostView = async(req,res)=>{
       const score = recalculateSpotlightScore(post)
       post.spotlightScore = score;
       await post.save()
+      await updateSpotlightInteractionCache(post)
       const isCommentOwner = comment.user_id.toString() ===userId.toString();
       const isPostOwner = post.owner_id.toString() === userId.toString();
       if( !isCommentOwner && !isPostOwner ){
@@ -941,7 +943,7 @@ export const addPostView = async(req,res)=>{
       );
       await redis.del(`user_arenas_${post.owner_id.toString()}`);
       const comments = await postCommentArena(postId , true)
-      await updateCachedSpotlightStats(post);
+      // await updateCachedSpotlightStats(post);
       return res.status(200).json(comments);
     }
     catch(error){
@@ -997,7 +999,7 @@ export const addPostView = async(req,res)=>{
 export const getRegionalSpotlightPerformances = async (req,res) => {
     try {
         const {
-            page = 1,
+            page,
             countryCode
         } = req.query;
         if(!countryCode){
@@ -1014,7 +1016,7 @@ export const getRegionalSpotlightPerformances = async (req,res) => {
                 message:"Region not supported"
             });
         }
-        const cacheKey = `spotlight:${region}:page:${page}`;
+        const cacheKey = `spotlight:regional:${region}:page:${page}`;
         const cached = await redis.get(cacheKey);
         if(!cached){
             return res.status(200).json({
@@ -1045,4 +1047,49 @@ export const getRegionalSpotlightPerformances = async (req,res) => {
             message:"Server error"
         });
     }
+};
+
+export const getLocalSpotlightPerformances = async (req,res) => {
+  try {
+      const {
+          page,
+          countryCode
+      } = req.query;
+      if(!countryCode){
+          return res.status(400).json({
+              success:false,
+              message:"Country code is required"
+          });
+      }
+      
+      const cacheKey = `spotlight:local:${countryCode}:page:${page}`;
+      const cached = await redis.get(cacheKey);
+      // console.log(cached)
+      if(!cached){
+          return res.status(200).json({
+              success:true,
+              message: "Regional spotlight not available",
+              performances :[]
+          });
+      }
+      const performances =
+                      typeof cached === "string"
+                      ? JSON.parse(cached)
+                      : cached;
+      return res.status(200).json({
+          success:true,
+          page:Number(page),
+          performances,
+          hasMore: performances.length === 50
+      });
+  } catch(error){
+      console.error(
+          "Regional Spotlight Error:",
+          error
+      );
+      return res.status(500).json({
+          success:false,
+          message:"Server error"
+      });
+  }
 };

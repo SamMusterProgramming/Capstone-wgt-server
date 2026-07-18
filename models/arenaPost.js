@@ -102,8 +102,13 @@ const ArenaPostSchema = new mongoose.Schema({
         page: Number,
         country: String,
         updatedAt: Date
+    },
+
+    createdAt:{
+        type:Date,
+        default:Date.now
     }
-   
+
   },
   { versionKey: false }    
 );

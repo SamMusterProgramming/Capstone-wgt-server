@@ -24,6 +24,7 @@ const rebuildSpotlight = async ({
     /*
         1. Build Mongo filter
     */
+
     let filter = {};
     if(type === "regional"){
         filter.spotlightRegion = region;
@@ -39,11 +40,10 @@ const rebuildSpotlight = async ({
     const candidates = await generateSpotlightCandidates(
                             filter
                         );
-
+                        
     /*
         3. Build ranking
     */
-
     const leaderboard =
         await buildSpotlightLeaderboard({
             performances:candidates,
@@ -51,7 +51,6 @@ const rebuildSpotlight = async ({
             region,
             country
         });
-
     /*
         4. Update Redis
     */

@@ -3,7 +3,7 @@ import { recalculateSpotlightScore } from "../../../../controllers/arenaControll
 import arenaPostModel from "../../../../models/arenaPost.js";
 
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 const MAX_SPOTLIGHT = 500;
 
 
@@ -34,7 +34,7 @@ const buildSpotlightLeaderboard = async ({
     .slice(0, MAX_SPOTLIGHT)
     .forEach((performance,index)=>{
         const rank = index + 1;
-        const page = Math.ceil(rank / PAGE_SIZE);
+        const page =  Math.ceil(rank / PAGE_SIZE);
         spotlightIds.push(
             performance._id
         );

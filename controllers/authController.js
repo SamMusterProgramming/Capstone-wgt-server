@@ -9,7 +9,9 @@ import { ensureUserRelations, getSpotlightRegion } from "../utilities/helper.js"
 import { Resend } from "resend";
 import { resend } from "../config/resend.js";
 import { getUserProfile, updateUserProfileRedis } from "./userController.js";
-import { rebuildSpotlight } from "../redisCash/spotlight/performances/rebuildSpotlight.js";
+import rebuildSpotlight from "../redisCash/spotlight/performances/rebuild/rebuildSpotlight.js";
+import { SPOTLIGHT_REGIONS } from "../utilities/data.js";
+import redis from "../config/redis.js";
 
 
 // ---------------- SIGNUP ----------------
@@ -105,7 +107,6 @@ export const signup = async (req, res) => {
       res.status(500).json({ message: "Login failed" });
     }
   };
-
 
   //********************** anynomousLogin ************************/
 
@@ -218,9 +219,31 @@ export const googleLogin = async (req, res) => {
       const user =  await getUserProfile(req.user._id) //await userModel.findById(req.user._id);
       // console.log(user)
       if(!user) return  res.json({user:false})
-      await rebuildSpotlight();
-     const region =  getSpotlightRegion(user.country);
-      await rebuildSpotlight(region)
+      // await rebuildSpotlight();
+      
+      
+      // const keys = [];
+      // for (let i =1 ; i<=50 ; i++) {
+      //       keys.push(
+      //           `spotlight:global:page:${i}`
+      //       );
+      // }
+      // await redis.del(...keys);
+
+    // await rebuildSpotlight({
+    //     type:"global"
+    // });
+
+    //  const region =  getSpotlightRegion(user.country);
+    //  await rebuildSpotlight({
+    //   type:"regional",
+    //   region
+    //   });
+    //  await rebuildSpotlight({
+    //   type:"local",
+    //   country : user.country
+    //  });
+      // await rebuildSpotlight(region)
       res.json({ user });
     } catch (err) {
       res.status(500).json({ message: "Error fetching user" });

@@ -8,7 +8,7 @@ const generateSpotlightCandidates = async (filter = {}) => {
         {
             $match: {
                 spotlightScore: {
-                    $gt: 5
+                    $gt: 2
                 },
                 ...filter
             }
