@@ -11,10 +11,9 @@ import arenaPostFireModel from "../models/arena/postArena/arenaPostFire.js"
 import arenaById from "../redisCash/arenas/arenaById.js"
 import postCommentArena from "../redisCash/arenas/postCommentArena.js"
 import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js"
-import updateCachedSpotlightPerformance from "../redisCash/spotlight/performances/updateCachedSpotlightPerformance.js"
-import updateCachedSpotlightStats from "../redisCash/spotlight/performances/updateCachedSpotlightStats"
 import { getSpotlightRegion } from "../utilities/helper.js"
 import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
+import removeSpotlightPerformance from "../redisCash/spotlight/performances/updates/removeSpotlightPerformance.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -102,7 +101,6 @@ export const updateArena = async (
 
       if (description !== undefined)
             updateData.description = description;
-
       if ( profileImage?.fileId !== undefined)
         {
           const signedUrl = await getPublicUrlFromB2(profileImage.fileName);
@@ -130,7 +128,6 @@ export const updateArena = async (
                 fileName : coverImage.fileName
             }
         }
-      console.log(updateData)
       const arena = await arenaModel.findOneAndUpdate(
         {
             _id: arena_id,
@@ -567,7 +564,7 @@ export const toggleArenaFollower = async (req, res) => {
  export const addPerformanceToArena = async (req, res) => {
     try {
      const arenaId = req.params.id
-     const {owner_id,description,video,thumbnail} = req.body
+     const {owner_id,description,video,thumbnail,region} = req.body
      // GENERATE URLS
      const thumbnailSignedUrl =
      await getPublicUrlFromB2(thumbnail.fileName);
@@ -587,6 +584,8 @@ export const toggleArenaFollower = async (req, res) => {
         arena_id: arenaId,
         owner_id,
         caption: description,
+        spotlightRegion : getSpotlightRegion(region),
+        spotlightCountry : region,
         media: {
             video: {
               cdnUrl: cdnUrl,
@@ -600,6 +599,7 @@ export const toggleArenaFollower = async (req, res) => {
             },
           },
       });
+      await post.save()
 
       const arena = await arenaModel.findByIdAndUpdate(
         arenaId,
@@ -612,9 +612,10 @@ export const toggleArenaFollower = async (req, res) => {
           },
         }
       );
-      post.spotlightRegion = getSpotlightRegion(arena.region)
-      post.spotlightCountry = arena.region
-      await post.save()
+      // console.log(arena.region)
+      // post.spotlightRegion = getSpotlightRegion(arena.region)
+      // post.spotlightCountry = arena.region
+      // await post.save()
       const arenas = await userArenas(owner_id , true)
       return res.json({
                       arenas:arenas,
@@ -689,6 +690,7 @@ export const toggleArenaFollower = async (req, res) => {
         `arena_${post.arena_id}`
       );
       const arenas = await userArenas(post.owner_id , true)
+      await removeSpotlightPerformance(post);
       return res.json({
         arenas:arenas,
         selectedArena:arenas.find( a => a._id.toString() === post.arena_id.toString())
@@ -698,31 +700,7 @@ export const toggleArenaFollower = async (req, res) => {
     }
  }
 
-//  export const toggleSpotlight = async (req, res) => {
-//     try {
-//         const  post_id  = req.params.id;
-//         const post =
-//         await arenaPostModel.findById(
-//             post_id
-//         );
-//         if (!post) {
-//         return res.status(404).json({
-//             message: "Post not found",
-//         });
-//         }
-//         post.spotlight =
-//         !post.spotlight;
-//         await post.save();
-//         return res.status(200).json({
-//         message: post.spotlight
-//             ? "Featured in Spotlight"
-//             : "Returned to Arena",
-//         post,
-//         });
-//     } catch (error) {
-//         console.log(error)
-//     }
-//  }
+
 
  // user fire the performance , toggling 
 
@@ -824,7 +802,6 @@ export const addPostView = async(req,res)=>{
         }
       }
     );
-    await updateCachedSpotlightStats(post)
     res.json({
       success:true
     });
@@ -882,10 +859,8 @@ export const addPostView = async(req,res)=>{
       await updateSpotlightInteractionCache(post)
       const comments = await postCommentArena(postId , true)
       return res.status(201).json(comments);
-  
-    } catch (error) {
+      } catch (error) {
       console.error(error);
-  
       return res.status(500).json({
         message: "Internal Server Error",
       });
@@ -1055,6 +1030,7 @@ export const getLocalSpotlightPerformances = async (req,res) => {
           page,
           countryCode
       } = req.query;
+
       if(!countryCode){
           return res.status(400).json({
               success:false,

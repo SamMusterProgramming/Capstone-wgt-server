@@ -230,19 +230,19 @@ export const googleLogin = async (req, res) => {
       // }
       // await redis.del(...keys);
 
-    // await rebuildSpotlight({
-    //     type:"global"
-    // });
+    await rebuildSpotlight({
+        type:"global"
+    });
 
-    //  const region =  getSpotlightRegion(user.country);
-    //  await rebuildSpotlight({
-    //   type:"regional",
-    //   region
-    //   });
-    //  await rebuildSpotlight({
-    //   type:"local",
-    //   country : user.country
-    //  });
+     const region =  getSpotlightRegion(user.country);
+     await rebuildSpotlight({
+      type:"regional",
+      region
+      });
+     await rebuildSpotlight({
+      type:"local",
+      country : user.country
+     });
       // await rebuildSpotlight(region)
       res.json({ user });
     } catch (err) {

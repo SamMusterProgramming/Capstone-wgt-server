@@ -82,26 +82,68 @@ const ArenaPostSchema = new mongoose.Schema({
     },
     
     globalSpotlight: {
-        spotlight: Boolean,
-        rank: Number,
-        page: Number,
-        updatedAt: Date
+        spotlight: {
+            type: Boolean,
+            default: false
+        },
+        rank: {
+            type: Number,
+            default: null
+        },
+        page: {
+            type: Number,
+            default: null
+        },
+        updatedAt: {
+            type: Date,
+            default: null
+        }
     },
     
     regionalSpotlight: {
-        spotlight: Boolean,
-        rank: Number,
-        page: Number,
-        region: String,
-        updatedAt: Date
+        spotlight: {
+            type: Boolean,
+            default: false
+        },
+        rank: {
+            type: Number,
+            default: null
+        },
+        page: {
+            type: Number,
+            default: null
+        },
+        region: {
+            type: String,
+            default: null
+        },
+        updatedAt: {
+            type: Date,
+            default: null
+        }
     },
     
     localSpotlight: {
-        spotlight: Boolean,
-        rank: Number,
-        page: Number,
-        country: String,
-        updatedAt: Date
+        spotlight: {
+            type: Boolean,
+            default: false
+        },
+        rank: {
+            type: Number,
+            default: null
+        },
+        page: {
+            type: Number,
+            default: null
+        },
+        country: {
+            type: String,
+            default: null
+        },
+        updatedAt: {
+            type: Date,
+            default: null
+        }
     },
 
     createdAt:{
