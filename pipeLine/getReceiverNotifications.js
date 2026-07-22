@@ -60,7 +60,7 @@ async ({
               _id:
                 notification._id,
               receiver_id:receiverId,
-              sender_id:sender._id,
+              sender_id:sender?._id,
               type:
                 notification.type,
               category:

@@ -29,9 +29,9 @@ const ArenaPostSchema = new mongoose.Schema({
         },
         thumbnail: {
           cdnUrl: String,
-          fileId: String,
+          fileId: String,   
           fileName : String
-        },
+        },  
     },
 
     // ---------- ENGAGEMENT ----------

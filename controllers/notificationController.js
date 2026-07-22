@@ -127,6 +127,7 @@ export const emitVotesNotification = async (
 // controller example
 export const getNotifications = async (req, res) => {
   try {
+    console.log(req.user._id)
     const notifications =
       await getReceiverNotifications({
         receiverId:req.user._id,
