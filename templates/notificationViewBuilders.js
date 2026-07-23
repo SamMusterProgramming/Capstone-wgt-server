@@ -85,6 +85,18 @@ export const notificationViewBuilders = {
         image:
         sender?.profileImage?.publicUrl || null,
         }),
+    performance_added: ({
+          sender,
+          metadata,
+          }) => ({
+            text:
+            sender?.name ?`${sender.name} posted a new performance in his arena` :
+                    `Your performance is live on ${metadata.arena_name} `,
+            subtitle:
+            metadata.arena_name || "",
+            image:
+            sender?.profileImage?.publicUrl || null,
+        }),
   };
 
 

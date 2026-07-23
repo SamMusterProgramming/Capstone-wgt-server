@@ -14,6 +14,7 @@ import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js
 import { getSpotlightRegion } from "../utilities/helper.js"
 import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
 import removeSpotlightPerformance from "../redisCash/spotlight/performances/updates/removeSpotlightPerformance.js"
+import { broadcastNotification } from "./notificationController.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -600,7 +601,6 @@ export const toggleArenaFollower = async (req, res) => {
           },
       });
       await post.save()
-
       const arena = await arenaModel.findByIdAndUpdate(
         arenaId,
         {
@@ -612,6 +612,23 @@ export const toggleArenaFollower = async (req, res) => {
           },
         }
       );
+      const userIds = await arenaFollowerModel.distinct(
+        "user_id",
+        { arena_id:arena._id }
+      ).map(id => id.toString());
+      console.log(userIds)
+      await broadcastNotification(
+                                  userIds ,
+                                  owner_id ,
+                                  "arena" ,
+                                  "performance_added",
+                                  {
+                                  arena_id: arena._id,
+                                  arena_name: arena.name,
+                                  arena_region: arena.region,
+                                  post_id: post._id 
+                                  }
+                                  )  
       // console.log(arena.region)
       // post.spotlightRegion = getSpotlightRegion(arena.region)
       // post.spotlightCountry = arena.region

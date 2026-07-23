@@ -51,7 +51,7 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     enum: [
       'friends',
-      'challenge',
+      'arena',
       'competition',
       'voting',
       'admin',
@@ -69,9 +69,9 @@ const notificationSchema = new mongoose.Schema({
       'friend_request',
       'friend_request_accepted',
 
-      // CHALLENGE
-      'challenge_invite',
-      'challenge_accepted',
+      //arena
+      'arena_created',
+      'performance_added',
       'challenge_declined',
 
       // COMPETITION
