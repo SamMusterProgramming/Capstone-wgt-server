@@ -85,6 +85,17 @@ export const notificationViewBuilders = {
         image:
         sender?.profileImage?.publicUrl || null,
         }),
+    friend_request_accepted_byou: ({
+        sender,
+        metadata
+        }) => ({
+        text:
+        `${metadata.sender_name} is a friend , start sharing`,
+        //   subtitle:
+        //     sender.city || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+        }),
     performance_added: ({
           sender,
           metadata,

@@ -68,6 +68,7 @@ const notificationSchema = new mongoose.Schema({
       'followed',
       'friend_request',
       'friend_request_accepted',
+      'friend_request_accepted_byou',
 
       //arena
       'arena_created',

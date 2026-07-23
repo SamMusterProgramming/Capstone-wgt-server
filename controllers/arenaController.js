@@ -262,11 +262,12 @@ export const getArenaByUser = async (req, res) => {
 export const getArenaByProfile = async (req, res) => {
     try {
         const userId = req.params.id;
+        console.log(userId)
         const { requesterId } = req.body;
         const arenas = await userArenas(userId, false);
         if (!requesterId || arenas.length === 0) {
             return res.json(arenas);
-        }
+        }   
         const arenaIds = arenas.map(arena => arena._id);
         const [followers, stars] = await Promise.all([
             arenaFollowerModel.find(
@@ -278,13 +279,13 @@ export const getArenaByProfile = async (req, res) => {
                     arena_id: 1,
                     _id: 0,
                 }
-            ),
+            ),  
             arenaStarModel.find(
                 {
                     user_id: requesterId,
                     arena_id: { $in: arenaIds },
                 },
-                {
+                {  
                     arena_id: 1,
                     _id: 0,
                 }

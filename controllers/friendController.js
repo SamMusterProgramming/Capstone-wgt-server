@@ -119,6 +119,7 @@ export const friendRequest =
         'friends',
         "friend_request",
         {
+          sender_id : senderId,
           sender_name: sender.name,
           sender_profile_img: sender.profileImage.publicUrl,
           sender_cover_img: sender.coverImage.publicUrl,
@@ -136,7 +137,7 @@ export const friendRequest =
 
 
 
-    export const acceptRequest = 
+  export const acceptRequest = 
     async (req, res) => {
         try {
           const receiverId = new mongoose.Types.ObjectId(req.body.user_id); // accepts
@@ -177,17 +178,15 @@ export const friendRequest =
             { _id: notificationId },
             {
               $set: {
-                type: "friend_request_accepted",
+                type: "friend_request_accepted_byou",
                 is_read: true
               }
             }
           );
 
           const receiver  = await userModel
-        .findById(receiverId)
-    
+          .findById(receiverId)
           // 5. Create notification for receiver
-
           await emitNotification( 
             senderId,
             receiverId,
@@ -200,11 +199,8 @@ export const friendRequest =
               sender_region : receiver.country
             }
           )
-
           const fList = await generateFriends(receiverId.toString())
-          console.log(fList)
           return res.status(200).json(fList);
-    
         } catch (err) {
           console.log(err);
           return res.status(500).json({ message: "Server error" });
@@ -212,12 +208,11 @@ export const friendRequest =
     }
 
 
-    export const cancelRequest = 
+  export const cancelRequest = 
     async (req, res) => {
       try {
         const receiverId = new mongoose.Types.ObjectId(req.body._id);
         const senderId = new mongoose.Types.ObjectId(req.params.id);
-  
         // 1. Remove from sender outgoing requests
         await friendModel.findOneAndUpdate(
           { user_id: senderId },
@@ -227,7 +222,6 @@ export const friendRequest =
             }
           }
         );
-  
         // 2. Remove from receiver incoming requests
         await friendModel.findOneAndUpdate(
           { user_id: receiverId },
@@ -237,21 +231,19 @@ export const friendRequest =
             }
           }
         );
-  
         // 3. Delete notifications (both directions safety cleanup)
         await notificationModel.deleteMany({
+          type: "friend_request",
           $or: [
             {
-              receiver_id: senderId,
-              type: "friend request",
-              "content.sender_id": receiverId
+              receiver_id: receiverId,
+              sender_id: senderId,
             },
             {
-              receiver_id: receiverId,
-              type: "friend request",
-              "content.sender_id": senderId
-            }
-          ]
+              receiver_id: senderId,
+              sender_id: receiverId,
+            },
+          ],
         });
         const fList = await generateFriends(req.params.id)
         return res.status(200).json(fList);
