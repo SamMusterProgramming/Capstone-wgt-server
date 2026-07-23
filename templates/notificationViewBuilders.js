@@ -91,7 +91,7 @@ export const notificationViewBuilders = {
           }) => ({
             text:
             sender?.name ?`${sender.name} posted a new performance in his arena` :
-                    `Your performance is live on ${metadata.arena_name} `,
+                    `Your performance is live `,
             subtitle:
             metadata.arena_name || "",
             image:

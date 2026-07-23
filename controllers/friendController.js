@@ -112,8 +112,7 @@ export const friendRequest =
       }
 
       // 4. Get sender info for notification (fresh from users collection)
-      const sender = await userModel
-        .findById(senderId)
+      const sender = await userModel.findById(senderId)
       await emitNotification( 
         receiverId,
         senderId,
@@ -123,6 +122,7 @@ export const friendRequest =
           sender_name: sender.name,
           sender_profile_img: sender.profileImage.publicUrl,
           sender_cover_img: sender.coverImage.publicUrl,
+          sender_region : sender.country
         }
      )
 
@@ -197,6 +197,7 @@ export const friendRequest =
               sender_name: receiver.name,
               sender_profile_img: receiver.profileImage.publicUrl,
               sender_cover_img: receiver.coverImage.publicUrl,
+              sender_region : receiver.country
             }
           )
 

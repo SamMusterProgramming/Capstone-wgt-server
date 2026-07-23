@@ -14,7 +14,7 @@ import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js
 import { getSpotlightRegion } from "../utilities/helper.js"
 import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
 import removeSpotlightPerformance from "../redisCash/spotlight/performances/updates/removeSpotlightPerformance.js"
-import { broadcastNotification } from "./notificationController.js"
+import { broadcastNotification, emitNotification } from "./notificationController.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -612,11 +612,11 @@ export const toggleArenaFollower = async (req, res) => {
           },
         }
       );
-      const userIds = await arenaFollowerModel.distinct(
+      const userIds = (await arenaFollowerModel.distinct(
         "user_id",
         { arena_id:arena._id }
-      ).map(id => id.toString());
-      console.log(userIds)
+      )).map(id => id.toString());
+      
       await broadcastNotification(
                                   userIds ,
                                   owner_id ,
@@ -624,12 +624,25 @@ export const toggleArenaFollower = async (req, res) => {
                                   "performance_added",
                                   {
                                   arena_id: arena._id,
-                                  arena_name: arena.name,
+                                  arena_name: arena.arenaName,
                                   arena_region: arena.region,
                                   post_id: post._id 
                                   }
                                   )  
-      // console.log(arena.region)
+      await emitNotification (
+        owner_id,
+        null,
+        "arena" , 
+        "performance_added",
+        {
+          arena_id: arena._id,
+          arena_name: arena.arenaName,
+          arena_region: arena.region,
+          post_id: post._id 
+        }
+        )
+      
+// console.log(arena.region)
       // post.spotlightRegion = getSpotlightRegion(arena.region)
       // post.spotlightCountry = arena.region
       // await post.save()
