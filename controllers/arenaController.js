@@ -14,7 +14,7 @@ import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js
 import { getSpotlightRegion } from "../utilities/helper.js"
 import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
 import removeSpotlightPerformance from "../redisCash/spotlight/performances/updates/removeSpotlightPerformance.js"
-import { broadcastNotification, emitNotification } from "./notificationController.js"
+import { broadcastNotification, emitFiresNotification, emitNotification, emitVotesNotification } from "./notificationController.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -613,11 +613,11 @@ export const toggleArenaFollower = async (req, res) => {
           },
         }
       );
-      const userIds = (await arenaFollowerModel.distinct(
+      let userIds = (await arenaFollowerModel.distinct(
         "user_id",
         { arena_id:arena._id }
       )).map(id => id.toString());
-      
+      userIds = userIds.filter(id => id !== owner_id)
       await broadcastNotification(
                                   userIds ,
                                   owner_id ,
@@ -803,12 +803,35 @@ export const toggleFirePost = async (req, res) => {
         const arena = await arenaModel.findById(post.arena_id)
         post.spotlightRegion = getSpotlightRegion(arena.region)
         post.spotlightCountry = arena.region
-        await post.save()
         const score = recalculateSpotlightScore(post)
         post.spotlightScore = score;
         await post.save()
         await redis.del(`user_arenas_${post.owner_id.toString()}`);
         await updateSpotlightInteractionCache(post)
+
+        if (!existing) {
+            const notification = await emitFiresNotification( 
+              post.owner_id,
+              null,
+              "arena",
+              "fire_received",
+              {
+              arena_id: arena._id,
+              arena_name: arena.arenaName,
+              arena_region:arena.region,
+              total_fires: 1,
+              recent_firers: [
+                {
+                  firer_id : userId,
+                  firer_name : "samir haddadi"
+                }
+              ],
+              post_id : post._id 
+              }
+          )
+          console.log(notification)
+        }
+
         return res.json({
                          active,
                          post,

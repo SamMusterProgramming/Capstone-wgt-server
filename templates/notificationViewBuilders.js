@@ -108,6 +108,17 @@ export const notificationViewBuilders = {
             image:
             sender?.profileImage?.publicUrl || null,
         }),
-  };
+    fire_received: ({
+        sender,
+        metadata,
+        }) => ({
+        text:  
+        `${metadata.recent_firers[0]?.firer_name} ${metadata.recent_firers[1]?.firer_name} and ${metadata.total_fires - 2} others have fired for your performance in ${metadata.arena_name}  `,
+        subtitle:
+        metadata.arena_name || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+        }),
+};
 
 

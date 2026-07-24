@@ -126,7 +126,6 @@ route.get('/user/performance/:id',protect,async(req,res)=>{
       userTalents.forEach( t => {
           t.editions.forEach( e => {
               let performance = null
-
               if(e.status == "closed" || (e.status == "open" && e.round > 4 ) ){
                 if( (e.winner && e.winner.user_id == user_id )||
                    e.quarter_finalists.find( c => c.user_id == user_id ) ||

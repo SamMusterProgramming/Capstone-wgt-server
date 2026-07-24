@@ -124,6 +124,55 @@ export const emitVotesNotification = async (
             }
 };
 
+export const emitFiresNotification = async (
+        receiverId,
+        senderId = null,
+        category,
+        type,
+        metadata = {},
+          ) => {
+  try {
+  let existantNotification = await notificationModel.findOne({
+      receiver_id: receiverId,
+      category:"arena" ,
+      type: "fire_received",
+      // is_read: false,
+      "metadata.post_id": metadata.post_id
+  });
+  if(!existantNotification)
+      existantNotification = await notificationService.emit({
+                receiverId,
+                senderId,
+                category,
+                type,
+                metadata,
+                });
+  else {
+    if(!existantNotification.metadata.recent_firers.find(f => f.firer_id == metadata.recent_firers[0].firer_id)){
+        existantNotification.metadata.total_fires += 1;  
+        existantNotification.metadata.recent_firers.unshift(metadata.recent_firers[0]);
+        existantNotification.is_read=false;
+        existantNotification.markModified("metadata");
+        await existantNotification.save()
+    }
+  }     
+  if(existantNotification.metadata.recent_firers.length % 5 !== 0) return ; 
+  const pushNotification = await  buildPushNotification(existantNotification)
+  const receiver = await getUserProfile(receiverId)
+  await sendPushNotification(receiver.expoPushToken, {
+  title: "New Activity",
+  body: pushNotification.presentation.text,
+  data: {
+  ...pushNotification.metadata , 
+  type : existantNotification.type , 
+  }
+  });
+  return existantNotification;
+  } catch (err) {
+  console.log('EMIT NOTIFICATION ERROR:', err);
+  }
+  };
+
 // controller example
 export const getNotifications = async (req, res) => {
   try {
