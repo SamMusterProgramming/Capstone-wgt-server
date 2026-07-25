@@ -27,7 +27,7 @@ async ({
             ),
         })
         .sort({
-          createdAt: -1,
+          updatedAt: -1,
         })
         .skip((page - 1) * limit)
         .limit(limit)

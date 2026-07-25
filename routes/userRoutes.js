@@ -68,7 +68,6 @@ route.route('/notifications/:id')
      .patch(protect , updateNotificationById)  
      .delete(protect,deleteNotificationById)  
 
-
 // seeds the database with prototype data
 route.get('/seed',async(req,res)=>{
     userModel.collection.drop() // delete the collection document

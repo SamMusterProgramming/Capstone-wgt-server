@@ -169,7 +169,7 @@ export const emitFiresNotification = async (
   });
   return existantNotification;
   } catch (err) {
-  console.log('EMIT NOTIFICATION ERROR:', err);
+   console.log('EMIT NOTIFICATION ERROR:', err);
   }
   };
 

@@ -118,7 +118,7 @@ export const notificationViewBuilders = {
         metadata.arena_name || "",
         image:
         sender?.profileImage?.publicUrl || null,
-        }),
+        }),   
 };
 
 
