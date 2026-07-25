@@ -753,7 +753,7 @@ export const toggleArenaFollower = async (req, res) => {
 
 export const toggleFirePost = async (req, res) => {
     try {
-        const { postId, userId } = req.body;
+        const { postId, userId,userName } = req.body;
         const existing = await arenaPostFireModel.findOne({
             post_id: postId,
             user_id: userId,
@@ -809,7 +809,7 @@ export const toggleFirePost = async (req, res) => {
         await redis.del(`user_arenas_${post.owner_id.toString()}`);
         await updateSpotlightInteractionCache(post)
 
-        if (!existing) {
+        if (!existing && post.owner_id.toString() !== userId) {
             const notification = await emitFiresNotification( 
               post.owner_id,
               null,
@@ -823,7 +823,7 @@ export const toggleFirePost = async (req, res) => {
               recent_firers: [
                 {
                   firer_id : userId,
-                  firer_name : "samir haddadi"
+                  firer_name : userName
                 }
               ],
               post_id : post._id 
