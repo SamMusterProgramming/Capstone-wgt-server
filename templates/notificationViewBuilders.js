@@ -113,12 +113,27 @@ export const notificationViewBuilders = {
         metadata,
         }) => ({
         text:  
-        `${metadata.recent_firers[0]?.firer_name} ${metadata.recent_firers[1]?.firer_name} and ${metadata.total_fires - 2} others have fired for your performance in ${metadata.arena_name}  `,
+        metadata.recent_firers.length >=2 ?
+        `${metadata.recent_firers[0]?.firer_name} ${metadata.recent_firers[1]?.firer_name} and ${metadata.total_fires - 2} others have fired for your performance in ${metadata.arena_name} Arena `
+        : `${metadata.recent_firers[0]?.firer_name}  has fired for your performance in ${metadata.arena_name} Arena  `,
         subtitle:
         metadata.arena_name || "",
         image:
         sender?.profileImage?.publicUrl || null,
         }),   
+    comment_received: ({
+        sender,
+        metadata,
+        }) => ({
+        text:  
+        metadata.recent_commentors.length >=2 ?
+        `${metadata.recent_commentors[0]?.commentor_name} ${metadata.recent_commentors[1]?.commentor_name} and ${metadata.total_commentors - 2} others have commented  your performance in ${metadata.arena_name} Arena `
+        : `${metadata.recent_commentors[0]?.commentor_name}  has commented your performance in ${metadata.arena_name} Arena  `,
+        subtitle:
+        metadata.arena_name || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+        }),  
 };
 
 

@@ -14,7 +14,7 @@ import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js
 import { getSpotlightRegion } from "../utilities/helper.js"
 import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
 import removeSpotlightPerformance from "../redisCash/spotlight/performances/updates/removeSpotlightPerformance.js"
-import { broadcastNotification, emitFiresNotification, emitNotification, emitVotesNotification } from "./notificationController.js"
+import { broadcastNotification, emitCommentsNotification, emitFiresNotification, emitNotification, emitVotesNotification } from "./notificationController.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -829,7 +829,6 @@ export const toggleFirePost = async (req, res) => {
               post_id : post._id 
               }
           )
-          console.log(notification)
         }
 
         return res.json({
@@ -880,7 +879,7 @@ export const addPostView = async(req,res)=>{
   export const addArenaPostComments = async (req, res) => {
     try {
       const  postId  = req.params.id;
-      const { userId, text } = req.body;
+      const { userId,userName , text } = req.body;
   
       if (!text?.trim()) {
         return res.status(400).json({
@@ -893,7 +892,7 @@ export const addPostView = async(req,res)=>{
         user_id: userId,
         text: text.trim(),
       });
-  
+      
       const post = await arenaPostModel.findByIdAndUpdate(
         postId,
         {
@@ -902,6 +901,33 @@ export const addPostView = async(req,res)=>{
           },
         }
       );
+
+      const arena = await arenaModel.findById(post.arena_id)
+     
+     
+      if(post.owner_id.toString() !== userId) {
+      const notification = await emitCommentsNotification( 
+        post.owner_id,
+        null,
+        "arena",
+        "comment_received",
+        {
+        arena_id: arena._id,
+        arena_name: arena.arenaName,
+        arena_region:arena.region,
+        total_commentors: 1,
+        recent_commentors: [
+          {
+            commentor_id : userId,
+            commentor_name : userName
+          }
+        ],
+        post_id : post._id 
+        }
+      ) 
+      console.log(notification)
+      }
+     
 
       const score = recalculateSpotlightScore(post)
       post.spotlightScore = score;

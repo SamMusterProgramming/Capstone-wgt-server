@@ -74,7 +74,8 @@ const notificationSchema = new mongoose.Schema({
       'arena_created',
       'performance_added',
       "fire_received",
-
+      "comment_received",
+      
       // COMPETITION
       'performance_posted',
       'contest_joined',

@@ -474,13 +474,10 @@ export const getStagesByRegion = async (req, res) => {
     }
   }
 
-  export const getAllStages = async(req,res)=> {
+export const getAllStages = async(req,res)=> {
     const stages = await talentModel.find({}).limit(60);  
     return res.json(stages).status(200)
   }
-
-
-
 
   // get stages where a user is hero , participatant , queued , eliminiated 
   
