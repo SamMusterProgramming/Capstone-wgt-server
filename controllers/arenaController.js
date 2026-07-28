@@ -14,7 +14,9 @@ import arenaPostCommentModel from "../models/arena/postArena/arenaPostComment.js
 import { getSpotlightRegion } from "../utilities/helper.js"
 import updateSpotlightInteractionCache from "../redisCash/spotlight/performances/updates/updateSpotlightInteractionCache.js"
 import removeSpotlightPerformance from "../redisCash/spotlight/performances/updates/removeSpotlightPerformance.js"
-import { broadcastNotification, emitCommentsNotification, emitFiresNotification, emitNotification, emitVotesNotification } from "./notificationController.js"
+import { broadcastNotification, emitCommentsNotification, emitFiresNotification, emitFollowersNotification, emitNotification, emitStarrersNotification, emitVotesNotification } from "./notificationController.js"
+import friendModel from "../models/friends.js"
+import followerModel from "../models/followers.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -72,6 +74,58 @@ export const createArena = async (req, res) => {
         coverImage
     })
     const arenas = await userArenas(userId , true)
+    
+
+
+    const friend = await friendModel.findOne({
+      user_id: userId
+    });
+    const friends = friend?.friends || [];
+    const follow = await followerModel.findOne({
+      user_id: userId
+    });
+    const followers = follow?.followers || [];
+    const audienceSet = new Set();
+    // helper to safely add ids
+    const addToSet = (arr, field = null) => {
+      arr?.forEach(item => {
+        const id = field ? item?.[field] : item;
+        if (!id) return;
+        const strId = id.toString();
+        if (strId !== userId) {
+          audienceSet.add(strId);
+        }
+      });
+    };
+
+    // merge all groups
+    addToSet(friends);
+    addToSet(followers);
+    const audience = Array.from(audienceSet);
+    // final array
+    await broadcastNotification(
+        audience,
+        userId ,
+        "arena" ,
+        "arena_created",
+        {
+          arena_id: arena._id,
+          arena_name: arena.arenaName,
+          arena_region: arena.region,
+        }
+      )  
+    await emitNotification (
+      userId,
+      null,
+      "arena" , 
+      "arena_created",
+      {
+        arena_id: arena._id,
+        arena_name: arena.arenaName,
+        arena_region: arena.region,
+      }
+    )
+
     return res.json({
         arenas:arenas,
         selectedArena:arenas.find ( a => a._id.toString() === arena._id.toString())
@@ -388,7 +442,7 @@ export const isUserStarredArena = async (req, res) => {
 
 export const toggleArenaStar = async (req, res) => {
     try {
-      const { arenaId, userId } = req.body;
+      const { arenaId, userId , userName } = req.body;
       const existing = await arenaStarModel.findOne({
         arena_id: arenaId,
         user_id: userId,
@@ -427,6 +481,28 @@ export const toggleArenaStar = async (req, res) => {
     //   await redis.del(`arena_${arenaId}`);
       const arena = await arenaById(arenaId,true)
       const freshArena = {...arena, isStarred:starred}
+
+      if (!existing && arena.owner_id.toString() !== userId) {
+        const notification = await emitStarrersNotification( 
+          arena.owner_id,
+          null,
+          "arena",
+          "star_arena", 
+          {
+          arena_id: arena._id,
+          arena_name: arena.arenaName,
+          arena_region:arena.region,
+          total_starrers: 1,
+          recent_starrers: [
+            {
+              starrer_id : userId,
+              starrer_name : userName
+            }
+          ],
+          }
+      )
+      }
+
       return res.json(freshArena);
     } catch (error) {
       console.error(error);
@@ -496,13 +572,12 @@ export const toggleArenaStar = async (req, res) => {
  
 export const toggleArenaFollower = async (req, res) => {
     try {
-      const { arenaId, userId } = req.body;
+      const { arenaId, userId ,userName } = req.body;
       const existing = await arenaFollowerModel.findOne({
         arena_id: arenaId,
         user_id: userId,
       });
       let following = false;
-      
       if (existing) {
         await arenaFollowerModel.deleteOne({
           _id: existing._id,
@@ -532,11 +607,32 @@ export const toggleArenaFollower = async (req, res) => {
         );
         following = true;
       }
-  
       // invalidate cache
-    //   await redis.del(`arena_${arenaId}`);
+      //   await redis.del(`arena_${arenaId}`);
       const arena = await arenaById(arenaId,true)
       const freshArena = {...arena, isFollower:following}
+
+      if (!existing && arena.owner_id.toString() !== userId) {
+        const notification = await emitFollowersNotification( 
+          arena.owner_id,
+          null,
+          "arena",
+          "follow_arena",
+          {
+          arena_id: arena._id,
+          arena_name: arena.arenaName,
+          arena_region:arena.region,
+          total_followers: 1,
+          recent_followers: [
+            {
+              follower_id : userId,
+              follower_name : userName
+            }
+          ],
+          }
+      )
+      }
+
       return res.json(freshArena);
     } catch (error) {
       console.error(error);

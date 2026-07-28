@@ -72,10 +72,12 @@ const notificationSchema = new mongoose.Schema({
 
       //arena
       'arena_created',
+      "follow_arena" ,
+      "star_arena" ,
       'performance_added',
       "fire_received",
       "comment_received",
-      
+
       // COMPETITION
       'performance_posted',
       'contest_joined',

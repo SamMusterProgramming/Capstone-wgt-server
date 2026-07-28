@@ -96,6 +96,45 @@ export const notificationViewBuilders = {
         image:
         sender?.profileImage?.publicUrl || null,
         }),
+        //arenas
+    arena_created: ({
+      sender,
+      metadata,
+      }) => ({
+        text:
+        sender?.name ?`${sender.name} has created a new arena , view and follow arena ` :
+                `Your arena is live , start adding performances`,
+        subtitle:
+        metadata.arena_name || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+    }),
+    follow_arena: ({
+      sender,
+      metadata,
+      }) => ({
+        text:
+        metadata.recent_followers.length >=2 ?
+        `${metadata.recent_followers[0]?.follower_name} ${metadata.recent_followers[1]?.follower_name} and ${metadata.total_followers - 2} others have folowed your arena  ${metadata.arena_name} `
+        : `${metadata.recent_followers[0]?.follower_name}  has followed  your arena ${metadata.arena_name}   `,
+        subtitle:
+        metadata.arena_name || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+    }),
+    star_arena: ({
+      sender,
+      metadata,
+      }) => ({
+        text:
+        metadata.recent_starrers.length >=2 ?
+        `${metadata.recent_starrers[0]?.starrer_name} ${metadata.recent_starrers[1]?.starrer_name} and ${metadata.total_starrers - 2} others have starred your arena  ${metadata.arena_name} `
+        : `${metadata.recent_starrers[0]?.starrer_name}  has starred  your arena ${metadata.arena_name}   `,
+        subtitle:
+        metadata.arena_name || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+    }),
     performance_added: ({
           sender,
           metadata,

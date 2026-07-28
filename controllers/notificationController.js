@@ -212,6 +212,7 @@ if(!existantNotification.metadata.recent_commentors.find(f => f.commentor_id == 
 if(existantNotification.metadata.recent_commentors.length % 5 !== 0) return ; 
 const pushNotification = await  buildPushNotification(existantNotification)
 const receiver = await getUserProfile(receiverId)
+console.log(receiver.expoPushToken)
 await sendPushNotification(receiver.expoPushToken, {
 title: "New Activity",
 body: pushNotification.presentation.text,
@@ -225,6 +226,107 @@ return existantNotification;
 console.log('EMIT NOTIFICATION ERROR:', err);
 }
 };
+
+export const emitFollowersNotification = async (
+          receiverId,
+          senderId = null,
+          category,
+          type,
+          metadata = {},
+            ) => {
+  try {
+    let existantNotification = await notificationModel.findOne({
+    receiver_id: receiverId,
+    category:"arena" ,
+    type: "follow_arena",
+    // is_read: false,
+    "metadata.arena_id": metadata.arena_id
+    });
+    if(!existantNotification)
+    existantNotification = await notificationService.emit({
+              receiverId,
+              senderId,
+              category,
+              type,
+              metadata,
+              });
+    else {
+
+    if(!existantNotification.metadata.recent_followers.find(f => f.follower_id == metadata.recent_followers[0].follower_id)){
+      existantNotification.metadata.total_followers += 1;  
+      existantNotification.metadata.recent_followers.unshift(metadata.recent_followers[0]);
+      existantNotification.is_read=false;
+      existantNotification.markModified("metadata");
+      await existantNotification.save()
+    }
+    }     
+    if(existantNotification.metadata.recent_followers.length % 5 !== 0) return ; 
+    const pushNotification = await  buildPushNotification(existantNotification)
+    const receiver = await getUserProfile(receiverId)
+    console.log(receiver.expoPushToken)
+    await sendPushNotification(receiver.expoPushToken, {
+    title: "New Activity",
+    body: pushNotification.presentation.text,
+    data: {
+    ...pushNotification.metadata , 
+    type : existantNotification.type , 
+    }
+    });
+    return existantNotification;
+  } catch (err) {
+    console.log('EMIT NOTIFICATION ERROR:', err);
+  }
+};
+
+export const emitStarrersNotification = async (
+          receiverId,
+          senderId = null,
+          category,
+          type,
+          metadata = {},
+            ) => {
+  try {
+    let existantNotification = await notificationModel.findOne({
+      receiver_id: receiverId,
+      category:"arena" ,
+      type: "star_arena",
+      // is_read: false,
+      "metadata.arena_id": metadata.arena_id
+    });
+    if(!existantNotification)
+    existantNotification = await notificationService.emit({
+          receiverId,
+          senderId,
+          category,
+          type,
+          metadata,
+          });
+    else {
+          if(!existantNotification.metadata.recent_starrers.find(f => f.starrer_id == metadata.recent_starrers[0].starrer_id)){
+              existantNotification.metadata.total_starrers += 1;  
+              existantNotification.metadata.recent_starrers.unshift(metadata.recent_starrers[0]);
+              existantNotification.is_read=false;
+              existantNotification.markModified("metadata");
+              await existantNotification.save()
+          }
+    }     
+    if(existantNotification.metadata.recent_starrers.length % 5 !== 0) return ; 
+    const pushNotification = await  buildPushNotification(existantNotification)
+    const receiver = await getUserProfile(receiverId)
+    await sendPushNotification(receiver.expoPushToken, {
+    title: "New Activity",
+    body: pushNotification.presentation.text,
+    data: {
+    ...pushNotification.metadata , 
+    type : existantNotification.type , 
+    }
+    });
+    return existantNotification;
+  } catch (err) {
+  console.log('EMIT NOTIFICATION ERROR:', err);
+  }
+};
+
 // controller example
 export const getNotifications = async (req, res) => {
   try {

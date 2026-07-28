@@ -767,7 +767,6 @@ export const getTrendingStages = async(req,res)=>{
               addToSet(contestants, "user_id");
               // final array
               const audience = Array.from(audienceSet);
-              console.log(audience)
               await broadcastNotification(
                                           audience ,
                                           user_id ,
