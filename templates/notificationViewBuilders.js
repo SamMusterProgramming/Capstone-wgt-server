@@ -153,8 +153,8 @@ export const notificationViewBuilders = {
         }) => ({
         text:  
         metadata.recent_firers.length >=2 ?
-        `${metadata.recent_firers[0]?.firer_name} ${metadata.recent_firers[1]?.firer_name} and ${metadata.total_fires - 2} others have fired for your performance in ${metadata.arena_name} Arena `
-        : `${metadata.recent_firers[0]?.firer_name}  has fired for your performance in ${metadata.arena_name} Arena  `,
+        `${metadata.recent_firers[0]?.firer_name} ${metadata.recent_firers[1]?.firer_name} and ${metadata.total_fires - 2} others have fired  your performance in ${metadata.arena_name} Arena `
+        : `${metadata.recent_firers[0]?.firer_name}  has fired your performance in ${metadata.arena_name} Arena  `,
         subtitle:
         metadata.arena_name || "",
         image:
