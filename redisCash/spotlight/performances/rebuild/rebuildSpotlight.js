@@ -1,4 +1,5 @@
 // import generateSpotlightCandidates from "../generators/generateSpotlightCandidates.js";
+import { broadcastNotification, broadcastSpotlightPerformanceNotifications, emitNotification } from "../../../../controllers/notificationController.js";
 import buildSpotlightLeaderboard from "../builders/buildSpotlightLeaderboard.js";
 import cacheSpotlightPerformances from "../cache/cacheSpotlightPerformances.js";
 import generateSpotlightCandidates from "../generator/generateSpotlightCandidates.js";
@@ -51,6 +52,22 @@ const rebuildSpotlight = async ({
             region,
             country
         });
+
+    let spotlightType = ""
+    switch (type) {
+        case "local":
+            spotlightType = "L"
+            break;
+        case "regional":
+            spotlightType = "R"
+            break;
+        default:
+            spotlightType = "G"
+            break;
+    }  
+
+    await broadcastSpotlightPerformanceNotifications(leaderboard , spotlightType)
+   
     /*
         4. Update Redis
     */

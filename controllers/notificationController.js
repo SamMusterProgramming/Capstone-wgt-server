@@ -327,6 +327,52 @@ export const emitStarrersNotification = async (
   }
 };
 
+export const broadcastSpotlightPerformanceNotifications = async( 
+  leaderboard , spotightType = ""
+ )=>{
+  for (const p of leaderboard) {
+    const existingNotification = await notificationModel.findOne({
+      receiver_id: p.owner._id.toString(),
+      type: "spotlight_featured",
+      "metadata.post_id": p._id,
+    });
+  
+    if (!existingNotification) {
+      await emitNotification(
+        p.owner._id.toString(),
+        null,
+        "arena",
+        "spotlight_featured",
+        {
+          arena_id: p.arena._id,
+          arena_name: p.arena.arenaName,
+          arena_region: p.arena.region,
+          post_id: p._id,
+          type: [spotightType],
+        }
+      );
+  
+      continue;
+    }
+  
+    if (
+      existingNotification.metadata.type.includes(spotightType)
+    ) {
+      continue;
+    }
+  
+    await notificationModel.updateOne(
+      { _id: existingNotification._id },
+      {
+        $addToSet: {
+          "metadata.type": spotightType,
+        },
+      }
+    );
+
+  }
+}
+
 // controller example
 export const getNotifications = async (req, res) => {
   try {

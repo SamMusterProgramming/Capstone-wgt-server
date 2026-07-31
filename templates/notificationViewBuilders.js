@@ -173,6 +173,39 @@ export const notificationViewBuilders = {
         image:
         sender?.profileImage?.publicUrl || null,
         }),  
+    spotlight_featured: ({
+      sender,
+      metadata,
+      }) => ({
+        text:
+        ` your performance is featured in ${metadata.type.find(s => s === "G")? "Global " :" "} ${metadata.type.find(s => s === "R")? " , Regional" :""}  ${metadata.type.find(s => s === "L")? " , Local" :""} spotlight of Itri community` ,
+        subtitle:
+        metadata.arena_name || "",
+        image:
+        sender?.profileImage?.publicUrl || null,
+    }),
+    // spotlight_performance_regional: ({
+    //   sender,
+    //   metadata,
+    //   }) => ({
+    //     text:
+    //     ` your performance is featured in Regional Spotlight of Itri community` ,
+    //     subtitle:
+    //     metadata.arena_name || "",
+    //     image:
+    //     sender?.profileImage?.publicUrl || null,
+    // }),
+    // spotlight_performance_global: ({
+    //   sender,
+    //   metadata,
+    //   }) => ({
+    //     text:
+    //     ` your performance is featured in Global Spotlight  of Itri community` ,
+    //     subtitle:
+    //     metadata.arena_name || "",
+    //     image:
+    //     sender?.profileImage?.publicUrl || null,
+    // }),
 };
 
 

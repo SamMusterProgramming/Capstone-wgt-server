@@ -3,12 +3,13 @@ import arenaPostModel from "../../../../models/arenaPost.js";
 
 
 const generateSpotlightCandidates = async (filter = {}) => {
-
+    const minScore =
+    Object.keys(filter).length > 0 ? 2 : 250;
     const performances = await arenaPostModel.aggregate([
         {
             $match: {
                 spotlightScore: {
-                    $gt: 2
+                    $gt: minScore
                 },
                 ...filter
             }
@@ -19,7 +20,7 @@ const generateSpotlightCandidates = async (filter = {}) => {
             }
         },
         {
-            $limit: 500
+            $limit: 5
         },
 
 

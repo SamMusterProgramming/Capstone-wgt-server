@@ -87,6 +87,9 @@ const userArenas = async (
                 commentCount: 1,
                 shareCount: 1,
                 createdAt: 1,
+                localSpotlight: 1,
+                regionalSpotlight : 1 ,
+                globalSpotlight : 1
                 // isFired: 1,
               },
             },

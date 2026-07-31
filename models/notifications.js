@@ -1,35 +1,3 @@
-// import  mongoose from 'mongoose'
-
-// const notificationSchema = new mongoose.Schema({
-//   receiver_id: {
-//     type: String,
-//     required: true
-//   },
-//   content: {},
-//   message:{
-//     type:String
-//   },
-//   type: {
-//     type: String,
-//     enum: ['like', 'comment', 'followers','friends', "friend request","talent",'other'], 
-//     default: 'other'
-//   },
-//   stage: {
-//     type: String,
-//     // enum: ['singing', 'dancing', 'eating','magic', "comedy","fashion",'other'], 
-//     default: 'other'
-//   },
-//   isRead: {
-//     type: Boolean,
-//     default: false
-//   },
-//   createdAt: {
-//     type: Date,
-//     default: Date.now
-//   }   
-// },
-//    { versionKey: false } 
-// );
 
 
 import mongoose from 'mongoose';
@@ -77,6 +45,8 @@ const notificationSchema = new mongoose.Schema({
       'performance_added',
       "fire_received",
       "comment_received",
+      "spotlight_featured",
+
 
       // COMPETITION
       'performance_posted',

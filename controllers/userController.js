@@ -264,14 +264,35 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
     res.json(notifications).status(200)
   }
 
-  export const updateNotificationById = async(req,res)=>{
-    const _id = req.params.id;
-    const notification = await notificationModel.findById(_id)
-    if(!notification) return res.json("notification expired")
-    notification.is_read = true;
-    await notification.save();
-    res.json(notification).status(200)
-  }
+  // export const updateNotificationById = async(req,res)=>{
+  //   const _id = req.params.id;
+  //   const notification = await notificationModel.findById(_id)
+  //   if(!notification) return res.json("notification expired")
+  //   notification.is_read = true;
+  //   await notification.save();
+  //   res.json(notification).status(200)
+  // }
+
+  export const updateNotificationById = async (req, res) => {
+    const { id } = req.params;
+  
+    const notification = await notificationModel.findByIdAndUpdate(
+      id,
+      {
+        is_read: true,
+        read_at: new Date(),
+      },
+      {
+        new: true,
+        timestamps: false,
+      }
+    );
+  
+    if (!notification) {
+      return res.status(404).json("Notification expired");
+    }
+    return res.status(200).json(notification);
+  };
 
   export const markNotificationRead = async(req,res)=>{
     const _id = req.params.id;
