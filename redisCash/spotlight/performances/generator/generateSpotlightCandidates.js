@@ -4,7 +4,7 @@ import arenaPostModel from "../../../../models/arenaPost.js";
 
 const generateSpotlightCandidates = async (filter = {}) => {
     const minScore =
-    Object.keys(filter).length > 0 ? 2 : 250;
+    Object.keys(filter).length > 0 ? 2 : 20;
     const performances = await arenaPostModel.aggregate([
         {
             $match: {
