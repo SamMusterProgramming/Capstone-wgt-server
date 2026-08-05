@@ -5,6 +5,7 @@ import { addArenaPostComments, addPerformanceToArena, addPostView, createArena,
          deleteArena, deleteArenaPostComment, deletePostFromArena, getArenaByProfile,
          getArenaByUser, getArenaPostComments, getGlobalSpotlightPerformances,
          getLocalArenas, getLocalSpotlightPerformances, getPostsArena, getRegionalSpotlightPerformances, 
+         getUserFollowedArenas, 
          isUserFiredPost, isUserFollowingArena, isUserStarredArena, toggleArenaFollower, 
          toggleArenaStar,  toggleFirePost,  updateArena } from '../controllers/arenaController.js';
 import { protect } from '../middleware/jwtProtect.js';
@@ -23,7 +24,7 @@ route.get('/local/arena/:id' , protect , getLocalArenas)
 route.get('/global/spotlightPerformances' , protect , getGlobalSpotlightPerformances)
 route.get('/regional/spotlightPerformances' , protect , getRegionalSpotlightPerformances)
 route.get('/local/spotlightPerformances' , protect , getLocalSpotlightPerformances)
-
+route.get("/following",protect, getUserFollowedArenas);
 
 //following, starring , comments
 route.patch('/arena/star' , protect , toggleArenaStar)

@@ -17,6 +17,7 @@ import removeSpotlightPerformance from "../redisCash/spotlight/performances/upda
 import { broadcastNotification, emitCommentsNotification, emitFiresNotification, emitFollowersNotification, emitNotification, emitStarrersNotification, emitVotesNotification } from "./notificationController.js"
 import friendModel from "../models/friends.js"
 import followerModel from "../models/followers.js"
+import userFollowedArenas from "../redisCash/arenas/getUserFollowedArenas.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -369,7 +370,6 @@ export const getArenaByProfile = async (req, res) => {
 export const getLocalArenas = async (req, res) => {
   try {   
     const countryCode  = req.params.id
-    console.log(countryCode)
     const { userId } = req.body;
     const arenas = await localArenas(countryCode , true)
     return res.status(200).json(arenas);
@@ -381,6 +381,22 @@ export const getLocalArenas = async (req, res) => {
   }
 };
 
+
+export const getUserFollowedArenas = async (req, res) => {
+  try {   
+    const { userId, page = 1 } = req.query;
+    const result = await userFollowedArenas(
+      userId,
+      Number(page),10,false
+    );
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      message: "Failed to load local arenas",
+    });
+  }
+};
 
 //star arena , toggleStar
 export const isUserStarredArena = async (req, res) => {
@@ -396,49 +412,6 @@ export const isUserStarredArena = async (req, res) => {
       return res.status(500).json(false);
     }
 };
-
-// export const toggleArenaStar = async (req, res) => {
-//     try {
-//       const  arenaId  = req.params.id;
-//       const { userId } = req.body;
-//       const arena = await arenaModel.findById(arenaId);
-//       if (!arena) {
-//         return res.status(404).json({
-//           success: false,
-//           message: "Arena not found",
-//         });
-//       }
-//       const alreadyStarred = arena.stars.some(
-//         starId => starId.toString() === userId
-//       );
-//       let query = {}
-//       if (alreadyStarred) {
-//         query = {
-//             $pull: {
-//               stars: userId,
-//             },
-//           }
-//       }else {
-//         query =  {
-//             $addToSet: {
-//               stars: userId,
-//             },
-//           }
-//       }
-//       const newArena =  await arenaModel.findByIdAndUpdate(
-//         arenaId,
-//         query,
-//         { new: true }
-//       );
-//       return res.status(200).json(newArena)
-//     } catch (error) {
-//       console.error(error);
-//       return res.status(500).json({
-//         success: false,
-//         message: "Server error",
-//       });
-//     }
-//   };
 
 export const toggleArenaStar = async (req, res) => {
     try {
