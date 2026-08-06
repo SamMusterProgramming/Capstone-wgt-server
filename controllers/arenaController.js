@@ -317,7 +317,6 @@ export const getArenaByUser = async (req, res) => {
 export const getArenaByProfile = async (req, res) => {
     try {
         const userId = req.params.id;
-        console.log(userId)
         const { requesterId } = req.body;
         const arenas = await userArenas(userId, false);
         if (!requesterId || arenas.length === 0) {
@@ -391,8 +390,42 @@ export const getUserFollowedArenas = async (req, res) => {
       10,
       true
     );
-    console.log(result)
-    return res.status(200).json(result);
+
+    const arenaIds = result.map(arena => arena._id);
+    const [followers, stars] = await Promise.all([
+            arenaFollowerModel.find(
+                {
+                    user_id: userId,
+                    arena_id: { $in: arenaIds },
+                },
+                {
+                    arena_id: 1,
+                    _id: 0,
+                }
+            ),  
+            arenaStarModel.find(
+                {
+                    user_id: userId,
+                    arena_id: { $in: arenaIds },
+                },
+                {  
+                    arena_id: 1,
+                    _id: 0,
+                }
+            ),
+        ]);
+    const followedSet = new Set(
+            followers.map(item => item.arena_id.toString())
+          );
+    const starredSet = new Set(
+            stars.map(item => item.arena_id.toString())
+        );
+    const arenas = result.map(arena => ({
+            ...arena,
+            isFollower: followedSet.has(arena._id.toString()),
+            isStarred: starredSet.has(arena._id.toString()),
+        }));
+    return res.status(200).json(arenas);
   } catch (err) {
     console.log(err);
     return res.status(500).json({
