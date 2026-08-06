@@ -34,90 +34,95 @@ const userFollowedArenas = async (
         // AGGREGATION
         // ===========================
 
-        const arenas =
-            await arenaFollowerModel.aggregate([
-
-                {
-                    $match: {
-                        user_id: new mongoose.Types.ObjectId(userId)
-                    }
-                },
-
-                {
-                    $sort: {
-                        createdAt: -1
-                    }
-                },
-
-                {
-                    $lookup: {
-                        from: "arenas",
-                        localField: "arena_id",
-                        foreignField: "_id",
-                        as: "arena"
-                    }
-                },
-
-                {
-                    $unwind: "$arena"
-                },
-
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "arena.owner_id",
-                        foreignField: "_id",
-                        as: "owner"
-                    }
-                },
-
-                {
-                    $unwind: "$owner"
-                },
-
-                {
-                    $project: {
-                        _id: "$arena._id",
-                        arenaName: "$arena.arenaName",
-                        talentType: "$arena.talentType",
-                        region: "$arena.region",
-                        biography: "$arena.biography",
-                        description: "$arena.description",
-                        profileImage: "$arena.profileImage",
-                        coverImage: "$arena.coverImage",
-                        followerCount: "$arena.followerCount",
-                        starCount: "$arena.starCount",
-                        postCount: "$arena.postCount",
-                        verified: "$arena.verified",
-                        createdAt: "$arena.createdAt",
-                        owner: {
-                            _id: "$owner._id",
-                            username: "$owner.username",
-                            fullname: "$owner.fullname",
-                            profileImage: "$owner.profileImage",
-                            verified: "$owner.verified"
-                        }
-                    }
-                },
-                {
-                    $facet: {
-                        metadata: [
-                            {
-                                $count: "total"
-                            }
-                        ],
-
-                        arenas: [
-                            {
-                                $skip: (page - 1) * limit
-                            },
-                            {
-                                $limit: limit
-                            }
-                        ]
-                    }
+        // const total = await arenaFollowerModel.countDocuments({
+        //     user_id: new mongoose.Types.ObjectId(userId)
+        // });
+        
+        const arenas = await arenaFollowerModel.aggregate([
+        
+            {
+                $match:{
+                    user_id:new mongoose.Types.ObjectId(userId)
                 }
-            ]);
+            },
+        
+            {
+                $sort:{
+                    createdAt:-1
+                }
+            },
+        
+            {
+                $skip:(page-1)*limit
+            },
+        
+            {
+                $limit:limit
+            },
+        
+            {
+                $lookup:{
+                    from:"arenas",
+                    localField:"arena_id",
+                    foreignField:"_id",
+                    as:"arena"
+                }
+            },
+        
+            {
+                $unwind:"$arena"
+            },
+        
+            {
+                $lookup:{
+                    from:"users",
+                    localField:"arena.owner_id",
+                    foreignField:"_id",
+                    as:"owner"
+                }
+            },
+        
+            {
+                $unwind:"$owner"
+            },
+        
+            {
+                $project:{
+        
+                    _id:"$arena._id",
+                    arenaName:"$arena.arenaName",
+                    talentType:"$arena.talentType",
+                    region:"$arena.region",
+                    biography:"$arena.biography",
+                    description:"$arena.description",
+                    profileImage:"$arena.profileImage",
+                    coverImage:"$arena.coverImage",
+                    followerCount:"$arena.followerCount",
+                    postCount:"$arena.postCount",
+        
+                    starCount:"$arena.starCount",
+        
+                    verified:"$arena.verified",
+        
+                    owner:{
+        
+                        _id:"$owner._id",
+        
+                        username:"$owner.username",
+        
+                        fullname:"$owner.fullname",
+        
+                        verified:"$owner.verified",
+        
+                        profileImage:"$owner.profileImage"
+        
+                    }
+        
+                }
+        
+            }
+        
+        ]);
 
         const result = arenas
         //  {

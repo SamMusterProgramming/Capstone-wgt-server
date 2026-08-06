@@ -387,8 +387,11 @@ export const getUserFollowedArenas = async (req, res) => {
     const { userId, page = 1 } = req.query;
     const result = await userFollowedArenas(
       userId,
-      Number(page),10,false
+      page,
+      10,
+      true
     );
+    console.log(result)
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);
