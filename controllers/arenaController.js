@@ -390,7 +390,6 @@ export const getUserFollowedArenas = async (req, res) => {
       10,
       true
     );
-
     const arenaIds = result.map(arena => arena._id);
     const [followers, stars] = await Promise.all([
             arenaFollowerModel.find(
