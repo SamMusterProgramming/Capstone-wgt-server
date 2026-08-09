@@ -1,119 +1,233 @@
+// import mongoose from "mongoose";
+// import redis from "../../config/redis.js";
+// import arenaModel from "../../models/arena.js";
+
+// const ARENA_BY_ID_CACHE_SECONDS = 60 * 5;
+
+// const arenaById = async (
+//   arenaId,
+//   refreshCache = false
+// ) => {
+//   try {
+//     const cacheKey = `arena_${arenaId}`;
+
+//     // ---------- REDIS ----------
+//     if (!refreshCache) {
+//       const cached = await redis.get(cacheKey);
+
+//       if (cached) {
+//         return typeof cached === "string"
+//           ? JSON.parse(cached)
+//           : cached;
+//       }
+//     }
+
+//     // ---------- MONGODB ----------
+//     const arena = await arenaModel.aggregate([
+//       {
+//         $match: {
+//           _id: new mongoose.Types.ObjectId(arenaId),
+//         },
+//       },
+
+//       {
+//         $lookup: {
+//           from: "arenaposts",
+//           let: {
+//             postIds: "$posts",
+//           },
+//           pipeline: [
+//             {
+//               $match: {
+//                 $expr: {
+//                   $in: ["$_id", "$$postIds"],
+//                 },
+//               },
+//             },
+
+//             {
+//               $project: {
+//                 _id: 1,
+//                 owner_id: 1,
+//                 caption: 1,
+//                 media: 1,
+//                 spotlight: 1,
+//                 spotlightScore: 1,
+//                 fireCount: 1,
+//                 commentCount: 1,
+//                 shareCount: 1,
+//                 viewCount: 1,
+//                 createdAt: 1,
+//               },
+//             },
+
+//             {
+//               $sort: {
+//                 createdAt: -1,
+//               },
+//             },
+//           ],
+//           as: "posts",
+//         },
+//       },
+
+//       {
+//         $project: {
+//           _id: 1,
+//           owner_id: 1,
+//           arenaName: 1,
+//           talentType: 1,
+//           biography: 1,
+//           description: 1,
+//           region: 1,
+//           coverImage: 1,
+//           profileImage: 1,
+
+//           followerCount: 1,
+//           starCount: 1,
+//           postCount: 1,
+//           viewCount: 1,
+
+//           verified: 1,
+//           createdAt: 1,
+
+//           posts: 1,
+//         },
+//       },
+//     ]);
+
+//     const result = arena[0] || null;
+
+//     // ---------- CACHE ----------
+//     if (result) {
+//       await redis.set(
+//         cacheKey,
+//         JSON.stringify(result),
+//         {
+//           ex: ARENA_BY_ID_CACHE_SECONDS,
+//         }
+//       );
+//     }
+
+//     return result;
+//   } catch (error) {
+//     console.error("arenaById error:", error);
+//     throw error;
+//   }
+// };
+
+// export default arenaById;
+
+
 import mongoose from "mongoose";
 import redis from "../../config/redis.js";
 import arenaModel from "../../models/arena.js";
 
 const ARENA_BY_ID_CACHE_SECONDS = 60 * 5;
 
-const arenaById = async (
-  arenaId,
-  refreshCache = false
-) => {
-  try {
-    const cacheKey = `arena_${arenaId}`;
+const arenaById = async (arenaId, refreshCache = false) => {
+    try {
+        const cacheKey = `arena:${arenaId}`;
 
-    // ---------- REDIS ----------
-    if (!refreshCache) {
-      const cached = await redis.get(cacheKey);
+        if (!refreshCache) {
+            const cached = await redis.get(cacheKey);
 
-      if (cached) {
-        return typeof cached === "string"
-          ? JSON.parse(cached)
-          : cached;
-      }
-    }
-
-    // ---------- MONGODB ----------
-    const arena = await arenaModel.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(arenaId),
-        },
-      },
-
-      {
-        $lookup: {
-          from: "arenaposts",
-          let: {
-            postIds: "$posts",
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $in: ["$_id", "$$postIds"],
-                },
-              },
-            },
-
-            {
-              $project: {
-                _id: 1,
-                owner_id: 1,
-                caption: 1,
-                media: 1,
-                spotlight: 1,
-                spotlightScore: 1,
-                fireCount: 1,
-                commentCount: 1,
-                shareCount: 1,
-                viewCount: 1,
-                createdAt: 1,
-              },
-            },
-
-            {
-              $sort: {
-                createdAt: -1,
-              },
-            },
-          ],
-          as: "posts",
-        },
-      },
-
-      {
-        $project: {
-          _id: 1,
-          owner_id: 1,
-          arenaName: 1,
-          talentType: 1,
-          biography: 1,
-          description: 1,
-          region: 1,
-          coverImage: 1,
-          profileImage: 1,
-
-          followerCount: 1,
-          starCount: 1,
-          postCount: 1,
-          viewCount: 1,
-
-          verified: 1,
-          createdAt: 1,
-
-          posts: 1,
-        },
-      },
-    ]);
-
-    const result = arena[0] || null;
-
-    // ---------- CACHE ----------
-    if (result) {
-      await redis.set(
-        cacheKey,
-        JSON.stringify(result),
-        {
-          ex: ARENA_BY_ID_CACHE_SECONDS,
+            if (cached) {
+                return typeof cached === "string"
+                    ? JSON.parse(cached)
+                    : cached;
+            }
         }
-      );
-    }
 
-    return result;
-  } catch (error) {
-    console.error("arenaById error:", error);
-    throw error;
-  }
+        const arenas = await arenaModel.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(arenaId)
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner_id",
+                    foreignField: "_id",
+                    as: "owner"
+                }
+            },
+            {
+                $unwind: "$owner"
+            },
+            {
+                $lookup: {
+                    from: "arenaposts",
+                    let: {
+                        arenaId: "$_id"
+                    },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $eq: [
+                                        "$arena_id",
+                                        "$$arenaId"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $sort: {
+                                createdAt: -1
+                            }
+                        }
+                    ],
+                    as: "posts"
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    owner_id: 1,
+                    arenaName: 1,
+                    talentType: 1,
+                    region: 1,
+                    biography: 1,
+                    description: 1,
+                    coverImage: 1,
+                    profileImage: 1,
+                    followerCount: 1,
+                    starCount: 1,
+                    postCount: 1,
+                    viewCount: 1,
+                    verified: 1,
+                    createdAt: 1,
+                    owner: {
+                        _id: "$owner._id",
+                        username: "$owner.username",
+                        fullname: "$owner.name",
+                        profileImage: "$owner.profileImage",
+                        verified: "$owner.verified"
+                    },
+                    posts: 1
+                }
+            }
+        ]);
+
+        const result = arenas[0] || null;
+
+        if (result) {
+            await redis.set(
+                cacheKey,
+                JSON.stringify(result),
+                {
+                    ex: ARENA_BY_ID_CACHE_SECONDS
+                }
+            );
+        }
+
+        return result;
+    } catch (error) {
+        console.error("arenaById error:", error);
+        throw error;
+    }
 };
 
 export default arenaById;

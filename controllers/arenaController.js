@@ -365,6 +365,42 @@ export const getArenaByProfile = async (req, res) => {
     }
 };
 
+export const getArenaById = async (req, res) => {
+  try {
+   const {
+      userId,
+      arenaId
+   } = req.query;
+   const arena = await arenaById(arenaId , false)
+   if (!arena) {
+    return res.status(404).json({
+        message: "Arena not found"
+    });
+   }
+   const [follower, star] = await Promise.all([
+            arenaFollowerModel.exists({
+                user_id: userId,
+                arena_id: arenaId
+            }),
+            arenaStarModel.exists({
+                user_id: userId,
+                arena_id: arenaId
+            })
+
+        ]);
+        const updatedArena = {
+            ...arena,
+            isFollower: !!follower,
+            isStarred: !!star
+   };
+
+   return res.json(updatedArena)
+
+  } catch (error) {
+     console.log(error)
+  }
+}
+
 
 export const getLocalArenas = async (req, res) => {
   try {   
@@ -489,7 +525,6 @@ export const toggleArenaStar = async (req, res) => {
     //   await redis.del(`arena_${arenaId}`);
       const arena = await arenaById(arenaId,true)
       const freshArena = {...arena, isStarred:starred}
-
       if (!existing && arena.owner_id.toString() !== userId) {
         const notification = await emitStarrersNotification( 
           arena.owner_id,
@@ -715,7 +750,8 @@ export const toggleArenaFollower = async (req, res) => {
           $inc: {
             postCount: 1,
           },
-        }
+        },
+        {new : true}
       );
       let userIds = (await arenaFollowerModel.distinct(
         "user_id",
@@ -747,14 +783,11 @@ export const toggleArenaFollower = async (req, res) => {
         }
         )
       
-// console.log(arena.region)
-      // post.spotlightRegion = getSpotlightRegion(arena.region)
-      // post.spotlightCountry = arena.region
-      // await post.save()
       const arenas = await userArenas(owner_id , true)
+      const selectedArena = await arenaById(arena._id , true)
       return res.json({
                       arenas:arenas,
-                      selectedArena:arenas.find( a => a._id.toString() === arena._id.toString())
+                      selectedArena:selectedArena//s.find( a => a._id.toString() === arena._id.toString())
                     })
     } catch (error) {
        console.log(error)

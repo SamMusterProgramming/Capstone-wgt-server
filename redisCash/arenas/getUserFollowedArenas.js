@@ -172,7 +172,7 @@ const userFollowedArenas = async (
                     owner: {
                         _id: "$owner._id",
                         username: "$owner.username",
-                        fullname: "$owner.fullname",
+                        fullname: "$owner.name",
                         profileImage: "$owner.profileImage",
                         verified: "$owner.verified"
                     },

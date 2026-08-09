@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import { addArenaPostComments, addPerformanceToArena, addPostView, createArena,
-         deleteArena, deleteArenaPostComment, deletePostFromArena, getArenaByProfile,
+         deleteArena, deleteArenaPostComment, deletePostFromArena, getArenaById, getArenaByProfile,
          getArenaByUser, getArenaPostComments, getGlobalSpotlightPerformances,
          getLocalArenas, getLocalSpotlightPerformances, getPostsArena, getRegionalSpotlightPerformances, 
          getUserFollowedArenas, 
@@ -25,6 +25,7 @@ route.get('/global/spotlightPerformances' , protect , getGlobalSpotlightPerforma
 route.get('/regional/spotlightPerformances' , protect , getRegionalSpotlightPerformances)
 route.get('/local/spotlightPerformances' , protect , getLocalSpotlightPerformances)
 route.get("/following",protect, getUserFollowedArenas);
+route.get("/arena",protect, getArenaById);
 
 //following, starring , comments
 route.patch('/arena/star' , protect , toggleArenaStar)
