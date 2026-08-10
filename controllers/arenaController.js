@@ -858,10 +858,11 @@ export const toggleArenaFollower = async (req, res) => {
         `arena_${post.arena_id}`
       );
       const arenas = await userArenas(post.owner_id , true)
+      const arena = await arenaById(post.arena_id , true)
       await removeSpotlightPerformance(post);
       return res.json({
         arenas:arenas,
-        selectedArena:arenas.find( a => a._id.toString() === post.arena_id.toString())
+        selectedArena: arena
       })
     } catch (error) {
        console.log(error)
@@ -1038,10 +1039,7 @@ export const addPostView = async(req,res)=>{
           },
         }
       );
-
       const arena = await arenaModel.findById(post.arena_id)
-     
-     
       if(post.owner_id.toString() !== userId) {
       const notification = await emitCommentsNotification( 
         post.owner_id,
@@ -1062,7 +1060,6 @@ export const addPostView = async(req,res)=>{
         post_id : post._id 
         }
       ) 
-      console.log(notification)
       }
      
 

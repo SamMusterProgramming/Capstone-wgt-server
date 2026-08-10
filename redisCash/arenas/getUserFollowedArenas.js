@@ -156,6 +156,7 @@ const userFollowedArenas = async (
             {
                 $project: {
                     _id: "$arena._id",
+                    owner_id: 1,
                     arenaName: "$arena.arenaName",
                     talentType: "$arena.talentType",
                     region: "$arena.region",
