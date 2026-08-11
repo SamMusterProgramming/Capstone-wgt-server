@@ -654,7 +654,7 @@ export const toggleArenaFollower = async (req, res) => {
       //   await redis.del(`arena_${arenaId}`);
       const arena = await arenaById(arenaId,true)
       const freshArena = {...arena, isFollower:following}
-
+      
       if (!existing && arena.owner_id.toString() !== userId) {
         const notification = await emitFollowersNotification( 
           arena.owner_id,
@@ -675,7 +675,6 @@ export const toggleArenaFollower = async (req, res) => {
           }
       )
       }
-
       return res.json(freshArena);
     } catch (error) {
       console.error(error);
@@ -684,7 +683,6 @@ export const toggleArenaFollower = async (req, res) => {
       });
     }
   };
-
 
  export const getPostsArena = async (req, res) => {
     try {
@@ -946,7 +944,6 @@ export const toggleFirePost = async (req, res) => {
         await post.save()
         await redis.del(`user_arenas_${post.owner_id.toString()}`);
         await updateSpotlightInteractionCache(post)
-
         if (!existing && post.owner_id.toString() !== userId) {
             const notification = await emitFiresNotification( 
               post.owner_id,
@@ -968,7 +965,7 @@ export const toggleFirePost = async (req, res) => {
               }
           )
         }
-
+        await arenaById(post?.arena_id , true)
         return res.json({
                          active,
                          post,
@@ -1061,8 +1058,6 @@ export const addPostView = async(req,res)=>{
         }
       ) 
       }
-     
-
       const score = recalculateSpotlightScore(post)
       post.spotlightScore = score;
       await post.save()
@@ -1072,6 +1067,7 @@ export const addPostView = async(req,res)=>{
       // await updateCachedSpotlightStats (post);
       await updateSpotlightInteractionCache(post)
       const comments = await postCommentArena(postId , true)
+      await arenaById(post?.arena_id , true)
       return res.status(201).json(comments);
       } catch (error) {
       console.error(error);
