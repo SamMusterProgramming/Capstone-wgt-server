@@ -42,7 +42,7 @@ const talentSchema = new mongoose.Schema({
     },
     contestants:
        { type: [contestantSchema],
-         default: [] 
+         default: []  
         }
     ,
     eliminations: { type: [contestantSchema],

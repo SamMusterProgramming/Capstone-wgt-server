@@ -266,11 +266,9 @@ try {
                 starCount: 1,
                 postCount: 1,
                 viewCount: 1,
-
                 verified: 1,
                 createdAt: 1,
                 score: 1,
-
                 owner: {
                     _id: "$owner._id",
                     username: "$owner.username",

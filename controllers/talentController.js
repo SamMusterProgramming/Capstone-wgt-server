@@ -20,7 +20,6 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
     if(!isUpdated){
         const cachedStage = await redis.get(cacheKey);
         if (cachedStage) {
-          console.log("✅ CACHE HIT");
           return cachedStage;
       }
     }
@@ -207,7 +206,7 @@ export const generateTalentStage = async (name, region , isUpdated = false) => {
       cacheKey,
       result[0],
       {
-         EX: 120
+         ex: 12
       }
    );
     return result[0];
@@ -245,87 +244,84 @@ export const createTalentStage =  async(req,res)=>{
           updatedAt: new Date()
         });
       }
-    await t.save()
-    const talent = await generateTalentStage(TalentName, regionName , queuedUsers.length > 0 )
-    talent.contestants?.sort((a, b) => {
+    
+    t.contestants?.sort((a, b) => {
      if(a.votes !== b.votes){
         return b.votes - a.votes
      }else {
         return b.likes - a.likes
      }
      })
-
-     talent.contestants.forEach((c, index) => {
+     
+     t.contestants.forEach((c, index) => {
         c.rank = index + 1;
      });
-  
-   if(edition && ((edition.round < 3 && talent.contestants.length >= 22 && talent.queue.length >= 6)||
+    
+   if(edition && ((edition.round < 3 && t.contestants.length >= 22 && t.queue.length >= 6)||
     (edition.round >= 3 ))) {
        const roundDate = new Date(edition.updatedAt)
        const now = new Date();
        const differenceInMilliseconds = (now - roundDate)/(1000*60000)
-
        if(differenceInMilliseconds >= 100) {
          let eliminatedContestants=[]
          let queuedContestants =[]  
          if(edition.round < 3 ){
-         eliminatedContestants = talent.contestants.splice(-6)
+         eliminatedContestants = t.contestants.splice(-6)
          talent.eliminations.push(...eliminatedContestants)
-         queuedContestants = talent.queue.splice(0,6)
-         talent.contestants.push(...queuedContestants)
+         queuedContestants = t.queue.splice(0,6)
+         t.contestants.push(...queuedContestants)
          }
 
          if(edition.round == 3 ){
-           eliminatedContestants = talent.contestants.splice(-6)
-           talent.eliminations.push(...eliminatedContestants)
+           eliminatedContestants = t.contestants.splice(-6)
+           t.eliminations.push(...eliminatedContestants)
          }
 
          if(edition.round == 4 ){
-           eliminatedContestants = talent.contestants.splice(-8)
-           talent.eliminations.push(...eliminatedContestants)
+           eliminatedContestants = t.contestants.splice(-8)
+           t.eliminations.push(...eliminatedContestants)
           
          }
      
          if(edition.round == 5 ){
-           eliminatedContestants = talent.contestants.splice(-4)
+           eliminatedContestants = t.contestants.splice(-4)
            // talent.eliminations.push(...eliminatedContestants)
            edition.quarter_finalists= eliminatedContestants
-           talent.editions[edIndex] = edition
-
+           t.editions[edIndex] = edition
          }
      
          if(edition.round == 6 ){
-           eliminatedContestants = talent.contestants.splice(-2)
+           eliminatedContestants = t.contestants.splice(-2)
            // talent.eliminations.push(...eliminatedContestants)
            edition.semi_finalists = eliminatedContestants
-           talent.editions[edIndex] = edition
+           t.editions[edIndex] = edition
          }
 
          if(edition.round == 7 ){
-           eliminatedContestants = talent.contestants.splice(-1)
+           eliminatedContestants = t.contestants.splice(-1)
            // talent.eliminations.push(...eliminatedContestants)
            edition.finalist = eliminatedContestants
-           talent.editions[edIndex] = edition
+           t.editions[edIndex] = edition
          }
      
          if(edition.round !== 7 ) {
            // edIndex = talent.editions.findIndex( e => e.status === "open")
            edition.round = edition.round + 1 
            edition.updatedAt = new Date()
-           talent.editions[edIndex] = edition
+           t.editions[edIndex] = edition
          } else {
            edition.round = 7
            edition.updatedAt = new Date()
            edition.status = "closed"
-           edition.winner = talent.contestants[0]
-           talent.editions[edIndex] = edition
+           edition.winner = t.contestants[0]
+           t.editions[edIndex] = edition
 
-           talent.queue.unshift(...edition.quarter_finalists)
-           talent.queue.unshift(...edition.semi_finalists)
-           talent.queue.unshift(...edition.finalist)
+           t.queue.unshift(...edition.quarter_finalists)
+           t.queue.unshift(...edition.semi_finalists)
+           t.queue.unshift(...edition.finalist)
 
-           let queuedUsers = talent.queue.splice(0,21)
-           talent.contestants.push(...queuedUsers)
+           let queuedUsers = t.queue.splice(0,21)
+           t.contestants.push(...queuedUsers)
 
            const newEdition = {
               _id:edition._id + 1 ,
@@ -338,75 +334,78 @@ export const createTalentStage =  async(req,res)=>{
               createdAt : new Date(),
               updatedAt : new Date()
            }
-           talent.editions.push(newEdition)
+           t.editions.push(newEdition)
          }
      
-         eliminatedContestants.forEach(async(el)=> {
+        //  eliminatedContestants.forEach(async(el)=> {
             
-               let   message = "you have been eliminated from  talent show"     
-               const notification = {
-                   receiver_id:el.user_id,   
-                   type:"talent",   
-                   isRead:false,
-                   message:message , 
-                   content: {  
-                       sender_id:el.user_id,
-                       talentRoom_id:talent._id,
-                       talentName:talent.name,
-                       name:el.name,
-                       profile_img:el.profile_img,
-                       region:talent.region,   
-                   }              
-               }   
-               await notificationModel(notification).save()
+        //        let   message = "you have been eliminated from  talent show"     
+        //        const notification = {
+        //            receiver_id:el.user_id,   
+        //            type:"talent",   
+        //            isRead:false,
+        //            message:message , 
+        //            content: {  
+        //                sender_id:el.user_id,
+        //                talentRoom_id:talent._id,
+        //                talentName:talent.name,
+        //                name:el.name,
+        //                profile_img:el.profile_img,
+        //                region:talent.region,   
+        //            }              
+        //        }   
+        //        await notificationModel(notification).save()
                
-         } )   
+        //  } )   
      
-         queuedContestants.forEach(async(el)=> {
-           let   message = "you have been posted in a Talent Show , you can start tracking progress"     
-           const notification = {
-               receiver_id:el.user_id,
-               type:"talent",
-               isRead:false,
-               message:message , 
-               content: {  
-                   sender_id:el.user_id,
-                   talentRoom_id:talent._id,
-                   talentName:talent.name,
-                   name:el.name,
-                   profile_img:el.profile_img,
-                   region:talent.region,   
-               }
-           }
-           await notificationModel(notification).save()
-           const friend = await friendModel.findOne({user_id:el.user_id})
+        //  queuedContestants.forEach(async(el)=> {
+          //  let   message = "you have been posted in a Talent Show , you can start tracking progress"     
+          //  const notification = {
+          //      receiver_id:el.user_id,
+          //      type:"talent",
+          //      isRead:false,
+          //      message:message , 
+          //      content: {  
+          //          sender_id:el.user_id,
+          //          talentRoom_id:talent._id,
+          //          talentName:talent.name,
+          //          name:el.name,
+          //          profile_img:el.profile_img,
+          //          region:talent.region,   
+          //      }
+          //  }
+          //  await notificationModel(notification).save()
+          //  const friend = await friendModel.findOne({user_id:el.user_id})
          
-           if(friend)
-                 friend.friends.forEach(async(friend) =>{
-                   let   message = "has participated in a talent show"     
-                   const notification = {
-                       receiver_id:friend.user_id,
-                       type:"talent",
-                       isRead:false,
-                       message:message , 
-                       content: {  
-                           sender_id:el.user_id,
-                           talentRoom_id:TalentName._id,
-                           talentName:talent.name,
-                           region:talent.region, 
-                           profile_img:el.profile_img,
-                           name:el.name,
-                           email:el.email,  
-                       }
+          //  if(friend)
+          //        friend.friends.forEach(async(friend) =>{
+          //          let   message = "has participated in a talent show"     
+          //          const notification = {
+          //              receiver_id:friend.user_id,
+          //              type:"talent",
+          //              isRead:false,
+          //              message:message , 
+          //              content: {  
+          //                  sender_id:el.user_id,
+          //                  talentRoom_id:TalentName._id,
+          //                  talentName:talent.name,
+          //                  region:talent.region, 
+          //                  profile_img:el.profile_img,
+          //                  name:el.name,
+          //                  email:el.email,  
+          //              }
                      
-                   }
-            await notificationModel(notification).save()
+          //          }
+          //   await notificationModel(notification).save()
                    
-           })
-         })
+          //  })
+        //  })
        }
    }
     // await talent.save()
+    await t.save()
+    const talent = await generateTalentStage(TalentName, regionName , true )
+    console.log(talent.contestants)
     res.json(talent)   
 }
 
@@ -534,8 +533,6 @@ export const getTrendingStages = async(req,res)=>{
                                   false)
   res.status(200).json(stages);           
 }
-
-
 
   //favourites
   export const getFavouriteStages = async (req, res) => {
@@ -1124,7 +1121,7 @@ export const getTrendingStages = async(req,res)=>{
     const cdnUrl = signedUrl.replace(
       "https://f005.backblazeb2.com",
       "https://cdn.challenmemey.com"
-    );   
+    );     
     contestant.performances.unshift({
       video: {  
             fileId:videoFileId ,
