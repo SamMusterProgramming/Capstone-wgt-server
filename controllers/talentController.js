@@ -495,6 +495,7 @@ export const getUserContestantInStage = async(req,res)=>{
      });
     userTalents = userTalents.filter(t => t.contestants.length !== 0)
     res.json(userTalents)
+    
 }
      
 export const getHotStages = async(req,res)=>{
