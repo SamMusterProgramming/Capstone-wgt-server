@@ -21,6 +21,7 @@ import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendReq
 import { followingRequest, getFollowersList, unfollowingRequest } from '../controllers/followController.js';
 import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
 import { getNotifications } from '../controllers/notificationController.js';
+import { searchSuggestions } from '../controllers/searchController.js';
 // import admin from '../service/firebase.js';
 
 
@@ -67,6 +68,10 @@ route.route('/notifications/:id')
      .get(protect , getNotifications)
      .patch(protect , updateNotificationById)  
      .delete(protect,deleteNotificationById)  
+
+// search
+route.get("/search/suggestions", searchSuggestions);
+
 
 // seeds the database with prototype data
 route.get('/seed',async(req,res)=>{
