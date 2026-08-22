@@ -113,6 +113,7 @@ export const createArena = async (req, res) => {
           arena_id: arena._id,
           arena_name: arena.arenaName,
           arena_region: arena.region,
+          arena_talent : arena.talentType,
         }
       )  
     await emitNotification (
@@ -124,6 +125,7 @@ export const createArena = async (req, res) => {
         arena_id: arena._id,
         arena_name: arena.arenaName,
         arena_region: arena.region,
+        arena_talent : arena.talentType,
       }
     )
 
@@ -534,7 +536,8 @@ export const toggleArenaStar = async (req, res) => {
           {
           arena_id: arena._id,
           arena_name: arena.arenaName,
-          arena_region:arena.region,
+          arena_region:arena.region,region,
+          arena_talent : arena.talentType,
           total_starrers: 1,
           recent_starrers: [
             {
@@ -664,7 +667,8 @@ export const toggleArenaFollower = async (req, res) => {
           {
           arena_id: arena._id,
           arena_name: arena.arenaName,
-          arena_region:arena.region,
+          arena_region:arena.region,region,
+          arena_talent : arena.talentType,
           total_followers: 1,
           recent_followers: [
             {
@@ -765,6 +769,7 @@ export const toggleArenaFollower = async (req, res) => {
                                   arena_id: arena._id,
                                   arena_name: arena.arenaName,
                                   arena_region: arena.region,
+                                  arena_talent : arena.talentType,
                                   post_id: post._id 
                                   }
                                   )  
@@ -776,7 +781,8 @@ export const toggleArenaFollower = async (req, res) => {
         {
           arena_id: arena._id,
           arena_name: arena.arenaName,
-          arena_region: arena.region,
+          arena_region: arena.region,region,
+          arena_talent : arena.talentType,
           post_id: post._id 
         }
         )
