@@ -18,7 +18,7 @@ import { addPushToken, anonymouslogin, deletePushToken, getMe, googleLogin, logi
 import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
 import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
-import { followingRequest, getFollowersList, unfollowingRequest } from '../controllers/followController.js';
+import { followingRequest, getFollowers, getFollowersList, getFollowings, unfollowingRequest } from '../controllers/followController.js';
 import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
 import { getNotifications } from '../controllers/notificationController.js';
 import { deepSearch, searchSuggestions } from '../controllers/searchController.js';
@@ -61,6 +61,9 @@ route.get('/friends/list/:id',protect,validateMongoObjectId,getFriendList)
 route.post("/followings/add/:id",protect,validateMongoObjectId,followingRequest)
 route.patch('/unfollowing/:id',protect,validateMongoObjectId,unfollowingRequest)
 route.get('/follow/data/:id',protect,validateMongoObjectId,getFollowersList)
+route.get('/followers/:id',protect,validateMongoObjectId,getFollowers)
+route.get('/followings/:id',protect,validateMongoObjectId,getFollowings)
+
 
 // user notification
 route.route('/notifications/:id')

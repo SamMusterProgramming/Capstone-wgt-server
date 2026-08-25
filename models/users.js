@@ -2,30 +2,30 @@ import mongoose from 'mongoose';
 import validator from 'validator';
 
 const userSchema = new mongoose.Schema({
-     uid: { 
-        type: String,
-        required: true, 
-        unique: true 
-     },
-     name:{
-        type:String,
-        default:"Unknown Some"
-     },
-     expoPushToken: {
-      type: String,
-      default: null,
-     },
-     profileImage:{
-      fileId: String,
-      fileName: String,
-      publicUrl: String,
-    },
-     coverImage:{
-      fileId: String,
-      fileName: String,
-      publicUrl: String,
-     },
-     email:{
+      uid: { 
+         type: String,
+         required: true, 
+         unique: true 
+      },
+      name:{
+         type:String,
+         default:"Unknown Some"
+      },
+      expoPushToken: {
+         type: String,
+         default: null,
+      },
+      profileImage:{
+         fileId: String,
+         fileName: String,
+         publicUrl: String,
+      },
+      coverImage:{
+         fileId: String,
+         fileName: String,
+         publicUrl: String,
+      },
+      email:{
         type:String,
         required:true,
         unique: true,
@@ -33,8 +33,8 @@ const userSchema = new mongoose.Schema({
             validator: validator.isEmail,
             message: 'Invalid email format'
         }   
-     },   
-     password: {
+       },   
+      password: {
         type: String,
       //   required: true
       },
@@ -45,26 +45,26 @@ const userSchema = new mongoose.Schema({
          type: [String], // e.g., ["email", "google"]
          default: ["email"],
        },
-     username :{    
+      username :{    
         type:String,
       //   required:true,
-     },
-     city:{
+      },
+      city:{
       type:String,
       default:"Charlotte"
-     },
-     state:{
+      },
+      state:{
       type:String,
       default:"North Carolina"
-     },
-     country:{
+      },
+      country:{
       type:String,
       default:"US"
-     },
-     talent:{
+      },
+      talent:{
       type:String,
       default:   "add your profession"
-     },
+      },
      tellus:{
       type:String,
       default: ""

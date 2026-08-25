@@ -12,6 +12,178 @@ import { getUserProfile, updateUserProfileRedis } from "./userController.js";
 import rebuildSpotlight from "../redisCash/spotlight/performances/rebuild/rebuildSpotlight.js";
 import { SPOTLIGHT_REGIONS } from "../utilities/data.js";
 import redis from "../config/redis.js";
+import FollowModal from "../models/follow.js";
+
+
+
+
+
+const migrateFollowersToFollow = async () => {
+  try {
+    console.log("Starting follower migration...");
+
+    const oldDocuments = await followerModel
+      .find({})
+      .select({
+        user_id: 1,
+        followers: 1,
+        followings: 1,
+      })
+      .lean();
+
+    console.log(
+      `Found ${oldDocuments.length} old follower documents`
+    );
+
+    const operations = [];
+
+    for (const document of oldDocuments) {
+      const userId = document.user_id;
+
+      if (!userId) {
+        continue;
+      }
+
+      /*
+       * =====================================================
+       * FOLLOWERS
+       *
+       * If A is in user.followers:
+       *
+       * A follows user
+       *
+       * followerId  = A
+       * followingId = user
+       * =====================================================
+       */
+
+      for (const followerId of document.followers || []) {
+        if (!followerId) {
+          continue;
+        }
+
+        operations.push({
+          updateOne: {
+            filter: {
+              followerId,
+              followingId: userId,
+            },
+
+            update: {
+              $setOnInsert: {
+                followerId,
+                followingId: userId,
+              },
+            },
+
+            upsert: true,
+          },
+        });
+      }
+
+      /*
+       * =====================================================
+       * FOLLOWINGS
+       *
+       * If X is in user.followings:
+       *
+       * user follows X
+       *
+       * followerId  = user
+       * followingId = X
+       * =====================================================
+       */
+
+      for (const followingId of document.followings || []) {
+        if (!followingId) {
+          continue;
+        }
+
+        operations.push({
+          updateOne: {
+            filter: {
+              followerId: userId,
+              followingId,
+            },
+
+            update: {
+              $setOnInsert: {
+                followerId: userId,
+                followingId,
+              },
+            },
+
+            upsert: true,
+          },
+        });
+      }
+    }
+
+    console.log(
+      `Prepared ${operations.length} follow relationships`
+    );
+
+    /*
+     * =====================================================
+     * WRITE IN BATCHES
+     *
+     * Don't send hundreds of thousands of operations
+     * in one gigantic bulkWrite.
+     * =====================================================
+     */
+
+    const BATCH_SIZE = 1000;
+
+    let inserted = 0;
+    let processed = 0;
+
+    for (
+      let i = 0;
+      i < operations.length;
+      i += BATCH_SIZE
+    ) {
+      const batch = operations.slice(
+        i,
+        i + BATCH_SIZE
+      );
+
+      const result =
+        await FollowModal.bulkWrite(
+          batch,
+          {
+            ordered: false,
+          }
+        );
+
+      inserted +=
+        result.upsertedCount || 0;
+
+      processed += batch.length;
+
+      console.log(
+        `Processed ${processed}/${operations.length}`
+      );
+    }
+
+    console.log(
+      `Migration complete. Created ${inserted} follow relationships.`
+    );
+
+    return {
+      oldDocuments: oldDocuments.length,
+      relationshipsProcessed: operations.length,
+      relationshipsCreated: inserted,
+    };
+
+  } catch (error) {
+    console.error(
+      "Follower migration error:",
+      error
+    );
+
+    throw error;
+  }
+};
 
 
 // ---------------- SIGNUP ----------------
@@ -229,6 +401,7 @@ export const googleLogin = async (req, res) => {
       //       );
       // }
       // await redis.del(...keys);
+      // await migrateFollowersToFollow()
 
       await rebuildSpotlight({
           type:"global"

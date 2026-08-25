@@ -1,6 +1,8 @@
 
 import mongoose from "mongoose";
 import followerModel from "../models/followers.js";
+import userFollowers from "../redisCash/users/userFollowers.js";
+import userFollowings from "../redisCash/users/userFollowings.js";
 
 export const generateFollowers = async(user_id) => {
     const result = await followerModel.aggregate([
@@ -129,4 +131,16 @@ export const followingRequest =  async (req, res) => {
     const user_id = req.params.id
     const result = await generateFollowers(user_id)
     return res.json(result).status(200)
+  }
+
+  export const getFollowers = async(req,res)=>{
+    const user_id = req.params.id
+    const results = await userFollowers(user_id)
+    return res.json(results).status(200)
+  }
+
+  export const getFollowings = async(req,res)=>{
+    const user_id = req.params.id
+    const results = await userFollowings(user_id)
+    return res.json(results).status(200)
   }

@@ -3,6 +3,7 @@ import friendModel from "../models/friends.js"
 import notificationModel from "../models/notifications.js"
 import talentModel from "../models/talent.js"
 import userModel from "../models/users.js"
+import userProfile from "../redisCash/users/userProfile.js"
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from "../utilities/blackBlazeb2.js"
 
 
@@ -80,7 +81,7 @@ export const updateUserProfileRedis = async (
 
 export const getUserById = async(req,res)=>{ // get single user by _id
     const userId = req.params.id
-    const user = await userModel.findById(userId)
+    const user = await userProfile(userId, false) //userModel.findById(userId)
     if(!user) return res.json({error:"cant find the user"}).status(404)
     res.status(200).json(user)
 }

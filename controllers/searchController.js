@@ -2,6 +2,7 @@ import arenaModel from "../models/arena.js";
 import talentModel from "../models/talent.js";
 import userModel from "../models/users.js";
 import arenaById from "../redisCash/arenas/arenaById.js";
+import userProfile from "../redisCash/users/userProfile.js";
 
 const escapeRegex = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -31,9 +32,7 @@ const searchPeople = async ({
       await Promise.all([
   
     userModel.find(filter)
-          .select({
-            password: 0,
-          })
+          .select("_id")
           .sort({
             name: 1,
           })
@@ -44,9 +43,12 @@ const searchPeople = async ({
     userModel.countDocuments(filter),
   
       ]);
-  
+    const users = await Promise.all(
+        results.map((u) => userProfile(u._id, false))
+      );
+
     return {
-      results: results.map(user => ({
+      results: users.map(user => ({
         ...user,
         resultType: "user",
       })),
@@ -79,11 +81,8 @@ const filter = {
 
 const [arenas, total] =
     await Promise.all([
-
      arenaModel.find(filter)
-        .sort({
-        createdAt: -1,
-        })
+        .sort("_id")
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -209,12 +208,16 @@ export const searchSuggestions = async (req, res) => {
           .lean(),
       ]);
 
+      const newUsers = await Promise.all(
+        users.map((u) => userProfile(u._id, false))
+      );
+
       const newArenas = await Promise.all(
         arenas.map((a) => arenaById(a._id, false))
       );
 
       return res.json({
-        users,
+        users:newUsers,
         arenas:newArenas,
         stages,  
       });
