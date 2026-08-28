@@ -190,8 +190,8 @@ export const notificationViewBuilders = {
     }) => ({
       text:
         sender?.name
-          ? `${sender.name} shared ${metadata.shared_name || "something"} with you`
-          : `Someone shared ${metadata.shared_name || "something"} with you`,
+          ? `${sender.name} shared arena  ${metadata.arena_name || "something"} with you`
+          : `Someone shared ${metadata.arena_name || "something"} with you`,
     
       subtitle:
         metadata.shared_type

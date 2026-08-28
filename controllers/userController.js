@@ -324,7 +324,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         sharedName,
         metadata = {},
       } = req.body;
-      
+      console.log(metadata)
       // -----------------------------
       // VALIDATION
       // -----------------------------
@@ -380,13 +380,19 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
       // SHARE METADATA
       // -----------------------------
   
-      const shareMetadata = {
-        shared_type: sharedType,
-        shared_id: sharedId,
-        shared_name:
-          sharedName || "",
-        ...metadata,
-      };
+      // const shareMetadata = {
+      //   arena_id: sharedId,
+      //   arena_name: sharedName,
+      //   arena_region: arena.region,
+      //   arena_talent : arena.talentType,
+
+
+      //   shared_type: ,
+      //   shared_id: sharedId,
+      //   shared_name:
+      //     sharedName || "",
+      //   ...metadata,
+      // };
   
       // -----------------------------
       // CREATE NOTIFICATIONS
@@ -398,7 +404,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         senderId,
         sharedType,
         "shared",  
-        shareMetadata
+        metadata
       );
   
       // -----------------------------
