@@ -19,7 +19,7 @@ import { protect } from '../middleware/jwtProtect.js';
 import talentModel from '../models/talent.js';
 import { acceptRequest, cancelRequest, friendRequest, getFriendList, unfriendRequest } from '../controllers/friendController.js';
 import { followingRequest, getFollowers, getFollowersList, getFollowings, unfollowingRequest } from '../controllers/followController.js';
-import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
+import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, shareWithFriends, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
 import { getNotifications } from '../controllers/notificationController.js';
 import { deepSearch, searchSuggestions } from '../controllers/searchController.js';
 // import admin from '../service/firebase.js';
@@ -75,6 +75,9 @@ route.route('/notifications/:id')
 // search
 route.get("/search/suggestions", searchSuggestions);
 route.get("/search/deep", deepSearch);
+
+//share
+route.post("/share",protect,shareWithFriends)
 
 
 // seeds the database with prototype data

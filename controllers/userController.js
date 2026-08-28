@@ -5,6 +5,7 @@ import talentModel from "../models/talent.js"
 import userModel from "../models/users.js"
 import userProfile from "../redisCash/users/userProfile.js"
 import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from "../utilities/blackBlazeb2.js"
+import { broadcastNotification } from "./notificationController.js"
 
 
 
@@ -309,3 +310,117 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
     const notifications = await notificationModel.findByIdAndDelete(_id)
     res.json("deleted").status(200)
   }
+
+
+
+  
+  export const shareWithFriends = async (req, res) => {
+    try {
+      const senderId = req.user._id;
+      const {
+        receiverIds,
+        sharedType,
+        sharedId,
+        sharedName,
+        metadata = {},
+      } = req.body;
+      
+      // -----------------------------
+      // VALIDATION
+      // -----------------------------
+  
+      if (
+        !Array.isArray(receiverIds) ||
+        receiverIds.length === 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "No friends selected",
+        });
+      }
+  
+      if (!sharedType || !sharedId) {
+        return res.status(400).json({
+          success: false,
+          message: "Shared item is required",
+        });
+      }
+  
+      // -----------------------------
+      // REMOVE DUPLICATES
+      // -----------------------------
+  
+      const uniqueReceivers = [
+        ...new Set(
+          receiverIds.map(
+            id => id.toString()
+          )
+        ),
+      ];
+  
+      // -----------------------------
+      // DON'T SEND TO YOURSELF
+      // -----------------------------
+  
+      const validReceivers =
+        uniqueReceivers.filter(
+          id =>
+            id !==
+            senderId.toString()
+        );
+  
+      if (!validReceivers.length) {
+        return res.status(400).json({
+          success: false,
+          message: "No valid friends selected",
+        });
+      }
+  
+      // -----------------------------
+      // SHARE METADATA
+      // -----------------------------
+  
+      const shareMetadata = {
+        shared_type: sharedType,
+        shared_id: sharedId,
+        shared_name:
+          sharedName || "",
+        ...metadata,
+      };
+  
+      // -----------------------------
+      // CREATE NOTIFICATIONS
+      // + SEND PUSH NOTIFICATIONS
+      // -----------------------------
+  
+      await broadcastNotification(
+        validReceivers,
+        senderId,
+        sharedType,
+        "shared",  
+        shareMetadata
+      );
+  
+      // -----------------------------
+      // RESPONSE
+      // -----------------------------
+  
+      return res.status(200).json({
+        success: true,
+        message: "Shared successfully",
+        count: validReceivers.length,
+      });
+  
+    } catch (err) {
+  
+      console.log(
+        "SHARE WITH FRIENDS ERROR:",
+        err
+      );
+  
+      return res.status(500).json({
+        success: false,
+        message: "Failed to share",
+      });
+    }
+  };
