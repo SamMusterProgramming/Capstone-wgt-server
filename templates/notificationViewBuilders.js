@@ -178,7 +178,7 @@ export const notificationViewBuilders = {
       metadata,
       }) => ({
         text:
-        ` your performance is featured in ${metadata.type.find(s => s === "G")? "Global " :" "} ${metadata.type.find(s => s === "R")? " , Regional" :""}  ${metadata.type.find(s => s === "L")? " , Local" :""} spotlight of Itri community` ,
+        `Your performance is featured in ${metadata.type.find(s => s === "G")? "Global " :" "} ${metadata.type.find(s => s === "R")? " , Regional" :""}  ${metadata.type.find(s => s === "L")? " , Local" :""} spotlight of Itri community` ,
         subtitle:
         metadata.arena_name || "",
         image:
