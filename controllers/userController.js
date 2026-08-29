@@ -324,7 +324,7 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         sharedName,
         metadata = {},
       } = req.body;
-      console.log(metadata)
+      console.log(sharedType)
       // -----------------------------
       // VALIDATION
       // -----------------------------
