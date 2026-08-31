@@ -9,20 +9,20 @@ export const notificationViewBuilders = {
                     metadata,
                     }) => ({
       text:
-        sender?.name ? `${sender.name} joined ${metadata.stageName} Stage`:
-                    `You have joined ${metadata.stageName} Stage` ,
+        sender?.name ? `${sender.name} joined ${metadata.name} Stage`:
+                    `You have joined ${metadata.name} Stage` ,
       subtitle:
         `Region ${metadata.stageRegion}`,
       image:
         sender?.profileImage?.publicUrl || null,
     }),
-    performance_posted: ({
+    performance_posted: ({    
                         sender,
                         metadata,
                         }) => ({
       text:
         sender?.name ?`${sender.name} posted a new performance` :
-                      `Your performance is live on ${metadata.stageName} Stage `,
+                      `Your performance is live on ${metadata.name} Stage `,
       subtitle:
         metadata.stageName || "",
       image:
@@ -87,7 +87,7 @@ export const notificationViewBuilders = {
         }),
     friend_request_accepted_byou: ({
         sender,
-        metadata
+        metadata  
         }) => ({
         text:
         `${metadata.sender_name} is a friend , start sharing`,
@@ -184,23 +184,36 @@ export const notificationViewBuilders = {
         image:
         sender?.profileImage?.publicUrl || null,
     }),
-    shared: ({
+    shared_arena: ({
       sender,
       metadata,
-    }) => ({
+      }) => ({
       text:
         sender?.name
-          ? `${sender.name} shared arena  ${metadata.arena_name || "something"} with you`
-          : `Someone shared ${metadata.arena_name || "something"} with you`,
-    
+          ? `${sender.name} shared an Arena  ${metadata.name || "something"} with you`
+          : `Someone shared ${metadata.name || "something"} with you`,
       subtitle:
         metadata.shared_type
           ? metadata.shared_type.toUpperCase()
           : "",
-    
       image:
         sender?.profileImage?.publicUrl || null,
     }),
+    shared_performance: ({
+      sender,
+      metadata,
+      }) => ({
+      text:
+        sender?.name
+          ? `${sender.name} shared a performance from  ${metadata.name || "something"} Arena with you`
+          : `Someone shared ${metadata.name || "something"} with you`,
+      subtitle:
+        metadata.shared_type  
+          ? metadata.shared_type.toUpperCase()
+          : "",
+      image: 
+        sender?.profileImage?.publicUrl || null,
+    }),   
 };
 
 

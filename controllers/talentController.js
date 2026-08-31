@@ -336,76 +336,12 @@ export const createTalentStage =  async(req,res)=>{
            }
            t.editions.push(newEdition)
          }
-     
-        //  eliminatedContestants.forEach(async(el)=> {
-            
-        //        let   message = "you have been eliminated from  talent show"     
-        //        const notification = {
-        //            receiver_id:el.user_id,   
-        //            type:"talent",   
-        //            isRead:false,
-        //            message:message , 
-        //            content: {  
-        //                sender_id:el.user_id,
-        //                talentRoom_id:talent._id,
-        //                talentName:talent.name,
-        //                name:el.name,
-        //                profile_img:el.profile_img,
-        //                region:talent.region,   
-        //            }              
-        //        }   
-        //        await notificationModel(notification).save()
-               
-        //  } )   
-     
-        //  queuedContestants.forEach(async(el)=> {
-          //  let   message = "you have been posted in a Talent Show , you can start tracking progress"     
-          //  const notification = {
-          //      receiver_id:el.user_id,
-          //      type:"talent",
-          //      isRead:false,
-          //      message:message , 
-          //      content: {  
-          //          sender_id:el.user_id,
-          //          talentRoom_id:talent._id,
-          //          talentName:talent.name,
-          //          name:el.name,
-          //          profile_img:el.profile_img,
-          //          region:talent.region,   
-          //      }
-          //  }
-          //  await notificationModel(notification).save()
-          //  const friend = await friendModel.findOne({user_id:el.user_id})
-         
-          //  if(friend)
-          //        friend.friends.forEach(async(friend) =>{
-          //          let   message = "has participated in a talent show"     
-          //          const notification = {
-          //              receiver_id:friend.user_id,
-          //              type:"talent",
-          //              isRead:false,
-          //              message:message , 
-          //              content: {  
-          //                  sender_id:el.user_id,
-          //                  talentRoom_id:TalentName._id,
-          //                  talentName:talent.name,
-          //                  region:talent.region, 
-          //                  profile_img:el.profile_img,
-          //                  name:el.name,
-          //                  email:el.email,  
-          //              }
-                     
-          //          }
-          //   await notificationModel(notification).save()
-                   
-          //  })
-        //  })
+    
        }
    }
     // await talent.save()
     await t.save()
     const talent = await generateTalentStage(TalentName, regionName , true )
-    console.log(talent.contestants)
     res.json(talent)   
 }
 
@@ -771,22 +707,24 @@ export const getTrendingStages = async(req,res)=>{
                                           "competition" ,
                                           "contest_joined",
                                           {
-                                          stage_id: stage_id,
-                                          stageName: talent.name,
-                                          stageRegion: talent.region,
+                                          _id: stage_id,
+                                          name: talent.name,
+                                          region: talent.region,
+                                          talent: talent.name,
                                           contestant_id: user_id 
                                           }
                                           )
               // inform the user that his performance is posted
               await emitNotification (
-                user_id,
-                null,
+                user_id,  
+                null,  
                 "competition" ,
                 "contest_joined",
                 {
-                stage_id: stage_id,
-                stageName: talent.name,
-                stageRegion: talent.region,
+                _id: stage_id,
+                name: talent.name,
+                region: talent.region,
+                talent: talent.name,
                 contestant_id: user_id 
                 }
                 )
@@ -799,10 +737,11 @@ export const getTrendingStages = async(req,res)=>{
                 "competition" ,
                 "contest_queued",
                 {
-                stage_id: stage_id,
-                stageName: talent.name,
-                stageRegion: talent.region,
-                contestant_id: user_id 
+                  _id: stage_id,
+                  name: talent.name,
+                  region: talent.region,
+                  talent: talent.name,
+                  contestant_id: user_id 
                 }
                 )
        }
@@ -904,10 +843,11 @@ export const getTrendingStages = async(req,res)=>{
         "competition" ,
         "eliminated",
         {
-        stage_id: room_id,
-        stageName: talentRoom.name, 
-        stageRegion: talentRoom.region, 
-        contestant_id: user_id 
+          _id: stage_id,
+          name: talent.name,
+          region: talent.region,
+          talent: talent.name,
+          contestant_id: user_id 
         }
       )
  
@@ -930,9 +870,10 @@ export const getTrendingStages = async(req,res)=>{
               "competition" ,
               "contest_joined",
               {
-              stage_id: room_id,
-              stageName: talentRoom.name, 
-              stageRegion: talentRoom.region, 
+              _id: room_id,
+              name: talentRoom.name, 
+              region: talentRoom.region, 
+              talent: talent.name,
               contestant_id: queuedContestant.user_id 
               }
             )
@@ -1176,26 +1117,30 @@ export const getTrendingStages = async(req,res)=>{
                                 "competition" ,
                                 "performance_posted",
                                 {
-                                stage_id: talent._id,
-                                stageName: talent.name,
-                                stageRegion: talent.region,
+                                _id: talent._id,
+                                name: talent.name,
+                                region: talent.region,
+                                talent: talent.name,
                                 contestant_id: req.body.user_id 
                                 }
                                 )
     // inform the user that his performance is posted
-    await emitNotification (
+    const notification = await emitNotification (
       req.body.user_id,
       null,
       "competition" ,
       "performance_posted",
       {
-      stage_id: talent._id,
-      stageName: talent.name,
-      stageRegion: talent.region,
+      _id: talent._id,
+      name: talent.name,
+      region: talent.region,
+      talent: talent.name,
       contestant_id: req.body.user_id 
       }
       )
+      // console.log(notification)
     }
+    
     // if(!talent) return res.json({error:"expired"}).status(404)
   }else {
        const talent = await talentModel.findById(_id)

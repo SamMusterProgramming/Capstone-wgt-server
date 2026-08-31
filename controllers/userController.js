@@ -321,24 +321,23 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
         receiverIds,
         sharedType,
         sharedId,
-        sharedName,
-        metadata = {},
+        sharedCategory,
+        metadata = {}, 
       } = req.body;
-      console.log(sharedType)
       // -----------------------------
       // VALIDATION
       // -----------------------------
-  
+     console.log(sharedCategory)
       if (
         !Array.isArray(receiverIds) ||
-        receiverIds.length === 0
-      ) {
+        receiverIds.length === 0  
+      ) { 
         return res.status(400).json({
           success: false,
           message: "No friends selected",
         });
-      }
-  
+      }   
+     
       if (!sharedType || !sharedId) {
         return res.status(400).json({
           success: false,
@@ -402,8 +401,8 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
       await broadcastNotification(
         validReceivers,
         senderId,
-        sharedType,
-        "shared",  
+        sharedCategory,
+        sharedType,  
         metadata
       );
   

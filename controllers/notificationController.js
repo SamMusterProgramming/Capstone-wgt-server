@@ -344,11 +344,11 @@ export const broadcastSpotlightPerformanceNotifications = async(
         "arena",
         "spotlight_featured",
         {
-          arena_id: p.arena._id,
-          arena_name: p.arena.arenaName,
-          arena_region: p.arena.region,
-          arena_talent : p.arena.talentType,
-          post_id: p._id,
+          _id: p.arena._id,
+          name: p.arena.arenaName,
+          region: p.arena.region,
+          talent : p.arena.talentType,
+          postId: p._id,
           type: [spotightType],
         }
       );

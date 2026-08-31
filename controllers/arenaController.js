@@ -122,10 +122,10 @@ export const createArena = async (req, res) => {
       "arena" , 
       "arena_created",
       {
-        arena_id: arena._id,
-        arena_name: arena.arenaName,
-        arena_region: arena.region,
-        arena_talent : arena.talentType,
+        _id: arena._id,
+        name: arena.arenaName,
+        region: arena.region,
+        talent : arena.talentType,
       }
     )
 
@@ -534,10 +534,10 @@ export const toggleArenaStar = async (req, res) => {
           "arena",
           "star_arena", 
           {
-          arena_id: arena._id,
-          arena_name: arena.arenaName,
-          arena_region:arena.region,region,
-          arena_talent : arena.talentType,
+          _id: arena._id,
+          name: arena.arenaName,
+          region:arena.region,region,
+          talent : arena.talentType,
           total_starrers: 1,
           recent_starrers: [
             {
@@ -665,10 +665,10 @@ export const toggleArenaFollower = async (req, res) => {
           "arena",
           "follow_arena",
           {
-          arena_id: arena._id,
-          arena_name: arena.arenaName,
-          arena_region:arena.region,region,
-          arena_talent : arena.talentType,
+          _id: arena._id,
+          name: arena.arenaName,
+          region:arena.region,region,
+          talent : arena.talentType,
           total_followers: 1,
           recent_followers: [
             {
@@ -766,11 +766,11 @@ export const toggleArenaFollower = async (req, res) => {
                                   "arena" ,
                                   "performance_added",
                                   {
-                                  arena_id: arena._id,
-                                  arena_name: arena.arenaName,
-                                  arena_region: arena.region,
-                                  arena_talent : arena.talentType,
-                                  post_id: post._id 
+                                  _id: arena._id,
+                                  name: arena.arenaName,
+                                  region: arena.region,
+                                  talent : arena.talentType,
+                                  postId: post._id 
                                   }
                                   )  
       await emitNotification (
@@ -779,11 +779,11 @@ export const toggleArenaFollower = async (req, res) => {
         "arena" , 
         "performance_added",
         {
-          arena_id: arena._id,
-          arena_name: arena.arenaName,
-          arena_region: arena.region,region,
-          arena_talent : arena.talentType,
-          post_id: post._id 
+          _id: arena._id,
+          name: arena.arenaName,
+          region: arena.region,region,
+          talent : arena.talentType,
+          postId: post._id 
         }
         )
       
@@ -957,9 +957,10 @@ export const toggleFirePost = async (req, res) => {
               "arena",
               "fire_received",
               {
-              arena_id: arena._id,
-              arena_name: arena.arenaName,
-              arena_region:arena.region,
+              _id: arena._id,
+              name: arena.arenaName,
+              region:arena.region,
+              talent:arena.talentType,
               total_fires: 1,
               recent_firers: [
                 {
@@ -967,7 +968,7 @@ export const toggleFirePost = async (req, res) => {
                   firer_name : userName
                 }
               ],
-              post_id : post._id 
+              postId : post._id 
               }
           )
         }
@@ -1050,9 +1051,10 @@ export const addPostView = async(req,res)=>{
         "arena",
         "comment_received",
         {
-        arena_id: arena._id,
-        arena_name: arena.arenaName,
-        arena_region:arena.region,
+        _id: arena._id,
+        name: arena.arenaName,
+        region:arena.region,
+        talent:arena.talentType,
         total_commentors: 1,
         recent_commentors: [
           {
@@ -1060,7 +1062,7 @@ export const addPostView = async(req,res)=>{
             commentor_name : userName
           }
         ],
-        post_id : post._id 
+        postId : post._id 
         }
       ) 
       }
@@ -1253,7 +1255,7 @@ export const getLocalSpotlightPerformances = async (req,res) => {
               message:"Country code is required"
           });
       }
-      
+  
       const cacheKey = `spotlight:local:${countryCode}:page:${page}`;
       const cached = await redis.get(cacheKey);
       // console.log(cached)
