@@ -1,0 +1,44 @@
+import "dotenv/config";
+import IORedis from "ioredis";
+
+console.log("Redis URL exists:", !!process.env.BULLMQ_REDIS_URL);
+
+const redis = new IORedis(
+    process.env.BULLMQ_REDIS_URL,
+    {
+        maxRetriesPerRequest: null,
+    }
+);
+
+redis.on("connect", () => {
+    console.log("CONNECTED");
+});
+
+redis.on("ready", () => {
+    console.log("READY");
+});
+
+redis.on("error", (error) => {
+    console.error("REDIS ERROR:", error);
+});
+
+redis.on("close", () => {
+    console.log("CLOSED");
+});
+
+try {
+    const result = await redis.ping();
+
+    console.log("PING RESULT:", result);
+
+    await redis.quit();
+
+} catch (error) {
+
+    console.error("PING FAILED:", error);
+
+    redis.disconnect();
+}
+
+node testRedis.js
+c

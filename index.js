@@ -1,7 +1,9 @@
+// import dotenv from 'dotenv';
+import "dotenv/config";
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
 import connectDB from './db.js';
 import userRoute from './routes/userRoutes.js';
 import challengeRoute from './routes/challengeRoutes.js';
@@ -10,11 +12,10 @@ import arenaRoute from './routes/arenaRoutes.js';
 
 import B2 from 'backblaze-b2';
 import "./config/redis.js";
-import redis from './config/redis.js';
 import startSpotlightJobs from './redisCash/spotlight/performances/jobs/spotlightJobs.js';
-
-
-dotenv.config();
+// import notificationQueue from './queues/notifications/notificationQueue.js';
+import "./queues/notifications/notificationWorker.js";
+// dotenv.config();
 
 
 connectDB() 
@@ -36,20 +37,21 @@ app.use('/challenges',challengeRoute)
 app.use('/talents',talentRoute)
 app.use('/arenas' , arenaRoute)
 app.use(validateRequestNetwork)
-app.set("trust proxy", true);
+// app.set("trust proxy", true);
 
 app.get('/',(req,res)=>{
      res.send('welcome to our app')
 })    
     
 
-app.get("/redis-test", async (req, res) => {
-    await redis.set("hello", "challengify");
-    const value = await redis.get("hello");
-    res.json({
-       redis: value
-    });
- });
+// app.get("/redis-test", async (req, res) => {
+//     await redis.set("hello", "challengify");
+//     const value = await redis.get("hello");
+//     res.json({
+//        redis: value
+//     });
+//  });
+
 
 
 function validateRequestNetwork(req,res,next) {
@@ -64,6 +66,3 @@ app.listen(process.env.PORT,()=> {
     console.log("running on port" + process.env.PORT)
 })  
 
-
-console.log("PUBLIC KEY ID:", process.env.B2_PUBLIC_KEY_ID);
-console.log("PUBLIC BUCKET ID:", process.env.B2_PUBLIC_BUCKET_ID);

@@ -1,46 +1,65 @@
-import redis from "../config/redis.js";
+
 import notificationModel from "../models/notifications.js";
 import { buildPushNotification, getReceiverNotifications,  sendPushNotification } from "../pipeLine/getReceiverNotifications.js";
 import notificationService from "../service/notificationService.js";
 import { notificationViewBuilders } from "../templates/notificationViewBuilders.js";
-import { getUserProfile } from "./userController.js";
+import getUserProfile from "../service/users/getUserProfile.js";
+import { queueBroadcastNotification } from "../queues/notifications/queueBroadcastNotification.js";
+
+// export const broadcastNotification = async (
+//                                     receivers = [],
+//                                     senderId,
+//                                     category,
+//                                     type,
+//                                     metadata = {},
+//                                     ) => {
+//   try {
+//     const uniqueReceivers =
+//         [...new Set(receivers)];
+//         if (!uniqueReceivers.length) return;
+//         for (const receiverId of uniqueReceivers) {
+//         const notification = await notificationService.emit({
+//             receiverId,
+//             senderId,
+//             category,
+//             type,
+//             metadata,
+//         });
+//         const pushNotification = await  buildPushNotification(notification)
+//         const receiver = await getUserProfile(receiverId)
+//         await sendPushNotification(receiver.expoPushToken, {
+//           title: "New Activity",
+//           body: pushNotification.presentation.text,
+//           data: {...pushNotification.metadata ,
+//                 type : notification.type,
+//                 notification_id:notification._id
+//                 }
+//         });
+//         }
+//   } catch (err) {
+//     console.log(
+//       'BROADCAST NOTIFICATION ERROR:',
+//       err
+//     );
+//   }
+// };
 
 export const broadcastNotification = async (
-                                    receivers = [],
-                                    senderId,
-                                    category,
-                                    type,
-                                    metadata = {},
-                                    ) => {
-  try {
-    const uniqueReceivers =
-        [...new Set(receivers)];
-        if (!uniqueReceivers.length) return;
-        for (const receiverId of uniqueReceivers) {
-        const notification = await notificationService.emit({
-            receiverId,
-            senderId,
-            category,
-            type,
-            metadata,
-        });
-        const pushNotification = await  buildPushNotification(notification)
-        const receiver = await getUserProfile(receiverId)
-        await sendPushNotification(receiver.expoPushToken, {
-          title: "New Activity",
-          body: pushNotification.presentation.text,
-          data: {...pushNotification.metadata ,
-                type : notification.type,
-                notification_id:notification._id
-                }
-        });
-        }
-  } catch (err) {
-    console.log(
-      'BROADCAST NOTIFICATION ERROR:',
-      err
-    );
-  }
+  receivers = [],
+  senderId,
+  category,
+  type,
+  metadata = {}
+) => {
+
+  return await queueBroadcastNotification(
+      receivers,
+      senderId,
+      category,
+      type,
+      metadata
+  );
+
 };
 
 export const emitNotification = async (

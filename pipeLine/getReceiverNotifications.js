@@ -2,8 +2,8 @@
 
 import mongoose from "mongoose";
 import notificationModel from "../models/notifications.js";
-import { getUserProfile } from "../controllers/userController.js";
 import { notificationViewBuilders } from "../templates/notificationViewBuilders.js";
+import getUserProfile from "../service/users/getUserProfile.js";
 // import notificationModel from "../models/notificationModel.js";
 // import { getUserProfile } from "../controllers/userController.js";
 // import { notificationViewBuilders } from "../templates/notificationViewBuilders.js";

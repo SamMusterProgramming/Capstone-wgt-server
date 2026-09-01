@@ -8,12 +8,13 @@ import admin from "../service/firebase.js";
 import { ensureUserRelations, getSpotlightRegion } from "../utilities/helper.js";
 import { Resend } from "resend";
 import { resend } from "../config/resend.js";
-import { getUserProfile, updateUserProfileRedis } from "./userController.js";
+import {  updateUserProfileRedis } from "./userController.js";
 import rebuildSpotlight from "../redisCash/spotlight/performances/rebuild/rebuildSpotlight.js";
 import { SPOTLIGHT_REGIONS } from "../utilities/data.js";
 import redis from "../config/redis.js";
 import FollowModal from "../models/follow.js";
 
+import getUserProfile from "../service/users/getUserProfile.js";
 
 
 
