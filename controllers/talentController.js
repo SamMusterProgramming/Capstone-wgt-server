@@ -12,6 +12,7 @@ import { COUNTRY_REGIONS } from "../utilities/data.js";
 import hotStages from "../redisCash/stages/hotStages.js";
 import trendingStages from "../redisCash/stages/trendingStages.js";
 import favouriteStages from "../redisCash/stages/favouriteStages.js";
+import stageById from "../redisCash/stages/stageById.js";
 
 
 //aggregation 
@@ -345,9 +346,21 @@ export const createTalentStage =  async(req,res)=>{
     res.json(talent)   
 }
 
-
-
 /// stages 
+export const getStageById = async (req, res) => {
+  try {
+    const stageId = req.params.id ; 
+    const stage = await stageById(stageId , false)
+    return res.status(200).json(stage);
+
+  } catch (error) {
+    console.error("Error fetching region stages:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching region stages",
+    });
+  }
+}
 
 export const getStagesByRegion = async (req, res) => {
     try {
@@ -715,7 +728,7 @@ export const getTrendingStages = async(req,res)=>{
                                           }
                                           )
               // inform the user that his performance is posted
-              await emitNotification (
+              const n = await emitNotification (
                 user_id,  
                 null,  
                 "competition" ,
@@ -728,6 +741,7 @@ export const getTrendingStages = async(req,res)=>{
                 contestant_id: user_id 
                 }
                 )
+                console.log(n)
        }
        if (isQueued) {
                // inform the user that his is in queue
@@ -843,11 +857,11 @@ export const getTrendingStages = async(req,res)=>{
         "competition" ,
         "eliminated",
         {
-          _id: stage_id,
-          name: talent.name,
-          region: talent.region,
-          talent: talent.name,
-          contestant_id: user_id 
+          _id: talentRoom._id,
+          name: talentRoom.name,
+          region: talentRoom.region,
+          talent: talentRoom.name,
+          contestant_id: null
         }
       )
  
@@ -873,7 +887,7 @@ export const getTrendingStages = async(req,res)=>{
               _id: room_id,
               name: talentRoom.name, 
               region: talentRoom.region, 
-              talent: talent.name,
+              talent: talentRoom.name,
               contestant_id: queuedContestant.user_id 
               }
             )

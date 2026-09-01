@@ -334,7 +334,7 @@ export const broadcastSpotlightPerformanceNotifications = async(
     const existingNotification = await notificationModel.findOne({
       receiver_id: p.owner._id.toString(),
       type: "spotlight_featured",
-      "metadata.post_id": p._id,
+      "metadata.postId": p._id,
     });
   
     if (!existingNotification) {
@@ -382,7 +382,7 @@ export const getNotifications = async (req, res) => {
       await getReceiverNotifications({
         receiverId:req.user._id,
         limit:
-          Number(req.query.limit) || 20,
+          Number(req.query.limit) || 40,
         page:
           Number(req.query.page) || 1,
       });

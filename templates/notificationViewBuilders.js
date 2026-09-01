@@ -214,6 +214,21 @@ export const notificationViewBuilders = {
       image: 
         sender?.profileImage?.publicUrl || null,
     }),   
+    shared_competition: ({
+      sender,
+      metadata,
+      }) => ({
+      text:
+        sender?.name
+          ? `${sender.name} shared a  ${metadata.name || "something"} stage Arena with you`
+          : `Someone shared ${metadata.name || "something"} with you`,
+      subtitle:
+        metadata.shared_type  
+          ? metadata.shared_type?.toUpperCase()
+          : "",
+      image: 
+        sender?.profileImage?.publicUrl || null,
+    }),   
 };
 
 

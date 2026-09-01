@@ -30,7 +30,7 @@ import {
    addUserPerformance, createTalentStage, deleteContestantFromEliminations, deleteContestantFromQueue, 
    deleteUserPerformanceQueue, 
    deleteUserPerformanceStage, 
-   generateTalentStage, getAllStages, getEliminatedUserBackToQueue, getFavouriteStages, getHotStages, getStagesByRegion, getTrendingStages, getUserContestantInStage, 
+   generateTalentStage, getAllStages, getEliminatedUserBackToQueue, getFavouriteStages, getHotStages, getStageById, getStagesByRegion, getTrendingStages, getUserContestantInStage, 
    joinStageOrQueueFirstPerformance, resignContestantFromStage, 
    toggleFavouriteStage
   } from '../controllers/talentController.js';
@@ -47,6 +47,7 @@ route.get('/stages',protect,getAllStages)
 route.get('/user/talent/:id',protect , getUserContestantInStage)
 route.get('/hotStages/:id', protect, getHotStages)
 route.get('/trendingStages/:countryCode', protect, getTrendingStages)
+route.get('/stage/:id', protect, getStageById)
 
 
 //favouriteStages

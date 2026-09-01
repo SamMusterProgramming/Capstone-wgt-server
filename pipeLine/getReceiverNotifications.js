@@ -27,7 +27,7 @@ async ({
             ),
         })
         .sort({
-          updatedAt: -1,
+          createdA: -1,
         })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -50,28 +50,19 @@ async ({
             const presentation =
               builder
                 ? builder({
-                    sender:
-                      sender || {},
-                    metadata:
-                      notification.metadata || {},
+                    sender: sender || {},
+                    metadata: notification.metadata || {},
                   })
                 : null;
             return {
-              _id:
-                notification._id,
-              receiver_id:receiverId,
+              _id: notification._id, receiver_id:receiverId,
               sender_id:sender?._id,
-              type:
-                notification.type,
-              category:
-                notification.category,
-              is_read:
-                notification.is_read,
-              createdAt:
-                notification.createdAt,
+              type:  notification.type,
+              category:  notification.category,
+              is_read: notification.is_read,
+              createdAt: notification.createdAt,
               // sender,
-              metadata:
-                notification.metadata,
+              metadata: notification.metadata,
               presentation,
             };
           }

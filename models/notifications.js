@@ -39,6 +39,7 @@ const notificationSchema = new mongoose.Schema({
       'friend_request_accepted_byou',
       'shared_arena',
       'shared_performance',
+      'shared_competition',
 
       //arena
       'arena_created',
