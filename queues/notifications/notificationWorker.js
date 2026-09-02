@@ -7,7 +7,7 @@ import { processNotification } from "./processNotification.js";
 
 const notificationWorker = new Worker(
     "notifications",
-    async (job) => {
+    async (job) => {  
         console.log(
             "🔔 Processing notification job:",
             job.id

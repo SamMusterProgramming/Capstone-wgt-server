@@ -5,7 +5,7 @@ export const queueBroadcastNotification = async (
     senderId,
     category,
     type,
-    metadata = {}
+    metadata = {}  
 ) => {
 
     const uniqueReceivers = [

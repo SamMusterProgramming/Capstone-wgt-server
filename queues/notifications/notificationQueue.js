@@ -12,7 +12,7 @@ const notificationQueue = new Queue(
                 delay: 1000,
             },
             removeOnComplete: {
-                age: 60 * 60,
+                age: 60 * 60,  
                 count: 1000,
             },
             removeOnFail: {

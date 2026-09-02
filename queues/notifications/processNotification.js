@@ -9,7 +9,7 @@ export const processNotification = async ({
     category,
     type,
     metadata = {},
-}) => {
+}) => {  
 
     const notification = await notificationService.emit({
         receiverId,
