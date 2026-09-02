@@ -4,7 +4,7 @@ import { buildPushNotification, getReceiverNotifications,  sendPushNotification 
 import notificationService from "../service/notificationService.js";
 import { notificationViewBuilders } from "../templates/notificationViewBuilders.js";
 import getUserProfile from "../service/users/getUserProfile.js";
-import { queueBroadcastNotification } from "../queues/notifications/queueBroadcastNotification.js";
+// import { queueBroadcastNotification } from "../queues/notifications/queueBroadcastNotification.js";
 
 export const broadcastNotification = async (
                                     receivers = [],

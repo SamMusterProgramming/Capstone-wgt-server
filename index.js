@@ -13,10 +13,9 @@ import arenaRoute from './routes/arenaRoutes.js';
 import B2 from 'backblaze-b2';
 import "./config/redis.js";
 import startSpotlightJobs from './redisCash/spotlight/performances/jobs/spotlightJobs.js';
-// import notificationQueue from './queues/notifications/notificationQueue.js';
-import "./queues/notifications/notificationWorker.js";
-// dotenv.config();
+// import "./queues/notifications/notificationWorker.js";
 
+   
 
 connectDB() 
 startSpotlightJobs();
