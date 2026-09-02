@@ -13,7 +13,7 @@ import arenaRoute from './routes/arenaRoutes.js';
 import B2 from 'backblaze-b2';
 import "./config/redis.js";
 import startSpotlightJobs from './redisCash/spotlight/performances/jobs/spotlightJobs.js';
-import "./queues/notifications/notificationWorker.js";
+// import "./queues/notifications/notificationWorker.js";
 
    
 
