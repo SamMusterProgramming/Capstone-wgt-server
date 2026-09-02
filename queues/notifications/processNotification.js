@@ -18,10 +18,8 @@ export const processNotification = async ({
         type,
         metadata,
     });
-    console.log(notification)
     const pushNotification =
         await buildPushNotification(notification);
-
     const receiver =await userModel
     .findById(receiverId)
     .select("expoPushToken")
