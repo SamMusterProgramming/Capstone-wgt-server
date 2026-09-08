@@ -536,7 +536,7 @@ export const toggleArenaStar = async (req, res) => {
           {
           _id: arena._id,
           name: arena.arenaName,
-          region:arena.region,region,
+          region:arena.region,
           talent : arena.talentType,
           total_starrers: 1,
           recent_starrers: [
@@ -667,7 +667,7 @@ export const toggleArenaFollower = async (req, res) => {
           {
           _id: arena._id,
           name: arena.arenaName,
-          region:arena.region,region,
+          region:arena.region,
           talent : arena.talentType,
           total_followers: 1,
           recent_followers: [

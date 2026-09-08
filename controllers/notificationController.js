@@ -254,7 +254,7 @@ export const emitFollowersNotification = async (
   try {
     let existantNotification = await notificationModel.findOne({
     receiver_id: receiverId,
-    category:"arena" ,
+    category:"arena" , 
     type: "follow_arena",
     // is_read: false,
     "metadata.arena_id": metadata.arena_id
