@@ -65,6 +65,9 @@ const generateSpotlightCandidates = async (filter = {}) => {
                 commentCount:1,
                 shareCount:1,
                 createdAt:1,
+                globalSpotlight:1,
+                regionalSpotlight:1,
+                globalSpotlight :1 ,
                 arena:{
                     _id:"$arena._id",
                     arenaName:"$arena.arenaName",
