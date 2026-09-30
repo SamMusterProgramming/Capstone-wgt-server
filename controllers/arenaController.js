@@ -18,6 +18,7 @@ import { broadcastNotification, emitCommentsNotification, emitFiresNotification,
 import friendModel from "../models/friends.js"
 import followerModel from "../models/followers.js"
 import userFollowedArenas from "../redisCash/arenas/getUserFollowedArenas.js"
+import userSpotlights from "../redisCash/users/userSpotlights.js"
 
 
 export const SPOTLIGHT_THRESHOLD = 250;
@@ -303,6 +304,17 @@ export const getArenaByUser = async (req, res) => {
     } catch (error) {
        console.log(error)
     }
+}
+
+export const getSpotlightByUser = async (req, res) => {
+  try {
+    console.log("here i am ",req.params.id)
+   const userId = req.params.id
+   const spotlights = await userSpotlights(userId , true)
+   return res.json(spotlights)
+  } catch (error) {  
+     console.log(error)  
+  }
 }
 
 // export const getArenaByProfile = async (req, res) => {
