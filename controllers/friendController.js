@@ -337,7 +337,10 @@ export const friendRequest =
                   _id: 1,
                   name: 1,
                   profileImage: 1,
-                  coverImage: 1
+                  coverImage: 1,
+                  city:1,
+                  state:1,
+                  country:1
                 },
                 friend_requests_sent: {
                   _id: 1,
