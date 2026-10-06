@@ -73,7 +73,17 @@ const userSchema = new mongoose.Schema({
       type:Number,   
       default: 0 ,
       required:false  
-     }
+     },
+     followerCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+     },
+     friendCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
    },
     { timestamps: true , versionKey: false }
  )
