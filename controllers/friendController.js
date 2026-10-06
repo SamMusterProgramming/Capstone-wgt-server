@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 import friendModel from "../models/friends.js";
 import notificationModel from "../models/notifications.js";
 import userModel from "../models/users.js";
@@ -7,6 +7,152 @@ import friendshipModel from "../models/friendshipSchema.js";
 import friendRequestModel from "../models/friendRequest.js";
 import userFriends from "../redisCash/users/userFriends.js";
 import userFriendRequestsReceived from "../redisCash/users/userFriendRequestsReceived.js";
+
+
+
+
+
+const migrateFriends = async () => {
+  try {
+    console.log("Starting friend migration...");
+
+    const oldFriendDocuments = await friendModel.find({}).lean();
+
+    console.log(
+      `Found ${oldFriendDocuments.length} old friend documents`
+    );
+
+    const friendships = new Map();
+
+    for (const friendDocument of oldFriendDocuments) {
+      const ownerId = friendDocument.user_id;
+
+      if (
+        !mongoose.Types.ObjectId.isValid(ownerId)
+      ) {
+        console.log(
+          "Skipping invalid owner:",
+          ownerId
+        );
+
+        continue;
+      }
+
+      const ownerObjectId =
+        new mongoose.Types.ObjectId(ownerId);
+
+      if (
+        !Array.isArray(friendDocument.friends) ||
+        friendDocument.friends.length === 0
+      ) {
+        continue;
+      }
+
+      for (const friendId of friendDocument.friends) {
+        if (
+          !friendId ||
+          !mongoose.Types.ObjectId.isValid(friendId)
+        ) {
+          continue;
+        }
+
+        const friendObjectId =
+          new mongoose.Types.ObjectId(friendId);
+
+        // Prevent a user from becoming friends with themselves
+        if (ownerObjectId.equals(friendObjectId)) {
+          continue;
+        }
+
+        // Normalize the friendship pair
+        const ids = [
+          ownerObjectId,
+          friendObjectId,
+        ].sort((a, b) =>
+          a.toString().localeCompare(
+            b.toString()
+          )
+        );
+
+        const user1 = ids[0];
+        const user2 = ids[1];
+
+        // Use the normalized pair as the unique migration key
+        const friendshipKey =
+          `${user1.toString()}_${user2.toString()}`;
+
+        if (!friendships.has(friendshipKey)) {
+          friendships.set(friendshipKey, {
+            user1,
+            user2,
+          });
+        }
+      }
+    }
+
+    const friendshipDocuments =
+      Array.from(friendships.values());
+
+    console.log(
+      `Prepared ${friendshipDocuments.length} unique friendships`
+    );
+
+    if (friendshipDocuments.length === 0) {
+      console.log(
+        "No friendships found to migrate."
+      );
+
+      return;
+    }
+
+    const result =
+      await friendshipModel.bulkWrite(
+        friendshipDocuments.map(
+          (friendship) => ({
+            updateOne: {
+              filter: {
+                user1: friendship.user1,
+                user2: friendship.user2,
+              },
+              update: {
+                $setOnInsert: {
+                  user1: friendship.user1,
+                  user2: friendship.user2,
+                  createdAt: new Date(),
+                },
+              },
+              upsert: true,
+            },
+          })
+        ),
+        {
+          ordered: false,
+        }
+      );
+
+    console.log(
+      "Friend migration completed."
+    );
+
+    console.log(
+      "Inserted:",
+      result.upsertedCount
+    );
+
+    console.log(
+      "Already existed:",
+      friendshipDocuments.length -
+        result.upsertedCount
+    );
+  } catch (error) {
+    console.error(
+      "Friend migration error:",
+      error
+    );
+
+    throw error;
+  }
+};
 
 
 
@@ -179,7 +325,6 @@ export const friendRequest = async (req, res) => {
 // ============================================================
 // ACCEPT FRIEND REQUEST
 // ============================================================
-
 export const acceptRequest = async (req, res) => {
   try {
     const { senderId, receiverId } = req.query;
@@ -201,8 +346,11 @@ export const acceptRequest = async (req, res) => {
       });
     }
 
-    const senderObjectId = new mongoose.Types.ObjectId(senderId);
-    const receiverObjectId = new mongoose.Types.ObjectId(receiverId);
+    const senderObjectId =
+      new mongoose.Types.ObjectId(senderId);
+
+    const receiverObjectId =
+      new mongoose.Types.ObjectId(receiverId);
 
     // --------------------------------------------------------
     // 2. Prevent accepting yourself
@@ -240,24 +388,7 @@ export const acceptRequest = async (req, res) => {
     );
 
     // --------------------------------------------------------
-    // 5. Change request to accepted
-    // --------------------------------------------------------
-
-    await friendRequestModel.updateOne(
-      {
-        _id: request._id,
-        status: "pending",
-      },
-      {
-        $set: {
-          status: "accepted",
-          respondedAt: new Date(),
-        },
-      }
-    );
-
-    // --------------------------------------------------------
-    // 6. Create friendship
+    // 5. Create friendship
     // --------------------------------------------------------
 
     await friendshipModel.create({
@@ -266,7 +397,7 @@ export const acceptRequest = async (req, res) => {
     });
 
     // --------------------------------------------------------
-    // 7. Increment both friend counters
+    // 6. Increment both friend counters
     // --------------------------------------------------------
 
     await userModel.updateMany(
@@ -284,6 +415,14 @@ export const acceptRequest = async (req, res) => {
         },
       }
     );
+
+    // --------------------------------------------------------
+    // 7. Delete accepted friend request
+    // --------------------------------------------------------
+
+    await friendRequestModel.deleteOne({
+      _id: request._id,
+    });
 
     // --------------------------------------------------------
     // 8. Update original notification
@@ -329,11 +468,15 @@ export const acceptRequest = async (req, res) => {
     }
 
     // --------------------------------------------------------
-    // 10. Response
+    // 10. Get updated friend requests
     // --------------------------------------------------------
 
-    const friendRequests = await getFriendRequestsReceived(receiverId)
-    return res.status(200).json(friendRequests.users);
+    const friendRequests =
+      await userFriendRequestsReceived(receiverId,1,20,true);
+
+    return res.status(200).json(
+      friendRequests.users
+    );
 
   } catch (err) {
     console.log(
@@ -592,7 +735,8 @@ export const unfriendRequest = async (req, res) => {
 
 export const getFriendList = async (req, res) => {
   const user_id = req.params.id;
-  const results = await userFriends(user_id);
+  // await migrateFriends()
+  const results = await userFriends(user_id,1,20,true);
   return res.json(results).status(200);
 
 };
