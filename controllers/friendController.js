@@ -471,8 +471,7 @@ export const acceptRequest = async (req, res) => {
     // 10. Get updated friend requests
     // --------------------------------------------------------
 
-    const friendRequests =
-      await userFriendRequestsReceived(receiverId,1,20,true);
+    const friendRequests = await userFriendRequestsReceived(receiverId,1,20,true);
 
     return res.status(200).json(
       friendRequests.users
@@ -503,13 +502,7 @@ export const acceptRequest = async (req, res) => {
 
 export const denyRequest = async (req, res) => {
   try {
-    const senderId = new mongoose.Types.ObjectId(
-      req.params.id
-    );
-
-    const receiverId = new mongoose.Types.ObjectId(
-      req.body._id
-    );
+    const { senderId, receiverId } = req.query;
 
     // --------------------------------------------------------
     // Find pending request
@@ -527,22 +520,31 @@ export const denyRequest = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------------
-    // Mark request as declined
+    // // --------------------------------------------------------
+    // // Mark request as declined
+    // // --------------------------------------------------------
+
+    // await friendRequestModel.updateOne(
+    //   {
+    //     _id: request._id,
+    //     status: "pending",
+    //   },
+    //   {
+    //     $set: {
+    //       status: "declined",
+    //       respondedAt: new Date(),
+    //     },
+    //   }
+    // );
+
+      // --------------------------------------------------------
+    // 7. Delete denied  friend request
     // --------------------------------------------------------
 
-    await friendRequestModel.updateOne(
-      {
-        _id: request._id,
-        status: "pending",
-      },
-      {
-        $set: {
-          status: "declined",
-          respondedAt: new Date(),
-        },
-      }
-    );
+    await friendRequestModel.deleteOne({
+      _id: request._id,
+    });
+
 
     // --------------------------------------------------------
     // Remove notification
@@ -554,9 +556,11 @@ export const denyRequest = async (req, res) => {
       receiver_id: receiverId,
     });
 
-    return res.status(200).json({
-      message: "Friend request denied",
-    });
+    const friendRequests = await userFriendRequestsReceived(receiverId,1,20,true);
+
+
+    return res.status(200).json(friendRequests);
+
   } catch (err) {
     console.log("denyRequest error:", err);
 
@@ -573,6 +577,7 @@ export const denyRequest = async (req, res) => {
 
 export const cancelRequest = async (req, res) => {
   try {
+
     const senderId = new mongoose.Types.ObjectId(
       req.params.id
     );
@@ -713,17 +718,14 @@ export const unfriendRequest = async (req, res) => {
       },
       { session }
     );
-
     await session.commitTransaction();
-
     return res.status(200).json({
       message: "Friendship removed",
     });
   } catch (err) {
+
     await session.abortTransaction();
-
     console.log("unfriendRequest error:", err);
-
     return res.status(500).json({
       message: "Server error",
     });
