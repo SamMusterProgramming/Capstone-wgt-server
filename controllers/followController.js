@@ -3,139 +3,175 @@ import mongoose from "mongoose";
 import followerModel from "../models/followers.js";
 import userFollowers from "../redisCash/users/userFollowers.js";
 import userFollowings from "../redisCash/users/userFollowings.js";
-
-export const generateFollowers = async(user_id) => {
-    const result = await followerModel.aggregate([
-        {
-            $match: { user_id: new mongoose.Types.ObjectId(user_id) }
-        },
-      
-        // FRIENDS
-        {
-          $lookup: {
-            from: "users",
-            localField: "followers",
-            foreignField: "_id",
-            as: "followers"
-          }
-        },
-      
-        // FRIEND REQUEST SENT
-        {
-          $lookup: {
-            from: "users",
-            localField: "followings",
-            foreignField: "_id",
-            as: "followings"
-          }
-        },
-      
-        // OPTIONAL: clean output
-      
-      ]);
-      return result[0];
-}
+import FollowModal from "../models/follow.js";
 
 
-export const followingRequest =  async (req, res) => {
-    try {
-      const userA = new mongoose.Types.ObjectId(req.params.id);   // follower
-      const userB = new mongoose.Types.ObjectId(req.body.user_id); // target
 
-      // prevent self-follow
-      if (userA.equals(userB)) {
-        return res.status(400).json({ message: "Cannot follow yourself" });
-      }
+export const followingRequest = async (req, res) => {
+  try {
+    const { senderId, receiverId } = req.query;
 
-      // Optional: check already following
-      const exists = await followerModel.findOne({
-        user_id: userA,
-        followings: userB
+    // Validate IDs
+    if (
+      !mongoose.isValidObjectId(senderId) ||
+      !mongoose.isValidObjectId(receiverId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid senderId or receiverId",
       });
-
-      if (exists) {
-        return res.status(400).json({ message: "Already following" });
-      }
-
-      // 1. Add B to A.followings
-      await followerModel.updateOne(
-        { user_id: userA },
-        {
-          $addToSet: { followings: userB }
-        }
-      );
-
-      // 2. Add A to B.followers
-      await followerModel.updateOne(
-        { user_id: userB },
-        {
-          $addToSet: { followers: userA }
-        }
-      );
-
-      const fList = await generateFollowers(req.params.id)
-      return res.status(200).json(fList);
-
-    } catch (err) {
-      console.log(err);
-      return res.status(500).json({ message: "Server error" });
     }
-  }
 
-  export const unfollowingRequest = async (req, res) => {
-    try {
-      const userA = new mongoose.Types.ObjectId(req.params.id);   // current user
-      const userB = new mongoose.Types.ObjectId(req.body.user_id); // user to unfollow
-
-      // prevent self-unfollow (optional safety)
-      if (userA.equals(userB)) {
-        return res.status(400).json({ message: "Invalid operation" });
-      }
-
-      // Optional: check if actually following
-      const exists = await followerModel.findOne({
-        user_id: userA,
-        followings: userB
+    // Prevent self-follow
+    if (senderId === receiverId) {
+      return res.status(400).json({
+        message: "Cannot follow yourself",
       });
+    }
 
-      if (!exists) {
-        return res.status(400).json({ message: "Not following this user" });
+    // Create the follow relationship.
+    // The unique compound index prevents duplicate relationships.
+    try {
+      await FollowModal.create({
+        followerId: senderId,
+        followingId: receiverId,
+      });
+    } catch (error) {
+      // MongoDB duplicate-key error
+      if (error.code === 11000) {
+        return res.status(400).json({
+          message: "Already following",
+        });
       }
 
-      // 1. Remove B from A.followings
-      await followerModel.updateOne(
-        { user_id: userA },
-        {
-          $pull: { followings: userB }
-        }
-      );
-
-      // 2. Remove A from B.followers
-      await followerModel.updateOne(
-        { user_id: userB },
-        {
-          $pull: { followers: userA }
-        }
-      );
-
-      const fList = await generateFollowers(req.params.id)
-      return res.status(200).json(fList);
-
-    } catch (err) {
-      console.log(err);
-      return res.status(500).json({ message: "Server error" });
+      throw error;
     }
-  }
 
-  export const getFollowersList = async(req,res)=>{
-    const user_id = req.params.id
-    const result = await generateFollowers(user_id)
-    return res.json(result).status(200)
+    // Return the receiver's updated followers.
+    const result = await userFollowers(
+      receiverId,
+      1,
+      20,
+      true
+    );
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("followingRequest error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
+};
+
+export const removeFollower = async (req, res) => {
+  try {
+    const { senderId, receiverId } = req.query;
+    console.log(senderId)
+    // Validate IDs
+    if (
+      !mongoose.isValidObjectId(senderId) ||
+      !mongoose.isValidObjectId(receiverId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid senderId or receiverId",
+      });
+    }
+
+    // Prevent self-removal
+    if (senderId === receiverId) {
+      return res.status(400).json({
+        message: "Invalid operation",
+      });
+    }
+
+    // receiverId follows senderId, so delete that relationship
+    const result = await FollowModal.findOneAndDelete({
+      followerId: receiverId,
+      followingId: senderId,
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        message: "This user is not following you",
+      });
+    }
+
+    // Refresh the sender's followers list
+    const fList = await userFollowers(
+      senderId,
+      1,
+      20,
+      true
+    );
+
+    return res.status(200).json(fList);
+  } catch (err) {
+    console.error("removeFollower error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+
+export const unfollowingRequest = async (req, res) => {
+  try {
+    const { senderId, receiverId } = req.query;
+
+    // Validate IDs
+    if (
+      !mongoose.isValidObjectId(senderId) ||
+      !mongoose.isValidObjectId(receiverId)
+    ) {
+      return res.status(400).json({
+        message: "Invalid senderId or receiverId",
+      });
+    }
+
+    // Prevent self-unfollow
+    if (senderId === receiverId) {
+      return res.status(400).json({
+        message: "Invalid operation",
+      });
+    }
+
+    // Delete senderId's follow relationship with receiverId
+    const result = await FollowModal.findOneAndDelete({
+      followerId: senderId,
+      followingId: receiverId,
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        message: "Not following this user",
+      });
+    }
+
+    // Refresh senderId's following list.
+    // This assumes userFollowings returns the list of users senderId follows.
+    const followingList = await userFollowings(
+      senderId,
+      1,
+      20,
+      true
+    );
+
+    return res.status(200).json(followingList);
+  } catch (err) {
+    console.error("unfollowingRequest error:", err);
+
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
 
   export const getFollowers = async(req,res)=>{
     const user_id = req.params.id
-    const results = await userFollowers(user_id)
+    const results = await userFollowers(user_id, 1 , 20 , true)
     return res.json(results).status(200)
   }
 

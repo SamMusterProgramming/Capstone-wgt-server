@@ -12,13 +12,12 @@ import jwt from 'jsonwebtoken';
 import B2 from 'backblaze-b2';
 import dotenv from 'dotenv';
 import b2 from '../B2.js' 
-import { deleteFileFromB2_Public, getPublicUrlFromB2, getUploadPrivateUrl, getUploadPublicUrl } from '../utilities/blackBlazeb2.js';
-import { verifyFirebaseToken } from '../middleware/auth.js';
+
 import { addPushToken, anonymouslogin, deletePushToken, getMe, googleLogin, login, signup } from '../controllers/authController.js';
 import { protect } from '../middleware/jwtProtect.js';
-import talentModel from '../models/talent.js';
+
 import { acceptRequest, cancelRequest, denyRequest, friendRequest, getFriendList, getFriendRequestsReceived, getFriendshipStatus, unfriendRequest } from '../controllers/friendController.js';
-import { followingRequest, getFollowers, getFollowersList, getFollowings, unfollowingRequest } from '../controllers/followController.js';
+import { followingRequest, getFollowers, getFollowings, removeFollower, unfollowingRequest } from '../controllers/followController.js';
 import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, shareWithFriends, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
 import { getNotifications } from '../controllers/notificationController.js';
 import { deepSearch, searchSuggestions } from '../controllers/searchController.js';
@@ -56,16 +55,17 @@ route.post("/friends/cancel/:id",protect,validateMongoObjectId,cancelRequest);
 route.post('/friends/accept/',protect,acceptRequest);
 route.post('/friends/deny/',protect,denyRequest);
 
-route.post('/friends/unfriend/:id',protect,validateMongoObjectId , unfriendRequest)
+route.post('/friends/unfriend/', protect , unfriendRequest)
 route.get('/friends/list/:id',protect,validateMongoObjectId,getFriendList)
 route.get('/friendship/status/',protect,getFriendshipStatus)
 route.get('/friendRequests/received/:id',protect,getFriendRequestsReceived)
 
 
 // follows, requests 
-route.post("/followings/add/:id",protect,validateMongoObjectId,followingRequest)
-route.patch('/unfollowing/:id',protect,validateMongoObjectId,unfollowingRequest)
-route.get('/follow/data/:id',protect,validateMongoObjectId,getFollowersList)
+route.post("/followings/add/" , protect ,followingRequest)
+route.patch('/unfollowing/',protect, unfollowingRequest)
+route.post('/removeFollower/',protect, removeFollower)
+
 route.get('/followers/:id',protect,validateMongoObjectId,getFollowers)
 route.get('/followings/:id',protect,validateMongoObjectId,getFollowings)
 

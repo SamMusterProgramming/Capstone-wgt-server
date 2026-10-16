@@ -160,13 +160,13 @@ const migrateFriends = async () => {
 // HELPERS
 // ============================================================
 
-const getSortedUserIds = (userA, userB) => {
-  const idA = userA.toString();
-  const idB = userB.toString();
+const getSortedUserIds = (senderId, receiverId) => {
+  const idA = senderId.toString();
+  const idB = receiverId.toString();
 
   return idA < idB
-    ? [userA, userB]
-    : [userB, userA];
+    ? [senderId, receiverId]
+    : [receiverId, senderId];
 };
 
 
@@ -520,26 +520,6 @@ export const denyRequest = async (req, res) => {
       });
     }
 
-    // // --------------------------------------------------------
-    // // Mark request as declined
-    // // --------------------------------------------------------
-
-    // await friendRequestModel.updateOne(
-    //   {
-    //     _id: request._id,
-    //     status: "pending",
-    //   },
-    //   {
-    //     $set: {
-    //       status: "declined",
-    //       respondedAt: new Date(),
-    //     },
-    //   }
-    // );
-
-      // --------------------------------------------------------
-    // 7. Delete denied  friend request
-    // --------------------------------------------------------
 
     await friendRequestModel.deleteOne({
       _id: request._id,
@@ -646,37 +626,26 @@ export const cancelRequest = async (req, res) => {
 // UNFRIEND
 // ============================================================
 
+
 export const unfriendRequest = async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
-    const userA = new mongoose.Types.ObjectId(
-      req.params.id
-    );
+    const { senderId, receiverId } = req.query;
 
-    const userB = new mongoose.Types.ObjectId(
-      req.body._id
-    );
+    console.log(senderId, receiverId);
 
-    if (userA.equals(userB)) {
+    if (!senderId || !receiverId || senderId === receiverId) {
       return res.status(400).json({
         message: "Invalid friendship",
       });
     }
 
-    // --------------------------------------------------------
     // Normalize IDs
-    // --------------------------------------------------------
-
     const [user1, user2] = getSortedUserIds(
-      userA,
-      userB
+      senderId,
+      receiverId
     );
 
-    // --------------------------------------------------------
     // Verify friendship
-    // --------------------------------------------------------
-
     const friendship = await friendshipModel.findOne({
       user1,
       user2,
@@ -688,49 +657,34 @@ export const unfriendRequest = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------------
-    // Transaction
-    // --------------------------------------------------------
+    // Delete friendship
+    await friendshipModel.deleteOne({
+      _id: friendship._id,
+    });
 
-    session.startTransaction();
-
-    await friendshipModel.deleteOne(
-      {
-        _id: friendship._id,
-      },
-      { session }
-    );
-
-    // Decrement both counters
+    // Decrement both users' friend counts
     await userModel.updateMany(
       {
         _id: {
-          $in: [userA, userB],
+          $in: [senderId, receiverId],
         },
-        friendCount: {
-          $gt: 0,
-        },
+        friendCount: { $gt: 0 },
       },
       {
-        $inc: {
-          friendCount: -1,
-        },
-      },
-      { session }
+        $inc: { friendCount: -1 },
+      }
     );
-    await session.commitTransaction();
-    return res.status(200).json({
-      message: "Friendship removed",
-    });
-  } catch (err) {
 
-    await session.abortTransaction();
+    // Return updated friends list
+    const friends = await userFriends(senderId, 1, 20, true);
+
+    return res.status(200).json(friends);
+  } catch (err) {
     console.log("unfriendRequest error:", err);
+
     return res.status(500).json({
       message: "Server error",
     });
-  } finally {
-    session.endSession();
   }
 };
 
@@ -769,14 +723,14 @@ export const getFriendshipStatus = async (req, res) => {
       });
     }
 
-    const userA = new mongoose.Types.ObjectId(user_id);
-    const userB = new mongoose.Types.ObjectId(profile_id);
+    const senderId = new mongoose.Types.ObjectId(user_id);
+    const receiverId = new mongoose.Types.ObjectId(profile_id);
 
     // ------------------------------------------------
     // SELF
     // ------------------------------------------------
 
-    if (userA.equals(userB)) {
+    if (senderId.equals(receiverId)) {
       return res.status(200).json({
         status: "self",
       });
@@ -791,12 +745,12 @@ export const getFriendshipStatus = async (req, res) => {
     const friendship = await friendshipModel.findOne({
       $or: [
         {
-          user1: userA,
-          user2: userB,
+          user1: senderId,
+          user2: receiverId,
         },
         {
-          user1: userB,
-          user2: userA,
+          user1: receiverId,
+          user2: senderId,
         },
       ],
     }).lean();
@@ -812,8 +766,8 @@ export const getFriendshipStatus = async (req, res) => {
     // ------------------------------------------------
 
     const requestSent = await friendRequestModel.findOne({
-      sender: userA,
-      receiver: userB,
+      sender: senderId,
+      receiver: receiverId,
       status: "pending",
     }).lean();
 
@@ -829,8 +783,8 @@ export const getFriendshipStatus = async (req, res) => {
     // ------------------------------------------------
 
     const requestReceived = await friendRequestModel.findOne({
-      sender: userB,
-      receiver: userA,
+      sender: receiverId,
+      receiver: senderId,
       status: "pending",
     }).lean();
 
@@ -1116,27 +1070,29 @@ export const friendRequest1 =
    
     export const unfriendRequest1 =  async (req, res) => {
         try {
-          const userA = new mongoose.Types.ObjectId(req.params.id);   // current user
-          const userB = new mongoose.Types.ObjectId(req.body._id);    // friend to remove
+          // const senderId = new mongoose.Types.ObjectId(req.params.id);   // current user
+          // const receiverId = new mongoose.Types.ObjectId(req.body._id);    // friend to remove
+          const { senderId, receiverId } = req.query;
+
           // Optional: check if they are actually friends
           const exists = await friendModel.findOne({
-            user_id: userA,
-            friends: userB
+            user_id: senderId,
+            friends: receiverId
           });
           if (!exists) {
             return res.status(400).json({ message: "Users are not friends" });
           }
           // Remove each other from friends list
           await friendModel.updateOne(
-            { user_id: userA },
+            { user_id: senderId },
             {
-              $pull: { friends: userB }
+              $pull: { friends: receiverId }
             }
           );
-          const updatedUserB = await friendModel.updateOne(
-            { user_id: userB },
+          const updatedreceiverId = await friendModel.updateOne(
+            { user_id: receiverId },
             {
-              $pull: { friends: userA }
+              $pull: { friends: senderId }
             }
           );
           const fList = await generateFriends(req.body._id)

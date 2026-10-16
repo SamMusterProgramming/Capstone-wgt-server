@@ -47,8 +47,10 @@ const userSchema = new mongoose.Schema({
        },
       username :{    
         type:String,
-      //   required:true,
       },
+      bio :{    
+         type:String,
+       },
       city:{
       type:String,
       default:"Charlotte"

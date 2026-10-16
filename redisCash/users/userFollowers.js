@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import redis from "../../config/redis.js";
-import Follow from "../../models/follow.js";
+// import Follow from "../../models/follow.js";
 import userProfile from "./userProfile.js";
+import FollowModal from "../../models/follow.js";
 
 const FOLLOWERS_CACHE_SECONDS = 60 * 5;
 
@@ -26,7 +27,7 @@ const userFollowers = async (
       }
     }
 
-    const relationships = await Follow.aggregate([
+    const relationships = await FollowModal.aggregate([
 
       {
         $match: {

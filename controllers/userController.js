@@ -100,11 +100,13 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
 
   export const updateUserInfoById = async(req,res)=>{ 
     const userId = req.params.id
+    console.log(req.body)
     const user = await userModel.findByIdAndUpdate(
              userId,
             req.body,
             { new: true }
           )
+
     if(!user) return res.json({error:"cant find the user"}).status(404)
     await updateUserProfileRedis(user)
     res.status(200).json(user)

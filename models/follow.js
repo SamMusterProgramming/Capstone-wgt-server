@@ -14,6 +14,7 @@ const followSchema = new mongoose.Schema(
       required: true,
     },
   },
+  
   {
     timestamps: true,
     versionKey: false,
