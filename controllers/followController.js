@@ -7,10 +7,51 @@ import FollowModal from "../models/follow.js";
 
 
 
+export const followshipStatus = async (req, res) => {
+  try {
+    const { user_id, profile_id } = req.query;
+
+    if (!user_id || !profile_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id and profile_id are required",
+      });
+    }
+
+    if (
+      !mongoose.Types.ObjectId.isValid(user_id) ||
+      !mongoose.Types.ObjectId.isValid(profile_id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID or profile ID",
+      });
+    }
+
+    // Is the visiting user following the profile owner?
+    const isFollowing = await FollowModal.exists({
+      followerId: user_id,
+      followingId: profile_id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      status: isFollowing ? "Following" : "Follow",
+    });
+  } catch (error) {
+    console.error("followshipStatus error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve followship status",
+    });
+  }
+};
+
 export const followingRequest = async (req, res) => {
   try {
     const { senderId, receiverId } = req.query;
-
+    
     // Validate IDs
     if (
       !mongoose.isValidObjectId(senderId) ||
@@ -27,33 +68,25 @@ export const followingRequest = async (req, res) => {
         message: "Cannot follow yourself",
       });
     }
-
+   
     // Create the follow relationship.
     // The unique compound index prevents duplicate relationships.
-    try {
+
       await FollowModal.create({
         followerId: senderId,
         followingId: receiverId,
-      });
-    } catch (error) {
-      // MongoDB duplicate-key error
-      if (error.code === 11000) {
-        return res.status(400).json({
-          message: "Already following",
-        });
-      }
+      }); 
+   
 
-      throw error;
-    }
-
+      
     // Return the receiver's updated followers.
-    const result = await userFollowers(
-      receiverId,
+    const result = await userFollowings(
+      senderId,
       1,
       20,
-      true
+      true  
     );
-
+    console.log(result)
     return res.status(200).json(result);
   } catch (err) {
     console.error("followingRequest error:", err);

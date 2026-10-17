@@ -17,7 +17,7 @@ import { addPushToken, anonymouslogin, deletePushToken, getMe, googleLogin, logi
 import { protect } from '../middleware/jwtProtect.js';
 
 import { acceptRequest, cancelRequest, denyRequest, friendRequest, getFriendList, getFriendRequestsReceived, getFriendshipStatus, unfriendRequest } from '../controllers/friendController.js';
-import { followingRequest, getFollowers, getFollowings, removeFollower, unfollowingRequest } from '../controllers/followController.js';
+import { followingRequest, followshipStatus, getFollowers, getFollowings, removeFollower, unfollowingRequest } from '../controllers/followController.js';
 import { deleteNotificationById, deleteUserById, getUploadImageUrl, getUploadVideoUrl, getUserById, getUserNotificationsByUserId, saveCoverImage, saveProfileImage, shareWithFriends, updateNotificationById, updateUserInfoById, updateUserProfileRedis } from '../controllers/userController.js';
 import { getNotifications } from '../controllers/notificationController.js';
 import { deepSearch, searchSuggestions } from '../controllers/searchController.js';
@@ -65,6 +65,7 @@ route.get('/friendRequests/received/:id',protect,getFriendRequestsReceived)
 route.post("/followings/add/" , protect ,followingRequest)
 route.patch('/unfollowing/',protect, unfollowingRequest)
 route.post('/removeFollower/',protect, removeFollower)
+route.get("/followship/status/" , protect ,followshipStatus)
 
 route.get('/followers/:id',protect,validateMongoObjectId,getFollowers)
 route.get('/followings/:id',protect,validateMongoObjectId,getFollowings)
