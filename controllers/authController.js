@@ -293,11 +293,6 @@ export const signup = async (req, res) => {
       ) {
         return res.status(404).json({ message: "User not found" });
       }  
-      // if (!user.providers.includes("email")){
-      //   return res.status(403).json({
-      //     message: "Please login using Google",
-      //   });
-      // }
       user.email_verified = true ;
       user.uid = uid;
       await user.save()
@@ -308,7 +303,9 @@ export const signup = async (req, res) => {
         token: jwtToken,
         user,
       });
+      console.log(jwtToken)
     } catch (err) {
+      console.error("❌ ANONYMOUS LOGIN ERROR:", err);
       res.status(500).json({ message: "Login failed" });
     }
   };

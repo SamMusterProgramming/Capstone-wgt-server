@@ -336,6 +336,7 @@ export const getArenaByProfile = async (req, res) => {
         if (!requesterId || arenas.length === 0) {
             return res.json(arenas);
         }   
+       
         const arenaIds = arenas.map(arena => arena._id);
         const [followers, stars] = await Promise.all([
             arenaFollowerModel.find(

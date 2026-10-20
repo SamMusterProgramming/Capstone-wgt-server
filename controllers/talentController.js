@@ -433,18 +433,20 @@ export const getUserContestantInStage = async(req,res)=>{
     const user_id = req.params.id
     let userTalents = await talentModel.find({
       $or: [
-        {  'contestants.user_id':  user_id
+        {  
+          'contestants.user_id':  user_id
           }, 
-        {  'queue.user_id': user_id
-          
+        {  
+          'queue.user_id': user_id
           }, 
-        {  'eliminations.user_id': user_id             
+        {  
+          'eliminations.user_id': user_id             
           }
       ]
      });
     userTalents = userTalents.filter(t => t.contestants.length !== 0)
+    console.log(userTalents)
     res.json(userTalents)
-    
 }
      
 export const getHotStages = async(req,res)=>{
