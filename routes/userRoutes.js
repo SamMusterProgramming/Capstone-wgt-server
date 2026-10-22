@@ -50,8 +50,8 @@ route.post("/getUploadVideoUrl",protect, getUploadVideoUrl);
 route.post("/getUploadImageUrl", protect , getUploadImageUrl);
 
 //friends , requests ... 
-route.post("/friends/request/:id",protect,validateMongoObjectId,friendRequest);
-route.post("/friends/cancel/:id",protect,validateMongoObjectId,cancelRequest);
+route.post("/friends/request/",protect,friendRequest);
+route.post("/friends/cancel/",protect,cancelRequest);
 route.post('/friends/accept/',protect,acceptRequest);
 route.post('/friends/deny/',protect,denyRequest);
 

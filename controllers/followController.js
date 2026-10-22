@@ -86,7 +86,7 @@ export const followingRequest = async (req, res) => {
       20,
       true  
     );
-    console.log(result)
+
     return res.status(200).json(result);
   } catch (err) {
     console.error("followingRequest error:", err);

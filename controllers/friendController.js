@@ -7,152 +7,10 @@ import friendshipModel from "../models/friendshipSchema.js";
 import friendRequestModel from "../models/friendRequest.js";
 import userFriends from "../redisCash/users/userFriends.js";
 import userFriendRequestsReceived from "../redisCash/users/userFriendRequestsReceived.js";
+import userFriendRequestsSent from "../redisCash/users/userFriendRequestsSent.js";
 
 
 
-
-
-const migrateFriends = async () => {
-  try {
-    console.log("Starting friend migration...");
-
-    const oldFriendDocuments = await friendModel.find({}).lean();
-
-    console.log(
-      `Found ${oldFriendDocuments.length} old friend documents`
-    );
-
-    const friendships = new Map();
-
-    for (const friendDocument of oldFriendDocuments) {
-      const ownerId = friendDocument.user_id;
-
-      if (
-        !mongoose.Types.ObjectId.isValid(ownerId)
-      ) {
-        console.log(
-          "Skipping invalid owner:",
-          ownerId
-        );
-
-        continue;
-      }
-
-      const ownerObjectId =
-        new mongoose.Types.ObjectId(ownerId);
-
-      if (
-        !Array.isArray(friendDocument.friends) ||
-        friendDocument.friends.length === 0
-      ) {
-        continue;
-      }
-
-      for (const friendId of friendDocument.friends) {
-        if (
-          !friendId ||
-          !mongoose.Types.ObjectId.isValid(friendId)
-        ) {
-          continue;
-        }
-
-        const friendObjectId =
-          new mongoose.Types.ObjectId(friendId);
-
-        // Prevent a user from becoming friends with themselves
-        if (ownerObjectId.equals(friendObjectId)) {
-          continue;
-        }
-
-        // Normalize the friendship pair
-        const ids = [
-          ownerObjectId,
-          friendObjectId,
-        ].sort((a, b) =>
-          a.toString().localeCompare(
-            b.toString()
-          )
-        );
-
-        const user1 = ids[0];
-        const user2 = ids[1];
-
-        // Use the normalized pair as the unique migration key
-        const friendshipKey =
-          `${user1.toString()}_${user2.toString()}`;
-
-        if (!friendships.has(friendshipKey)) {
-          friendships.set(friendshipKey, {
-            user1,
-            user2,
-          });
-        }
-      }
-    }
-
-    const friendshipDocuments =
-      Array.from(friendships.values());
-
-    console.log(
-      `Prepared ${friendshipDocuments.length} unique friendships`
-    );
-
-    if (friendshipDocuments.length === 0) {
-      console.log(
-        "No friendships found to migrate."
-      );
-
-      return;
-    }
-
-    const result =
-      await friendshipModel.bulkWrite(
-        friendshipDocuments.map(
-          (friendship) => ({
-            updateOne: {
-              filter: {
-                user1: friendship.user1,
-                user2: friendship.user2,
-              },
-              update: {
-                $setOnInsert: {
-                  user1: friendship.user1,
-                  user2: friendship.user2,
-                  createdAt: new Date(),
-                },
-              },
-              upsert: true,
-            },
-          })
-        ),
-        {
-          ordered: false,
-        }
-      );
-
-    console.log(
-      "Friend migration completed."
-    );
-
-    console.log(
-      "Inserted:",
-      result.upsertedCount
-    );
-
-    console.log(
-      "Already existed:",
-      friendshipDocuments.length -
-        result.upsertedCount
-    );
-  } catch (error) {
-    console.error(
-      "Friend migration error:",
-      error
-    );
-
-    throw error;
-  }
-};
 
 
 
@@ -173,14 +31,13 @@ const getSortedUserIds = (senderId, receiverId) => {
 
 export const friendRequest = async (req, res) => {
   try {
-    const senderId = new mongoose.Types.ObjectId(req.params.id);
-    const receiverId = new mongoose.Types.ObjectId(req.body._id);
-    console.log(receiverId)
+    const { senderId, receiverId } = req.query;
+
     // --------------------------------------------------------
     // 1. Prevent sending a request to yourself
     // --------------------------------------------------------
 
-    if (senderId.equals(receiverId)) {
+    if (senderId === receiverId) {
       return res.status(400).json({
         message: "You cannot send a friend request to yourself",
       });
@@ -244,16 +101,6 @@ export const friendRequest = async (req, res) => {
       });
     }
 
-    // --------------------------------------------------------
-    // 5. Check opposite direction
-    //
-    // If Bob already sent Alice a request, don't create:
-    //
-    // Alice -> Bob
-    // Bob   -> Alice
-    //
-    // Instead frontend should accept the existing request.
-    // --------------------------------------------------------
 
     const existingIncomingRequest =
       await friendRequestModel.findOne({
@@ -301,10 +148,10 @@ export const friendRequest = async (req, res) => {
       }
     );
 
-    return res.status(200).json({
-      message: "Friend request sent",
-      request,
-    });
+    const friendRequests = await userFriendRequestsSent(senderId,1,20,true);
+
+    return res.status(200).json(friendRequests);
+
   } catch (err) {
     console.log("friendRequest error:", err);
 
@@ -327,36 +174,27 @@ export const friendRequest = async (req, res) => {
 // ============================================================
 export const acceptRequest = async (req, res) => {
   try {
-    const { senderId, receiverId } = req.query;
-
-    const notificationId = req.body._id
-      ? new mongoose.Types.ObjectId(req.body._id)
-      : null;
+    const { senderId, receiverId ,notificationId} = req.query;
 
     // --------------------------------------------------------
     // 1. Validate IDs
     // --------------------------------------------------------
 
-    if (
-      !mongoose.Types.ObjectId.isValid(senderId) ||
-      !mongoose.Types.ObjectId.isValid(receiverId)
-    ) {
-      return res.status(400).json({
-        message: "Invalid user ID",
-      });
-    }
+    // if (
+    //   !mongoose.Types.ObjectId.isValid(senderId) ||
+    //   !mongoose.Types.ObjectId.isValid(receiverId)
+    // ) {
+    //   return res.status(400).json({
+    //     message: "Invalid user ID",
+    //   });
+    // }
 
-    const senderObjectId =
-      new mongoose.Types.ObjectId(senderId);
-
-    const receiverObjectId =
-      new mongoose.Types.ObjectId(receiverId);
 
     // --------------------------------------------------------
     // 2. Prevent accepting yourself
     // --------------------------------------------------------
 
-    if (senderObjectId.equals(receiverObjectId)) {
+    if (senderId === receiverId) {
       return res.status(400).json({
         message: "Invalid friend request",
       });
@@ -367,8 +205,8 @@ export const acceptRequest = async (req, res) => {
     // --------------------------------------------------------
 
     const request = await friendRequestModel.findOne({
-      sender: senderObjectId,
-      receiver: receiverObjectId,
+      sender: senderId,
+      receiver: receiverId,
       status: "pending",
     });
 
@@ -383,8 +221,8 @@ export const acceptRequest = async (req, res) => {
     // --------------------------------------------------------
 
     const [user1, user2] = getSortedUserIds(
-      senderObjectId,
-      receiverObjectId
+      senderId,
+      receiverId
     );
 
     // --------------------------------------------------------
@@ -404,8 +242,8 @@ export const acceptRequest = async (req, res) => {
       {
         _id: {
           $in: [
-            senderObjectId,
-            receiverObjectId,
+            senderId,
+            receiverId,
           ],
         },
       },
@@ -447,13 +285,13 @@ export const acceptRequest = async (req, res) => {
     // --------------------------------------------------------
 
     const receiver = await userModel.findById(
-      receiverObjectId
+      receiverId
     );
 
     if (receiver) {
       await emitNotification(
-        senderObjectId,
-        receiverObjectId,
+        senderId,
+        receiverId,
         "friends",
         "friend_request_accepted",
         {
@@ -472,9 +310,12 @@ export const acceptRequest = async (req, res) => {
     // --------------------------------------------------------
 
     const friendRequests = await userFriendRequestsReceived(receiverId,1,20,true);
-
+    const friends =  await userFriends(receiverId,1,20,true)
     return res.status(200).json(
-      friendRequests.users
+     { 
+      requests: friendRequests,
+      friends : friends
+     }
     );
 
   } catch (err) {
@@ -558,14 +399,8 @@ export const denyRequest = async (req, res) => {
 export const cancelRequest = async (req, res) => {
   try {
 
-    const senderId = new mongoose.Types.ObjectId(
-      req.params.id
-    );
-
-    const receiverId = new mongoose.Types.ObjectId(
-      req.body._id
-    );
-
+    const { senderId, receiverId } = req.query;
+    console.log(senderId)
     // --------------------------------------------------------
     // Find pending request
     // --------------------------------------------------------
@@ -609,9 +444,10 @@ export const cancelRequest = async (req, res) => {
       receiver_id: receiverId,
     });
 
-    return res.status(200).json({
-      message: "Friend request cancelled",
-    });
+    const friendRequests = await userFriendRequestsSent(senderId,1,20,true);
+
+    return res.status(200).json(friendRequests);
+
   } catch (err) {
     console.log("cancelRequest error:", err);
 
@@ -631,7 +467,6 @@ export const unfriendRequest = async (req, res) => {
   try {
     const { senderId, receiverId } = req.query;
 
-    console.log(senderId, receiverId);
 
     if (!senderId || !receiverId || senderId === receiverId) {
       return res.status(400).json({
@@ -736,11 +571,6 @@ export const getFriendshipStatus = async (req, res) => {
       });
     }
 
-    // ------------------------------------------------
-    // FRIENDSHIP
-    // ------------------------------------------------
-    // Friendship stores the two users as user1/user2,
-    // so check both possible directions.
 
     const friendship = await friendshipModel.findOne({
       $or: [
@@ -794,10 +624,6 @@ export const getFriendshipStatus = async (req, res) => {
         request_id: requestReceived._id,
       });
     }
-
-    // ------------------------------------------------
-    // NO RELATIONSHIP
-    // ------------------------------------------------
 
     return res.status(200).json({
       status: "add",
