@@ -174,8 +174,8 @@ export const friendRequest = async (req, res) => {
 // ============================================================
 export const acceptRequest = async (req, res) => {
   try {
-    const { senderId, receiverId ,notificationId} = req.query;
-
+    const { senderId, receiverId } = req.query;
+    const notificationId = null
     // --------------------------------------------------------
     // 1. Validate IDs
     // --------------------------------------------------------
@@ -511,7 +511,7 @@ export const unfriendRequest = async (req, res) => {
     );
 
     // Return updated friends list
-    const friends = await userFriends(senderId, 1, 20, true);
+    const friends = await userFriends(receiverId, 1, 20, true);
 
     return res.status(200).json(friends);
   } catch (err) {
