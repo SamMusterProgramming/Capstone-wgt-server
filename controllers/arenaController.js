@@ -58,13 +58,64 @@ export const createArena = async (req, res) => {
             biography,
             description,
             coverImage ,
-            profileImage
-          } = req.body
+            profileImage ,
+            customCoverImage ,
+            customProfileImage
+          } = req.body   
+    console.log(req.body)
     const existArena = await arenaModel.findOne({
         owner_id:userId,
         talentType
     })
     if(existArena) return res.json({ message:"arena exists already"})
+
+    // if ( profileImage?.fileId !== undefined)
+    //   {
+    //     const signedUrl = await getPublicUrlFromB2(profileImage.fileName);
+    //     const cdnUrl = signedUrl.replace(
+    //     "https://f005.backblazeb2.com",
+    //     "https://cdn.challenmemey.com"
+    //     );
+    //     updateData.profileImage = {
+    //         publicUrl : cdnUrl ,
+    //         fileId : profileImage.fileId,
+    //         fileName : profileImage .fileName
+    //     }
+    //   }
+    let coverImageToUpdate = coverImage
+    let profileImageToUpdate = profileImage
+
+
+    if (customCoverImage) 
+      {
+          const signedUrl = await getPublicUrlFromB2(coverImage.fileName);
+          const cdnUrl = signedUrl.replace(
+          "https://f005.backblazeb2.com",
+          "https://cdn.challenmemey.com"
+          );
+          // updateData.coverImage = {
+          //     publicUrl : cdnUrl ,
+          //     fileId : coverImage.fileId,
+          //     fileName : coverImage.fileName
+          // }
+          coverImageToUpdate = {...coverImage , publicUrl : cdnUrl }
+      }
+
+      if (customProfileImage) 
+        {
+            const signedUrl = await getPublicUrlFromB2(profileImage.fileName);
+            const cdnUrl = signedUrl.replace(
+            "https://f005.backblazeb2.com",
+            "https://cdn.challenmemey.com"
+            );
+            // updateData.coverImage = {
+            //     publicUrl : cdnUrl ,
+            //     fileId : coverImage.fileId,
+            //     fileName : coverImage.fileName
+            // }
+            profileImageToUpdate  = {...profileImage , publicUrl : cdnUrl }
+        }
+
     const arena = await arenaModel.create({
         owner_id : userId ,
         arenaName,
@@ -72,12 +123,11 @@ export const createArena = async (req, res) => {
         region,
         biography,
         description,
-        profileImage,
-        coverImage
+        profileImage : profileImageToUpdate ,
+        coverImage : coverImageToUpdate
     })
     const arenas = await userArenas(userId , true)
     
-
 
     const friend = await friendModel.findOne({
       user_id: userId
