@@ -62,7 +62,6 @@ export const createArena = async (req, res) => {
             customCoverImage ,
             customProfileImage
           } = req.body   
-    console.log(req.body)
     const existArena = await arenaModel.findOne({
         owner_id:userId,
         talentType
@@ -201,15 +200,13 @@ export const updateArena = async (
         description,
         profileImage,
         coverImage,
+        profileImageToDelete,
+        coverImageToDelete
       } = req.body
-      console.log(req.body)
       const updateData = {};
 
-      if (biography !== undefined)
-            updateData.biography = biography;
-
-      if (description !== undefined)
-            updateData.description = description;
+      if (biography !== undefined)   updateData.biography = biography;
+      if (description !== undefined) updateData.description = description;
       if ( profileImage?.fileId !== undefined)
         {
           const signedUrl = await getPublicUrlFromB2(profileImage.fileName);
@@ -222,6 +219,13 @@ export const updateArena = async (
              fileId : profileImage.fileId,
              fileName : profileImage .fileName
           }
+
+          if (profileImageToDelete?.fileId && profileImageToDelete?.fileName) {
+      
+            deleteFileFromB2_Public(profileImageToDelete.fileName, profileImageToDelete.fileId)
+              .catch(err => console.error("Delete error:", err));
+          }
+
         }
 
       if (coverImage?.fileId !== undefined ) 
@@ -236,6 +240,13 @@ export const updateArena = async (
                 fileId : coverImage.fileId,
                 fileName : coverImage.fileName
             }
+
+            if (coverImageToDelete?.fileId && coverImageToDelete?.fileName) {
+
+              deleteFileFromB2_Public(coverImageToDelete.fileName, coverImageToDelete.fileId)
+                .catch(err => console.error("Delete error:", err));
+            }
+
         }
       const arena = await arenaModel.findOneAndUpdate(
         {
@@ -262,6 +273,9 @@ export const updateArena = async (
   
       await redis.del(
         `local_arenas_${arena.region}`
+      );
+      await redis.del(
+        `arena:${arena._id}`
       );
 
       const freshArenas = await userArenas(
@@ -314,9 +328,20 @@ export const deleteArena = async (req, res) => {
             $in: arena.posts || [],
           },
         });
+        //delete media
+        if (arena.profileImage?.fileId && arena.profileImage?.fileName) {
+
+          deleteFileFromB2_Public(arena.profileImage.fileName, arena.profileImage.fileId)
+            .catch(err => console.error("Delete error:", err));
+         }
+
+        if (arena.coverImage?.fileId && arena.coverImage?.fileName) {
+        
+          deleteFileFromB2_Public(arena.coverImage.fileName, arena.coverImage.fileId)
+            .catch(err => console.error("Delete error:", err));
+         }
     
         // delete arena
-    
         await arenaModel.findByIdAndDelete(
           arena_id
         );

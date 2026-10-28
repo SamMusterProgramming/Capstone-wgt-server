@@ -10,51 +10,6 @@ import getUserProfile from "../service/users/getUserProfile.js";
 
 
 
-// getSenderProfile.js
-
-// export const getUserProfile = async (
-//   userId
-// ) => {
-//   if (!userId) return null;
-//   try {
-//     // await redis.del(`user:${userId}`);
-//     // 1. REDIS FIRST
-//     const cached =
-//       await redis.get(
-//         `user:${userId}`
-//       );
-//     if (cached) {
-//       return cached;
-//     }
-//     // 2. FALLBACK TO MONGO
-//     const user =
-//       await userModel.findById(userId);
-//     if (!user) return null;
-//     // convert mongoose document
-//     const plainUser =
-//       user.toObject();
-
-//     // 3. CACHE USER
-//     await redis.set(
-//       `user:${userId}`,
-//       JSON.stringify(plainUser),
-//       {
-//         ex: 60 * 10,
-//       }
-//     );
-//     return plainUser;
-//   } catch (err) {
-//     console.log(
-//       "GET USER PROFILE ERROR:",
-//       err
-//     );
-//     return null;
-//   }
-// };
-
-
-
-
 
 export const updateUserProfileRedis = async (
   user
@@ -190,9 +145,10 @@ export const deleteUserById = async(req,res)=>{ // delete single user by _id
       }
   
       if (deleteFileId && deleteFileName) {
-        deleteFileFromB2_Public(deleteFileName, deleteFileId)
+          deleteFileFromB2_Public(deleteFileName, deleteFileId)
           .catch(err => console.error("Delete error:", err));
       }
+
       await talentModel.updateMany(
         {},
         {
