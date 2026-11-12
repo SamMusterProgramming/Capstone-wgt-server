@@ -1,4 +1,5 @@
 import redis from "../../config/redis.js";
+import stageModel from "../../models/stage.js";
 import talentModel from "../../models/talent.js";
 
 const HOT_STAGES_CACHE_SECONDS = 60 * 3; // 3 minutes
@@ -22,7 +23,7 @@ export const hotStages = async (
       }
   
       // MONGO
-      const hotStages = await talentModel.aggregate([
+      const hotStages = await stageModel.aggregate([
         {
           $addFields: {
             contestantsCount: {

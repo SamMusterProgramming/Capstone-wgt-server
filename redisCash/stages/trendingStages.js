@@ -1,4 +1,5 @@
 import redis from "../../config/redis.js";
+import stageModel from "../../models/stage.js";
 import talentModel from "../../models/talent.js";
 
 
@@ -145,11 +146,11 @@ const trendingStages = async(
             },
             },
         ];
-        const localStages = await talentModel.aggregate(
+        const localStages = await stageModel.aggregate(
             [...buildPipeline([userCountryCode]), { $limit: 15 }]
         );
             
-        const regionalStages = await talentModel.aggregate(
+        const regionalStages = await stageModel.aggregate(
             [...buildPipeline(otherCountries), { $limit: 15 }]
             );
         const stages = [

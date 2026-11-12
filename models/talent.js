@@ -53,7 +53,11 @@ const talentSchema = new mongoose.Schema({
         default: [] 
        }
     ,
-
+    talentType:{
+       type:String,   
+        default:"Singing"
+    },
+    
     voters:[],
     editions:[],
     desc:{

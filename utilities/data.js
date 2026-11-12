@@ -315,4 +315,60 @@ export const SPOTLIGHT_COUNTRIES = [
 
 ];
 
+
+export const talentStages = [
+
+  // MUSIC
+  { id: "0", name: "Singing" },
+  { id: "1", name: "Rapping" },
+  { id: "2", name: "Beatboxing" },
+  { id: "3", name: "Guitar" },
+  { id: "4", name: "Piano" },
+  { id: "5", name: "Violin" },
+  { id: "6", name: "Drumming" },
+  { id: "7", name: "DJing" },
+  { id: "8", name: "Beatmaking" },
+
+  // DANCE & PHYSICAL PERFORMANCE
+  { id: "9", name: "Dancing" },
+  { id: "10", name: "Fitness" },
+  { id: "11", name: "Acrobatics" },
+  { id: "12", name: "Karate" },
+  { id: "13", name: "Parkour" },
+  { id: "14", name: "Skating" },
+  { id: "15", name: "Yoga" },
+
+  // MAGIC & ENTERTAINMENT
+  { id: "16", name: "Magic" },
+  { id: "17", name: "Mentalism" },
+  { id: "18", name: "Comedy" },
+  { id: "19", name: "Acting" },
+  { id: "20", name: "Ventriloquism" },
+  { id: "21", name: "Juggling" },
+  { id: "22", name: "Puppetry" },
+  { id: "23", name: "Fire Performance" },
+  { id: "24", name: "Stunts" },
+  { id: "25", name: "Storytelling" },
+
+  // CREATIVE & VISUAL ARTS
+  { id: "26", name: "Art" },
+  { id: "27", name: "Photography" },
+  { id: "28", name: "Filmmaking" },
+  { id: "29", name: "Animation" },
+  { id: "30", name: "Design" },
+  { id: "31", name: "Fashion" },
+  { id: "32", name: "Makeup" },
+
+  // TECHNOLOGY
+  { id: "33", name: "Tech" },
+
+  // OTHER TALENTS
+  { id: "34", name: "Modeling" },
+  { id: "35", name: "Eating" },
+  { id: "36", name: "Cooking" },
+  { id: "37", name: "Speedcubing" },
+  { id: "38", name: "Whistling" },
+
+];
+
 export { users, challenges , COUNTRY_REGIONS ,SPOTLIGHT_REGIONS};

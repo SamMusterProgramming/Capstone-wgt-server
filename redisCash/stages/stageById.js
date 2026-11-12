@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import redis from "../../config/redis.js";
 import talentModel from "../../models/talent.js";
+import stageModel from "../../models/stage.js";
 
 const STAGE_CACHE_SECONDS = 60 * 5; // 5 minutes
 
@@ -37,7 +38,7 @@ export const stageById = async (
     // MONGO
     // -----------------------------
 
-    const stage = await talentModel.aggregate([
+    const stage = await stageModel.aggregate([
       {
         $match: {
           _id: new mongoose.Types.ObjectId(stageId),

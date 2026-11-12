@@ -15,6 +15,7 @@ import redis from "../config/redis.js";
 import FollowModal from "../models/follow.js";
 
 import getUserProfile from "../service/users/getUserProfile.js";
+import migrateStages from "../script/migrateStages.js";
 
 
 
@@ -386,12 +387,12 @@ export const googleLogin = async (req, res) => {
   // ---------------- ME ----------------
   export const getMe = async (req, res) => {
     try {
-      const user =  await getUserProfile(req.user._id) //await userModel.findById(req.user._id);
+      const user =  await getUserProfile(req.user._id) 
       // console.log(user)
       if(!user) return  res.json({user:false})
       // await rebuildSpotlight();
-      
-      
+      // console.log("making  stage migration")
+      // await migrateStages();
       // const keys = [];
       // for (let i =1 ; i<=50 ; i++) {
       //       keys.push(
