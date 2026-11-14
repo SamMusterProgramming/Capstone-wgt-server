@@ -15,16 +15,6 @@ const ArenaSchema = new mongoose.Schema({
     talentType: {
       type: String,
       required: true,
-      enum: [
-        "Sport",
-        "Fitness",
-        "Art",
-        "Singing",
-        "Dancing",
-        "Music",
-        "Comedy",
-        "Magic"
-      ],
     },
     region: {
       type: String,
