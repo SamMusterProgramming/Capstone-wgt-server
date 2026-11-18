@@ -21,8 +21,5 @@ const favouriteSchema = new mongoose.Schema(
   }
 );
 
-// favouriteSchema.index({
-//   user_id: 1,
-// });
 let favouriteModel = mongoose.model( "favourites", favouriteSchema);
 export default favouriteModel ;

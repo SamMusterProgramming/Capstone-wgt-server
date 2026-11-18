@@ -37,7 +37,7 @@ export const favouriteStages =
 
           {
             $lookup: {
-              from: "talents",
+              from: "stages",
               localField:
                 "favourites",
               foreignField: "_id",

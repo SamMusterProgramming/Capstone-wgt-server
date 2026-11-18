@@ -346,7 +346,6 @@ export const talentStages = [
   { id: "20", name: "Ventriloquism" },
   { id: "21", name: "Juggling" },
   { id: "22", name: "Puppetry" },
-  { id: "23", name: "Fire Performance" },
   { id: "24", name: "Stunts" },
   { id: "25", name: "Storytelling" },
 
