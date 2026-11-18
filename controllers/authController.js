@@ -16,6 +16,7 @@ import FollowModal from "../models/follow.js";
 
 import getUserProfile from "../service/users/getUserProfile.js";
 import migrateStages from "../script/migrateStages.js";
+import cacheAllStages from "../redisCash/stages/cacheAllStages.js";
 
 
 
@@ -401,7 +402,8 @@ export const googleLogin = async (req, res) => {
       // }
       // await redis.del(...keys);
       // await migrateFollowersToFollow()
-
+      // await cacheAllStages();
+ 
       await rebuildSpotlight({
           type:"global"
       });

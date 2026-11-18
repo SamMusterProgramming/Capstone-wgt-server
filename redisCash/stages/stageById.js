@@ -1,16 +1,11 @@
+
 import mongoose from "mongoose";
 import redis from "../../config/redis.js";
-import talentModel from "../../models/talent.js";
 import stageModel from "../../models/stage.js";
 
-const STAGE_CACHE_SECONDS = 60 * 5; // 5 minutes
+const STAGE_CACHE_SECONDS = 60 * 5;
 
-export const stageById = async (
-  stageId,
-  refreshCache = false
-) => {
-  const cacheKey = `stage:${stageId}`;
-
+export const stageById = async (stageId, refreshCache = false) => {
   try {
     // -----------------------------
     // VALIDATE ID
@@ -20,8 +15,11 @@ export const stageById = async (
       throw new Error("Invalid stage ID");
     }
 
+    const objectId = new mongoose.Types.ObjectId(stageId);
+    const cacheKey = `stage:${objectId.toString()}`;
+
     // -----------------------------
-    // REDIS
+    // REDIS CACHE
     // -----------------------------
 
     if (!refreshCache) {
@@ -35,14 +33,18 @@ export const stageById = async (
     }
 
     // -----------------------------
-    // MONGO
+    // MONGODB AGGREGATION
     // -----------------------------
 
-    const stage = await stageModel.aggregate([
+    const stages = await stageModel.aggregate([
       {
         $match: {
-          _id: new mongoose.Types.ObjectId(stageId),
+          _id: objectId,
         },
+      },
+
+      {
+        $limit: 1,
       },
 
       // -----------------------------
@@ -52,95 +54,225 @@ export const stageById = async (
       {
         $addFields: {
           contestantsCount: {
-            $size: {
-              $ifNull: ["$contestants", []],
-            },
+            $size: { $ifNull: ["$contestants", []] },
           },
-
           queueCount: {
-            $size: {
-              $ifNull: ["$queue", []],
-            },
+            $size: { $ifNull: ["$queue", []] },
           },
-
           eliminationsCount: {
-            $size: {
-              $ifNull: ["$eliminations", []],
-            },
+            $size: { $ifNull: ["$eliminations", []] },
           },
-
           votersCount: {
-            $size: {
-              $ifNull: ["$voters", []],
-            },
+            $size: { $ifNull: ["$voters", []] },
           },
-
           commentsCount: {
-            $size: {
-              $ifNull: ["$comments", []],
-            },
+            $size: { $ifNull: ["$comments", []] },
           },
         },
       },
 
       // -----------------------------
-      // CONTESTANT USER INFORMATION
+      // COLLECT ALL PARTICIPANT IDS
+      // -----------------------------
+
+      {
+        $addFields: {
+          _participantUserIds: {
+            $setUnion: [
+              {
+                $filter: {
+                  input: {
+                    $concatArrays: [
+                      {
+                        $map: {
+                          input: { $ifNull: ["$contestants", []] },
+                          as: "item",
+                          in: "$$item.user_id",
+                        },
+                      },
+                      {
+                        $map: {
+                          input: { $ifNull: ["$queue", []] },
+                          as: "item",
+                          in: "$$item.user_id",
+                        },
+                      },
+                      {
+                        $map: {
+                          input: { $ifNull: ["$eliminations", []] },
+                          as: "item",
+                          in: "$$item.user_id",
+                        },
+                      },
+                    ],
+                  },
+                  as: "userId",
+                  cond: { $ne: ["$$userId", null] },
+                },
+              },
+              [],
+            ],
+          },
+        },
+      },
+
+      // -----------------------------
+      // FETCH PUBLIC USER INFORMATION
+      // ONE LOOKUP FOR ALL GROUPS
       // -----------------------------
 
       {
         $lookup: {
           from: "users",
-          localField: "contestants.user_id",
+          localField: "_participantUserIds",
           foreignField: "_id",
-          as: "contestantUsers",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                name: 1,
+                username: 1,
+                "profileImage.publicUrl": 1,
+                city: 1,
+                state: 1,
+                country: 1,
+                talent: 1,
+              },
+            },
+          ],
+          as: "participantProfiles",
         },
       },
 
       // -----------------------------
-      // BUILD CONTESTANTS
+      // ENRICH CONTESTANTS
       // -----------------------------
 
       {
         $addFields: {
           contestants: {
             $map: {
-              input: {
-                $ifNull: ["$contestants", []],
-              },
-
-              as: "contestant",
-
+              input: { $ifNull: ["$contestants", []] },
+              as: "item",
               in: {
-                _id: "$$contestant._id",
-
-                user_id: "$$contestant.user_id",
-
-                performances: "$$contestant.performances",
-
-                votes: "$$contestant.votes",
-
-                likes: "$$contestant.likes",
-
-                rank: "$$contestant.rank",
-
-                createdAt: "$$contestant.createdAt",
-
-                user: {
-                  $arrayElemAt: [
-                    {
-                      $filter: {
-                        input: "$contestantUsers",
-                        as: "user",
-                        cond: {
-                          $eq: [
-                            "$$user._id",
-                            "$$contestant.user_id",
-                          ],
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$participantProfiles",
+                            as: "profile",
+                            cond: {
+                              $eq: [
+                                "$$profile._id",
+                                "$$item.user_id",
+                              ],
+                            },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    $mergeObjects: [
+                      "$$item",
+                      {
+                        user: {
+                          $ifNull: ["$$matchedUser", null],
                         },
                       },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+
+          // -----------------------------
+          // ENRICH QUEUE
+          // -----------------------------
+
+          queue: {
+            $map: {
+              input: { $ifNull: ["$queue", []] },
+              as: "item",
+              in: {
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$participantProfiles",
+                            as: "profile",
+                            cond: {
+                              $eq: [
+                                "$$profile._id",
+                                "$$item.user_id",
+                              ],
+                            },
+                          },
+                        },
+                        0,
+                      ],
                     },
-                    0,
-                  ],
+                  },
+                  in: {
+                    $mergeObjects: [
+                      "$$item",
+                      {
+                        user: {
+                          $ifNull: ["$$matchedUser", null],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+
+          // -----------------------------
+          // ENRICH ELIMINATIONS
+          // -----------------------------
+
+          eliminations: {
+            $map: {
+              input: { $ifNull: ["$eliminations", []] },
+              as: "item",
+              in: {
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$participantProfiles",
+                            as: "profile",
+                            cond: {
+                              $eq: [
+                                "$$profile._id",
+                                "$$item.user_id",
+                              ],
+                            },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    $mergeObjects: [
+                      "$$item",
+                      {
+                        user: {
+                          $ifNull: ["$$matchedUser", null],
+                        },
+                      },
+                    ],
+                  },
                 },
               },
             },
@@ -149,42 +281,14 @@ export const stageById = async (
       },
 
       // -----------------------------
-      // REMOVE SENSITIVE USER DATA
+      // REMOVE TEMPORARY FIELDS
       // -----------------------------
 
       {
         $project: {
-          contestantsCount: 1,
-          queueCount: 1,
-          eliminationsCount: 1,
-          votersCount: 1,
-          commentsCount: 1,
-      
-          name: 1,
-          desc: 1,
-          region: 1,
-          MAXCONTESTANTS: 1,
-          thumbNail_URL: 1,
-      
-          contestants: 1,
-          eliminations: 1,
-          queue: 1,
-          voters: 1,
-          editions: 1,
-          invited_friends: 1,
-          comments: 1,
-      
-          createdAt: 1,
-          updatedAt: 1,
+          _participantUserIds: 0,
+          participantProfiles: 0,
         },
-      },
-
-      // -----------------------------
-      // ONLY ONE DOCUMENT
-      // -----------------------------
-
-      {
-        $limit: 1,
       },
     ]);
 
@@ -192,11 +296,11 @@ export const stageById = async (
     // STAGE NOT FOUND
     // -----------------------------
 
-    if (!stage.length) {
+    if (!stages.length) {
       return null;
     }
 
-    const result = stage[0];
+    const result = stages[0];
 
     // -----------------------------
     // SAVE TO REDIS
@@ -213,11 +317,7 @@ export const stageById = async (
     return result;
 
   } catch (error) {
-    console.error(
-      "stageById error:",
-      error
-    );
-
+    console.error("stageById error:", error);
     throw error;
   }
 };

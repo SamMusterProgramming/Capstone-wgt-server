@@ -432,24 +432,78 @@ export const getAllStages = async(req,res)=> {
 
   // get stages where a user is hero , participatant , queued , eliminiated 
   
-export const getUserContestantInStage = async(req,res)=>{
-    const user_id = req.params.id
-    let userTalents = await stageModel.find({
-      $or: [
-        {  
-          'contestants.user_id':  user_id
-          }, 
-        {  
-          'queue.user_id': user_id
-          }, 
-        {  
-          'eliminations.user_id': user_id             
-          }
-      ]
-     });
-    userTalents = userTalents.filter(t => t.contestants.length !== 0)
-    res.json(userTalents)
-}
+// export const getUserContestantInStage = async(req,res)=>{
+//     const user_id = req.params.id
+//     let userTalents = await stageModel.find({
+//       $or: [
+//         {  
+//           'contestants.user_id':  user_id
+//           }, 
+//         {  
+//           'queue.user_id': user_id
+//           }, 
+//         {  
+//           'eliminations.user_id': user_id             
+//           }
+//       ]
+//      });
+//     userTalents = userTalents.filter(t => t.contestants.length !== 0)
+//     res.json(userTalents)
+// }
+
+
+
+
+export const getUserContestantInStage = async (req, res) => {
+  try {
+    const user_id = req.params.id;
+
+    // Validate user ID
+    if (!mongoose.Types.ObjectId.isValid(user_id)) {
+      return res.status(400).json({
+        message: "Invalid user ID",
+      });
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(user_id);
+
+  
+    const userStages = await stageModel
+      .find({
+        $or: [
+          { "contestants.user_id": userObjectId },
+          { "queue.user_id": userObjectId },
+          { "eliminations.user_id": userObjectId },
+        ],
+      })
+      .select("_id")
+      .lean();
+
+    if (!userStages.length) {
+      return res.json([]);
+    }
+
+    // Retrieve fully aggregated stages through stageById
+    const aggregatedStages = await Promise.all(
+      userStages.map(({ _id }) =>
+        stageById(_id.toString())
+      )
+    );
+
+    // Remove any stages that may have been deleted
+    const result = aggregatedStages.filter(Boolean);
+
+    return res.json(result);
+
+  } catch (error) {
+    console.error("getUserContestantInStage error:", error);
+
+    return res.status(500).json({
+      message: "Failed to retrieve user stages",
+    });
+  }
+};
+
      
 export const getHotStages = async(req,res)=>{
     const user_id = req.params.id
