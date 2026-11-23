@@ -34,7 +34,7 @@ import {
    joinStageOrQueueFirstPerformance, resignContestantFromStage, 
    toggleFavouriteStage
   } from '../controllers/talentController.js';
-import { addComment, deleteComment, flagPost, getPostById, LikePost, votePost } from '../controllers/postController.js';
+import { addComment, deleteComment, flagPost, getPostById, getStageVoterEntry, LikePost, toggleStagePostVote, votePost } from '../controllers/postController.js';
 
 const route = express.Router();
 
@@ -67,7 +67,9 @@ route.patch('/delete/contestant/Elimination/:id',protect,deleteContestantFromEli
 //conestant post , like , vote 
 route.get('/post/:id',protect,getPostById)
 route.post('/likes/:id',protect,LikePost)
-route.post('/votes/:id',protect,votePost)
+route.get('/votes/entry/',protect,getStageVoterEntry)
+route.post('/votes/',protect,toggleStagePostVote )
+// route.post('/votes/:id',protect,votePost)
 route.post('/flags/:id',protect,flagPost)
 
 // comments , add , delete , update , replies

@@ -352,7 +352,7 @@ export const createTalentStage =  async(req,res)=>{
 export const getStageById = async (req, res) => {
   try {
     const stageId = req.params.id ; 
-    const stage = await stageById(stageId , false)
+    const stage = await stageById(stageId , true)
     return res.status(200).json(stage);
 
   } catch (error) {
@@ -369,50 +369,6 @@ export const getStagesByRegion = async (req, res) => {
       const { region } = req.params; 
       const normalizedCountry = region.length == 2 ? region.toUpperCase() : region;
       const stages = await regionalStages(normalizedCountry)
-      // await stageModel.find({
-      //   region: normalizedCountry,
-      // }).sort({ createdAt: -1 });
-      // const stageNames= [
-      //   "Singing" ,
-      //   "Dancing",
-      //   "Fitness",
-      //   'Magic',
-      //   "Sport",
-      //   "Melody",
-      //   "Art",
-      //   "Comedy",
-      // ];
-      // // Instrumental
-      // stageNames.forEach( async(name) =>{
-      //     if(!stages.find( s => s.name === name)){
-      //       const tal = new talentModel({
-      //       name:name,  
-      //       region : region,
-      //       desc : ""
-      //       })
-      //     await tal.save()
-      //   }else {
-      //       let t = await talentModel.findOne({name:name , region:normalizedCountry})
-      //       if (!t.editions) {
-      //           t.editions = [];
-      //         }
-              
-      //       if (t.editions.length === 0) {
-      //           t.editions.push({
-      //             _id: 1,
-      //             round: 1,
-      //             status: "open",
-      //             winner: null,
-      //             finalist: [],
-      //             semi_finalists: [],
-      //             quarter_finalists: [],
-      //             createdAt: new Date(),
-      //             updatedAt: new Date()
-      //           });
-      //         }
-      //       await t.save()
-      //      }
-      // } )
   
       return res.status(200).json(stages);
   

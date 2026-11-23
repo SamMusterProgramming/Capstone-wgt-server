@@ -3,6 +3,8 @@ import talentModel from "../models/talent.js"
 import talentPostDataModel from "../models/talentPostData.js"
 import { generateTalentStage } from "./talentController.js"
 import { emitVotesNotification } from "./notificationController.js"
+import StagePostVoteModel from "../models/stage/stagePost/stagePostVote.js"
+import stageModel from "../models/stage.js"
 
 
 
@@ -18,6 +20,8 @@ export const getPostById  = async(req,res)=>{
       }
     return res.json(talentPost)
 }
+
+
 
 export const LikePost = async(req,res)=>{
     
@@ -60,12 +64,127 @@ export const LikePost = async(req,res)=>{
     return res.json(updatedPost)
 }
 
+
+
+export const getStageVoterEntry = async (req, res) => {
+  try {
+    const { stage_id, voter_id } = req.query;
+    console.log(stage_id , voter_id)
+    const voterEntry = await StagePostVoteModel.findOne({
+      stage_id,
+      voter_id,
+    });
+
+    return res.status(200).json(
+       voterEntry
+    );
+
+  } catch (error) {
+    console.error("Get stage voter entry error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve stage voter entry.",
+    });
+  }
+};
+
+
+
+export const toggleStagePostVote = async (req, res) => {
+  try {
+    const { stage_id, post_id } = req.query;
+    const voter_id = req.user._id;
+
+    if (!stage_id || !post_id) {
+      return res.status(400).json({
+        success: false,
+        message: "stage_id and post_id are required.",
+      });
+    }
+
+    const voterEntry = await StagePostVoteModel.findOne({
+      stage_id,
+      voter_id,
+    });
+
+    // CASE 1: First vote
+    if (!voterEntry) {
+      const newVote = await StagePostVoteModel.create({
+        stage_id,
+        post_id,
+        voter_id,
+      });
+
+      await stageModel.updateOne(
+        { _id: stage_id, "contestants._id": post_id },
+        { $inc: { "contestants.$.voteCount": 1 } }
+      );
+
+      return res.status(201).json(newVote);
+    }
+
+    // CASE 2: Remove existing vote
+    if (voterEntry.post_id.toString() === post_id.toString()) {
+      await StagePostVoteModel.deleteOne({
+        _id: voterEntry._id,
+      });
+
+      await stageModel.updateOne(
+        { _id: stage_id, "contestants._id": post_id },
+        { $inc: { "contestants.$.voteCount": -1 } }
+      );
+      return res.status(200).json(null);
+    }
+
+    // CASE 3: Change vote
+    const previousPostId = voterEntry.post_id;
+
+    const updatedVote = await StagePostVoteModel.findByIdAndUpdate(
+      voterEntry._id,
+      {
+        $set: {
+          post_id,
+          createdAt: new Date(),
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    // Decrement previous contestant
+    await stageModel.updateOne(
+      { _id: stage_id, "contestants._id": previousPostId },
+      { $inc: { "contestants.$.voteCount": -1 } }
+    );
+
+    // Increment new contestant
+    await stageModel.updateOne(
+      { _id: stage_id, "contestants._id": post_id },
+      { $inc: { "contestants.$.voteCount": 1 } }
+    );
+
+    return res.status(200).json(updatedVote);
+
+  } catch (error) {
+    console.error("Toggle stage post vote error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to process vote.",
+    });
+  }
+};
+
+
 export const votePost = async(req,res)=>{
     const post_id =  req.params.id
     const owner_id = req.body.owner_id
     const voter_id = req.body.voter_id
     const voter_name = req.body.voter_name
-    console.log(voter_name)
+
     const vote = {
        voter_id : req.body.voter_id
     }
@@ -91,10 +210,7 @@ export const votePost = async(req,res)=>{
     const voter = talent.voters.find(v => 
                                     v.voter_id == voter_id
                                     )
-    // let votedTalentPost = null
-    // if(voter) votedTalentPost = await talentPostDataModel.findOne(
-    //                {post_id:voter.post_id}
-    //              )
+
     if(!voter){
         talent.voters.push({
                   voter_id : req.body.voter_id,
@@ -205,6 +321,8 @@ export const votePost = async(req,res)=>{
     );
     return res.json(talentPost)
 }
+
+
 
 
 export const flagPost = async(req,res)=>{
