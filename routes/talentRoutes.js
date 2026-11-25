@@ -55,7 +55,9 @@ route.get("/favouriteStages/:id", protect,getFavouriteStages);
 route.post('/favourite/:id',protect ,toggleFavouriteStage)
 
 // user performances , add , update , delete , resign 
-route.post('/uploads/:id', protect, joinStageOrQueueFirstPerformance);
+// route.post('/uploads/:id', protect, joinStageOrQueueFirstPerformance);
+route.post('/joinStage/:id', protect, joinStageOrQueueFirstPerformance);
+
 route.patch('/back/queue/:id',protect, getEliminatedUserBackToQueue)
 route.patch('/update/:id',protect,addUserPerformance)
 route.patch('/delete/performance/stage/:id',protect,deleteUserPerformanceStage)
@@ -69,7 +71,6 @@ route.get('/post/:id',protect,getPostById)
 route.post('/likes/:id',protect,LikePost)
 route.get('/votes/entry/',protect,getStageVoterEntry)
 route.post('/votes/',protect,toggleStagePostVote )
-// route.post('/votes/:id',protect,votePost)
 route.post('/flags/:id',protect,flagPost)
 
 // comments , add , delete , update , replies
