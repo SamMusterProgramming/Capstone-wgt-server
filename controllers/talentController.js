@@ -553,252 +553,9 @@ export const getTrendingStages = async(req,res)=>{
     return res.json(favourites).status(200)
   }
 
-  // user performances
-
-  // export const joinStageOrQueueFirstPerformance =  async (req, res) => {
-  //   try {
-  //     const stage_id = req.params.id;
-  //     const {
-  //       user_id,
-  //       room_id,
-  //       type,
-  //       videoFileName,
-  //       videoFileId,
-  //       thumbnailFileName,
-  //       thumbnailFileId,
-  //     } = req.body;
-  //     let  hasJoined = false;
-  //     let  isQueued = false;
-  //     // VALIDATION
-  //     if (!mongoose.Types.ObjectId.isValid(user_id)) {
-  //       return res.status(400).json({
-  //         error: "Invalid user_id"
-  //       });
-  //     }
-  //     if (!mongoose.Types.ObjectId.isValid(stage_id)) {
-  //       return res.status(400).json({
-  //         error: "Invalid stage_id"
-  //       });
-  //     }
-  //     // GENERATE URLS
-  //     const thumbnailSignedUrl =
-  //       await getPublicUrlFromB2(thumbnailFileName);
-  //     const thumbNailCdnUrl =
-  //       thumbnailSignedUrl.replace(
-  //         "https://f005.backblazeb2.com",
-  //         "https://cdn.challenmemey.com"
-  //       );
-  //     const signedUrl =
-  //       await getSignedUrlFromB2(videoFileName);
-  //     const cdnUrl =
-  //       signedUrl.replace(
-  //         "https://f005.backblazeb2.com",
-  //         "https://cdn.challenmemey.com"
-  //       );
-  //     // FIND STAGE
-  
-  //     const talent =
-  //       await talentModel.findById(stage_id);
-  
-  //     if (!talent) {
-  //       return res.status(404).json({
-  //         error: "Talent stage expired"
-  //       });
-  //     }
-  //     // PERFORMANCE OBJECT
-  //     const performance = {
-  //       video: {
-  //         fileId: videoFileId,
-  //         fileName: videoFileName,
-  //         signedUrl,
-  //         cdnUrl,
-  //       },
-  //       thumbnail: {
-  //         fileId: thumbnailFileId,
-  //         fileName: thumbnailFileName,
-  //         publicUrl: thumbNailCdnUrl,
-  //       },
-  //       date: new Date(),
-  //     };
-  
-
-  //     // FIND EXISTING CONTESTANT
-  
-  //     const existingContestant =
-  //       talent.contestants.find(
-  //         c =>
-  //           c.user_id?.toString() ===
-  //           user_id
-  //       );
-  
-  //     const existingQueuedContestant =
-  //       talent.queue.find(
-  //         c =>
-  //           c.user_id?.toString() ===
-  //           user_id
-  //       );
-  //     // NEW CONTESTANT
-  //     const contestant = {
-  //       _id: new mongoose.Types.ObjectId(),
-  //       user_id:
-  //         new mongoose.Types.ObjectId(user_id),
-  //       votes: 0,
-  //       likes: 0,
-  //       rank: 0,
-  //       createdAt: new Date(),
-  //       performances: [performance],
-  //     };
-
-  //     if (type === "new") {
-  //       // avoid duplicates
-  //       if (
-  //         existingContestant ||
-  //         existingQueuedContestant
-  //       ) {
-  //         return res.status(400).json({
-  //           error: "Contestant already exists"
-  //         });
-  //       }
-  
-  //       // stage has room
-  //       if (talent.contestants.length < 22) {
-  //         talent.contestants.push(contestant);
-  //         hasJoined = true ;
-  //         // ranking
-  //         talent.contestants.sort((a, b) => {
-  //           if (a.votes !== b.votes) {
-  //             return b.votes - a.votes;
-  //           } 
-  //           return b.likes - a.likes;
-  //         });
-  //         talent.contestants.forEach((c, index) => {
-  //           c.rank = index + 1;
-  //         });
-  //       } else {
-  //         // push to queue
-  //         isQueued = true ;
-  //         talent.queue.push(contestant);
-  //       }
-      
-  //     }
-
-  //     else {
-  //       isQueued = true ;
-  //       talent.queue.push(contestant);
-  //     }
-  //     await talent.save();
-
-  //     const newPostData =
-  //     new talentPostDataModel({
-  //       post_id: contestant._id,
-  //       owner_id:user_id,
-  //       room_id:room_id,
-  //       likes: [],
-  //       votes: [],
-  //       flags: [],
-  //       comments: [],
-  //     });
-  //     await newPostData.save();
-
-  //     if (hasJoined) {
-
-  //             const friend = await friendModel.findOne({
-  //               user_id: new mongoose.Types.ObjectId(user_id)
-  //             });
-  //             const friends = friend?.friends || [];
-  //             const follow = await followerModel.findOne({
-  //               user_id
-  //             });
-  //             const followers = follow?.followers || [];
-  //             const contestants = talent?.contestants || [];
-  //             const audienceSet = new Set();
-  //             // helper to safely add ids
-  //             const addToSet = (arr, field = null) => {
-  //               arr?.forEach(item => {
-  //                 const id = field ? item?.[field] : item;
-  //                 if (!id) return;
-  //                 const strId = id.toString();
-  //                 if (strId !== user_id.toString()) {
-  //                   audienceSet.add(strId);
-  //                 }
-  //               });
-  //             };
-
-  //             // merge all groups
-  //             addToSet(friends);
-  //             addToSet(followers);
-  //             addToSet(contestants, "user_id");
-  //             // final array
-  //             const audience = Array.from(audienceSet);
-  //             await broadcastNotification(
-  //                                         audience ,
-  //                                         user_id ,
-  //                                         "competition" ,
-  //                                         "contest_joined",
-  //                                         {
-  //                                         _id: stage_id,
-  //                                         name: talent.name,
-  //                                         region: talent.region,
-  //                                         talent: talent.name,
-  //                                         contestant_id: user_id 
-  //                                         }
-  //                                         )
-  //             // inform the user that his performance is posted
-  //             const n = await emitNotification (
-  //               user_id,  
-  //               null,  
-  //               "competition" ,
-  //               "contest_joined",
-  //               {
-  //               _id: stage_id,
-  //               name: talent.name,
-  //               region: talent.region,
-  //               talent: talent.name,
-  //               contestant_id: user_id 
-  //               }
-  //               )
-  //               console.log(n)
-  //      }
-  //      if (isQueued) {
-  //              // inform the user that his is in queue
-  //              await emitNotification (
-  //               user_id,
-  //               null,
-  //               "competition" ,
-  //               "contest_queued",
-  //               {
-  //                 _id: stage_id,
-  //                 name: talent.name,
-  //                 region: talent.region,
-  //                 talent: talent.name,
-  //                 contestant_id: user_id 
-  //               }
-  //               )
-  //      }
 
 
-  //     // RETURN STRUCTURED STAGE
-  //     const structuredTalent =
-  //       await generateTalentStage(
-  //         talent.name,
-  //         talent.region, 
-  //         true
-  //       );
-  //     return res.status(200).json(
-  //       structuredTalent
-  //     );
-  //   } catch (err) {
-  //     console.error(
-  //       "Upload error:",
-  //       err
-  //     );
-  //     return res.status(500).json({
-  //       error:
-  //         "Failed to upload contestant"
-  //     });
-  //   }
-  // }
-
+  // join stage , queue and add performances
   export const joinStageOrQueueFirstPerformance =  async (req, res) => {
     try {
       const stage_id = req.params.id;
@@ -930,9 +687,16 @@ export const getTrendingStages = async(req,res)=>{
       
       }
 
-      else {
+      if (channel === "queue") {
         isQueued = true ;
         talent.queue.push(contestant);
+      }
+
+      if (channel === "add") {
+        const findContestant = talent.contestants.find(c => c.user_id.toString() === user_id.toString())
+                                || talent.queue.find(c => c.user_id.toString() === user_id.toString())
+        console.log(findContestant)
+        findContestant?.performances.unshift(performance)
       }
 
       await talent.save();
@@ -950,16 +714,7 @@ export const getTrendingStages = async(req,res)=>{
       await newPostData.save();
 
       if (hasJoined) {
-
-              // const friend = await friendModel.findOne({
-              //   user_id: new mongoose.Types.ObjectId(user_id)
-              // });
-
               const friends = await userFriends(user_id)?.users
-              // friend?.friends || [];
-              // const follow = await followerModel.findOne({
-              //   user_id
-              // });
               const followers = await userFollowers(user_id).users;
               const contestants = talent?.contestants || [];
               const audienceSet = new Set();
@@ -1049,6 +804,7 @@ export const getTrendingStages = async(req,res)=>{
       });
     }
   }
+
 
 
 
@@ -1233,7 +989,7 @@ export const getTrendingStages = async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
-    const talentRoom = await talentModel.findById(room_id)
+    const talentRoom = await stageModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const deletedContestant = talentRoom.queue.find(c => c.user_id.toString() == user_id)
     talentRoom.queue = talentRoom.queue.filter(u => u.user_id.toString() !== user_id)
@@ -1263,9 +1019,8 @@ export const getTrendingStages = async(req,res)=>{
     talentRoom.markModified("queue");
     await talentRoom.save()
     const structuredTalent =
-        await generateTalentStage(
-          talentRoom.name,
-          talentRoom.region,
+        await stageById(
+          room_id,
           true
         );
     return res
@@ -1280,7 +1035,7 @@ export const getTrendingStages = async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
-    const talentRoom = await talentModel.findById(room_id)
+    const talentRoom = await stageModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const deletedContestant = talentRoom.eliminations.find(c => c.user_id.toString() == user_id)
     talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id.toString() !== user_id)
@@ -1301,22 +1056,21 @@ export const getTrendingStages = async(req,res)=>{
                 p.thumbnail.fileName,
                 p.thumbnail.fileId
               )
-            );
+            );   
           }
           await Promise.all(file);
     })
     await talentPostDataModel.findOneAndDelete({post_id:post_id})
     talentRoom.markModified("eliminations");
     await talentRoom.save()
-    const structuredTalent =
-    await generateTalentStage(
-      talentRoom.name,
-      talentRoom.region,
+   
+    const stage = await stageById(
+      room_id,
       true
     );
     return res
     .status(200)
-    .json(structuredTalent);
+    .json(stage);
    }
 
   
@@ -1326,7 +1080,7 @@ export const getTrendingStages = async(req,res)=>{
     if(!talent) return res.json({error:"expired"}).status(404)
 
     if(req.body.type !== "eupdate"){
-    const contestant = req.body.type === "update" ? talent.contestants.find(c => c.user_id.toString() === req.body.user_id.toString() ):
+    const contestant = req.body.type === "update" ? talent.contestants.find(c => c.user_id.toString() === req.body.user_id.toString()):
                                                     talent.queue.find(c => c.user_id.toString() === req.body.user_id )
     const videoFileName =  req.body.videoFileName
     const videoFileId  = req.body.videoFileId
@@ -1450,7 +1204,7 @@ export const deleteUserPerformanceStage = async(req,res)=>{
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
     const performanceToDelete = req.body.performanceToDelete
-    const talentRoom = await talentModel.findById(room_id)
+    const talentRoom = await stageModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const contestant = talentRoom.contestants.find(c => c.user_id.toString() == user_id)
     contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
@@ -1474,23 +1228,23 @@ export const deleteUserPerformanceStage = async(req,res)=>{
       );     
     }
     await Promise.all(filesToDelete);
-    const structuredTalent =
-    await generateTalentStage(
-        talentRoom.name,
-        talentRoom.region,
+    const structuredStage =
+    await stageById(
+        room_id,
         true
-      );
-    return res
+      );  
+    return res   
       .status(200)
-      .json(structuredTalent);
+      .json(structuredStage);
    }
 
-   export const deleteUserPerformanceQueue = async(req,res)=>{
+
+export const deleteUserPerformanceQueue = async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
     const performanceToDelete = req.body.performanceToDelete
-    const talentRoom = await talentModel.findById(room_id)
+    const talentRoom = await stageModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const contestant = talentRoom.queue.find(c => c.user_id.toString() == user_id)
     contestant.performances = contestant.performances.filter(p => p.video.fileId !== performanceToDelete.video.fileId)
@@ -1514,21 +1268,21 @@ export const deleteUserPerformanceStage = async(req,res)=>{
       );     
     }
     await Promise.all(filesToDelete);
-    const structuredTalent = await generateTalentStage(
-                                                        talentRoom.name,
-                                                        talentRoom.region,
-                                                        true
-                                                      );
+    const structuredTalent =
+             await stageById(
+                            room_id,
+                            true
+                            );
     return res
       .status(200)
       .json(structuredTalent);
    }
 
-   export const getEliminatedUserBackToQueue = async(req,res)=>{
+export const getEliminatedUserBackToQueue = async(req,res)=>{
     const room_id = req.params.id;
     const user_id = req.body.user_id;
     const post_id = req.body.post_id;
-    const talentRoom = await talentModel.findById(room_id)
+    const talentRoom = await stageModel.findById(room_id)
     if(!talentRoom) return res.json("expired")
     const contestant = talentRoom.eliminations.find(c => c.user_id.toString() == user_id)
     talentRoom.eliminations = talentRoom.eliminations.filter(u => u.user_id.toString() !== user_id)
@@ -1537,9 +1291,8 @@ export const deleteUserPerformanceStage = async(req,res)=>{
     talentRoom.markModified("queue");
     await talentRoom.save()
     const structuredTalent =
-    await generateTalentStage(
-        talentRoom.name,
-        talentRoom.region,
+    await stageById(
+        room_id,
         true
       );
     return res
