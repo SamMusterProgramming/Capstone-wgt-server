@@ -21,7 +21,7 @@ import friendModel from '../models/friends.js';
 import notificationModel from '../models/notifications.js';
 import favouriteModel from '../models/favourites.js';
 import b2 from '../B2.js';
-import { deleteFileFromB2_Private, deleteFileFromB2_Public, getPublicUrlFromB2, getSignedUrlFromB2 } from '../utilities/blackBlazeb2.js';
+
 import userModel from '../models/users.js';
 import { verifyFirebaseToken } from '../middleware/auth.js';
 import { protect } from '../middleware/jwtProtect.js';
@@ -34,7 +34,7 @@ import {
    joinStageOrQueueFirstPerformance, resignContestantFromStage, 
    toggleFavouriteStage
   } from '../controllers/talentController.js';
-import { addComment, deleteComment, flagPost, getPostById, getStageVoterEntry, LikePost, toggleStagePostVote, votePost } from '../controllers/postController.js';
+import { addComment, deleteComment, flagPost, getPostById, getStageVoterEntry, getUserStageLikerEntry, LikePost, toggleStagePostLike, toggleStagePostVote, votePost } from '../controllers/postController.js';
 
 const route = express.Router();
 
@@ -68,7 +68,10 @@ route.patch('/delete/contestant/Elimination/:id',protect,deleteContestantFromEli
 
 //conestant post , like , vote 
 route.get('/post/:id',protect,getPostById)
-route.post('/likes/:id',protect,LikePost)
+// route.post('/likes/:id',protect,LikePost)
+
+route.get('/like/entry/',protect,getUserStageLikerEntry)
+route.post('/likes/',protect,toggleStagePostLike)
 route.get('/votes/entry/',protect,getStageVoterEntry)
 route.post('/votes/',protect,toggleStagePostVote )
 route.post('/flags/:id',protect,flagPost)

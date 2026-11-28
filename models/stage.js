@@ -11,7 +11,7 @@ const contestantSchema = new mongoose.Schema({
   },
 
   performances: [],
-  
+
   votes: {
     type: Number,
     default: 0,
@@ -28,6 +28,11 @@ const contestantSchema = new mongoose.Schema({
   },
 
   voteCount :{
+    type: Number,
+    default: 0,
+  },
+
+  likeCount :{
     type: Number,
     default: 0,
   },

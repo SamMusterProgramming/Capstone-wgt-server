@@ -5,6 +5,7 @@ import { generateTalentStage } from "./talentController.js"
 import { emitVotesNotification } from "./notificationController.js"
 import StagePostVoteModel from "../models/stage/stagePost/stagePostVote.js"
 import stageModel from "../models/stage.js"
+import stagePostLikeModel from "../models/stage/stagePost/stagePostLike.js"
 
 
 
@@ -64,12 +65,161 @@ export const LikePost = async(req,res)=>{
     return res.json(updatedPost)
 }
 
+//likes for stage contestants 
 
+export const getUserStageLikerEntry = async (req, res) => {
+  try {
+    const {  stage_id, liker_id, } = req.query;
+
+    if (
+      !mongoose.Types.ObjectId.isValid(liker_id) ||
+      !mongoose.Types.ObjectId.isValid(stage_id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user_id or stage_id",
+      });
+    }
+
+    const likes = await stagePostLikeModel.find({
+      liker_id: liker_id,
+      stage_id: stage_id,
+    })
+      .select("post_id")
+      .lean();
+
+    const likedPostIds = likes.map(
+      (like) => like.post_id.toString()
+    );
+
+    return res.status(200).json(
+      likedPostIds
+    );
+
+  } catch (error) {
+    console.error("getUserStageLikes error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve stage likes",
+    });
+  }
+};
+
+export const toggleStagePostLike = async (req, res) => {
+  const { liker_id, stage_id, post_id } = req.query;
+  const session = await mongoose.startSession();
+  try {
+    if (
+      !mongoose.Types.ObjectId.isValid(liker_id) ||
+      !mongoose.Types.ObjectId.isValid(stage_id) ||
+      !mongoose.Types.ObjectId.isValid(post_id)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid IDs",
+      });
+    }
+
+    let result;
+
+    await session.withTransaction(async () => {
+
+      // CHECK THAT THE CONTESTANT EXISTS IN THIS STAGE
+      const stage = await stageModel.findOne({
+        _id: stage_id,
+        "contestants._id": post_id,
+      }).session(session);
+
+      if (!stage) {
+        const error = new Error("Contestant not found in this stage");
+        error.status = 404;
+        throw error;
+      }
+
+      // CHECK IF THE USER ALREADY LIKED THIS POST
+      const existingLike = await stagePostLikeModel.findOneAndDelete({
+        liker_id,
+        stage_id,
+        post_id,
+      }).session(session);
+
+      let isLiked;
+      let increment;
+
+      if (existingLike) {
+        // ALREADY LIKED → REMOVE LIKE
+        isLiked = false;
+        increment = -1;
+      } else {
+        // NOT LIKED → CREATE LIKE
+        await stagePostLikeModel.create(
+          [{
+            liker_id,
+            stage_id,
+            post_id,
+          }],
+          { session }
+        );
+
+        isLiked = true;
+        increment = 1;
+      }
+
+      // UPDATE THE MATCHING CONTESTANT'S LIKE COUNT
+      await stageModel.updateOne(
+        {
+          _id: stage_id,
+          "contestants._id": post_id,
+        },
+        {
+          $inc: {
+            "contestants.$.likeCount": increment,
+          },
+        },
+        { session }
+      );
+
+      // GET UPDATED LIKE COUNT
+      // const updatedStage = await stageModel.findOne(
+      //   {
+      //     _id: stage_id,
+      //     "contestants._id": post_id,
+      //   },
+      //   {
+      //     contestants: {
+      //       $elemMatch: { _id: post_id },
+      //     },
+      //   }
+      // ).session(session);
+
+      result = {
+        isLiked,
+      };
+    });
+
+    return res.status(200).json(
+         result
+    );
+
+  } catch (error) {
+    console.error("toggleStagePostLike error:", error);
+
+    return res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Failed to toggle like",
+    });
+
+  } finally {
+    await session.endSession();
+  }
+};
+
+// stage contestants votes
 
 export const getStageVoterEntry = async (req, res) => {
   try {
     const { stage_id, voter_id } = req.query;
-    console.log(stage_id , voter_id)
     const voterEntry = await StagePostVoteModel.findOne({
       stage_id,
       voter_id,
